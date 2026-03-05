@@ -16,7 +16,7 @@ const Login = () => {
         e.preventDefault(); // Ngăn trình duyệt reload lại trang
         
         try {
-            const response = await axios.post('http://127.0.0.1:8000/api/login', {
+            const response = await axios.post(`${import.meta.env.VITE_API_URL}/login`, {
                 username: email,
                 password: password
             });

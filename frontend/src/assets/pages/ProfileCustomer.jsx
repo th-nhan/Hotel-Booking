@@ -18,7 +18,7 @@ export default function ProfileCustomer() {
       }
 
       try {
-        const response = await axios.get('http://127.0.0.1:8000/api/my-profile', {
+        const response = await axios.get(`${import.meta.env.VITE_API_URL}/my-profile`, {
           headers: {
             Authorization: `Bearer ${token}`
           }
@@ -101,7 +101,7 @@ function Sidebar({ profile, activeTab, setActiveTab }) {
       try {
         const token = localStorage.getItem('token');
         // Gọi API để cập nhật riêng cái link ảnh
-        await axios.post('http://127.0.0.1:8000/api/update-profile', 
+        await axios.post(`${import.meta.env.VITE_API_URL}/update-profile`, 
           { name: profile.name, anhdaidien: newAvatarUrl }, // Gửi kèm tên để API ko báo lỗi thiếu
           { headers: { Authorization: `Bearer ${token}` } }
         );
@@ -230,7 +230,7 @@ function ProfileOverview({ profile, bookings }) {
       const token = localStorage.getItem('token');
 
       // GỌI API ĐỂ LƯU VÀO DATABASE
-      const response = await axios.post('http://127.0.0.1:8000/api/update-profile', formData, {
+      const response = await axios.post(`${import.meta.env.VITE_API_URL}/update-profile`, formData, {
         headers: { Authorization: `Bearer ${token}` }
       });
 

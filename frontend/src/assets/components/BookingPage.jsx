@@ -96,7 +96,7 @@ const BookingPage = () => {
         TaiKhoanID: storedUser.TaiKhoanID || null // Gắn ID user nếu có
       };
 
-      const response = await axios.post('http://127.0.0.1:8000/api/dat-phong', payload);
+      const response = await axios.post(`${import.meta.env.VITE_API_URL}/dat-phong`, payload);
 
       if (response.data.status === 'success') {
         message.success('Đặt phòng thành công! Mã phiếu: ' + response.data.phieu_id);

@@ -20,7 +20,7 @@ export default function HotelDashboard() {
   const fetchDashboardData = async () => {
     setLoading(true);
     try {
-      const response = await axios.get('http://127.0.0.1:8000/api/dashboard');
+      const response = await axios.get(`${import.meta.env.VITE_API_URL}/dashboard`);
       setRooms(response.data.rooms);
       setStats(response.data.stats);
     } catch (error) {
@@ -57,7 +57,7 @@ export default function HotelDashboard() {
   const handleCheckout = async () => {
     if (!selectedRoom || !window.confirm(`Xác nhận trả phòng ${selectedRoom.number}?`)) return;
     try {
-      await axios.post('http://127.0.0.1:8000/api/tra-phong', { PhongID: selectedRoom.id });
+      await axios.post(`${import.meta.env.VITE_API_URL}/tra-phong`, { PhongID: selectedRoom.id });
       fetchDashboardData(); // Gọi lại API để update biểu đồ & map
       setSelectedRoom({ ...selectedRoom, status: 'Đang dọn', guestName: null });
     } catch (error) {
