@@ -24,27 +24,27 @@ class AuthController extends Controller
             'password.min' => 'Mật khẩu phải có ít nhất 6 ký tự.'
         ]);
 
-        DB::beginTransaction(); 
-        
+        DB::beginTransaction();
+
         try {
-           
+
             $taiKhoan = TaiKhoan::create([
                 'HoTen' => $request->fullname,
                 'Email' => $request->username,
-                'MatKhau' => Hash::make($request->password), 
-                'VaiTroID' => 3, 
-                'TrangThai' => 1, 
+                'MatKhau' => Hash::make($request->password),
+                'VaiTroID' => 3,
+                'TrangThai' => 1,
                 'NgayTao' => now(),
             ]);
 
-            
+
             DB::table('khach_hang')->insert([
                 'TaiKhoanID' => $taiKhoan->TaiKhoanID,
                 'HoTen' => $request->fullname,
                 'Email' => $request->username,
                 'NgayTao' => now(),
-                
-                
+
+
                 'DiaChi' => '',
                 'SoDienThoai' => '',
                 'CCCD' => '',
@@ -58,12 +58,14 @@ class AuthController extends Controller
                 'message' => 'Đăng ký tài khoản thành công!',
                 'user' => $taiKhoan
             ], 201);
-
         } catch (\Exception $e) {
             DB::rollBack();
+            // Trả về chi tiết lỗi để Nhan đọc được trên Console của trình duyệt
             return response()->json([
-                'status' => 'error', 
-                'message' => 'Lỗi hệ thống: ' . $e->getMessage()
+                'status' => 'error',
+                'message' => 'Lỗi thực tế: ' . $e->getMessage(),
+                'dong' => $e->getLine(),
+                'file' => $e->getFile()
             ], 500);
         }
     }
@@ -114,13 +116,13 @@ class AuthController extends Controller
             ]
         ]);
     }
-    
+
     // 3. ĐĂNG XUẤT
     public function logout(Request $request)
     {
         // Xóa token hiện tại của user đang gọi API
         $request->user()->currentAccessToken()->delete();
-        
+
         return response()->json([
             'status' => 'success',
             'message' => 'Đăng xuất thành công!'

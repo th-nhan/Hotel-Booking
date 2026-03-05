@@ -19,6 +19,7 @@ class TaiKhoan extends Authenticatable
 
     // 3. Các cột được phép thêm dữ liệu (Mass Assignment)
     protected $fillable = [
+        'TaiKhoanID',
         'Email',
         'MatKhau',
         'HoTen',
