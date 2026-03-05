@@ -89,7 +89,7 @@ class DatPhongController extends Controller
                     'CCCD' => $request->CCCD,
                     'TaiKhoanID' => $request->TaiKhoanID ?? 3, // Mặc định 3 là khách vãng lai
                     'NgayTao' => now(),
-                ]);
+                ], 'KhachHangID');
             }
 
             // B. Tính toán tiền
@@ -116,7 +116,7 @@ class DatPhongController extends Controller
                 'TienCoc' => $tienCoc,
                 'TrangThaiThanhToan' => ($tienCoc > 0) ? 'Đã đặt cọc' : 'Đã thanh toán',
                 'MaGiaoDich' => null, // Sẽ cập nhật nếu thanh toán online
-            ]);
+            ], 'PhieuDatPhongID');
 
             // D. Tạo Chi Tiết Phiếu
             DB::table('chi_tiet_phieu_dat_phong')->insert([
