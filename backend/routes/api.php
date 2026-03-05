@@ -32,3 +32,10 @@ Route::middleware('auth:sanctum')->group(function () {
 Route::get('/dashboard', [\App\Http\Controllers\Api\DashboardController::class, 'index']);
 Route::middleware('auth:sanctum')->get('/my-profile', [\App\Http\Controllers\Api\ProfileController::class, 'getProfile']);
 Route::middleware('auth:sanctum')->post('/update-profile', [\App\Http\Controllers\Api\ProfileController::class, 'updateProfile']);
+
+Route::get('/test', function () {
+    return response()->json([
+        'status' => 'OK', 
+        'message' => 'Backend Vercel đã thông đường 100%!'
+    ]);
+});
