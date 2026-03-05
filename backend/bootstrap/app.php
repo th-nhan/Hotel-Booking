@@ -13,7 +13,7 @@ return Application::configure(basePath: dirname(__DIR__))
     )
     ->withMiddleware(function (Middleware $middleware) {
         $middleware->validateCsrfTokens(except: [
-            'api/*', // Thêm dòng này để bỏ qua kiểm tra CSRF cho toàn bộ API
+            'api/*', // Loại bỏ kiểm tra CSRF cho tất cả các link API
         ]);
     })
     ->withExceptions(function (Exceptions $exceptions): void {
