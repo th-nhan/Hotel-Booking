@@ -1,5 +1,5 @@
 <?php
-
+$_SERVER['HTTP_ACCEPT'] = 'application/json';
 // --- TRỊ DỨT ĐIỂM CORS ---
 header('Access-Control-Allow-Origin: *');
 header('Access-Control-Allow-Methods: GET, POST, PUT, PATCH, DELETE, OPTIONS');
