@@ -1,4 +1,16 @@
 <?php
+
+// --- TRỊ DỨT ĐIỂM CORS ---
+header('Access-Control-Allow-Origin: *');
+header('Access-Control-Allow-Methods: GET, POST, PUT, PATCH, DELETE, OPTIONS');
+header('Access-Control-Allow-Headers: Content-Type, Authorization, X-Requested-With, X-XSRF-TOKEN');
+
+// Nếu là request kiểm tra (OPTIONS) của trình duyệt, trả về OK (200) luôn và dừng lại
+if ($_SERVER['REQUEST_METHOD'] === 'OPTIONS') {
+    http_response_code(200);
+    exit(0);
+}
+// --------------------------------------------------------
 // 1. Chuyển Log ra màn hình quản lý của Vercel (thay vì ghi vào file laravel.log)
 putenv('LOG_CHANNEL=stderr');
 
