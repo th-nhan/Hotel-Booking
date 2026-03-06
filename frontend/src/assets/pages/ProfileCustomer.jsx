@@ -107,8 +107,13 @@ function Sidebar({ profile, activeTab, setActiveTab }) {
         );
         
         // Cập nhật UI ngay lập tức
-        profile.anhdaidien = newAvatarUrl;
-        alert("Đã cập nhật ảnh đại diện thành công!");
+        // profile.anhdaidien = newAvatarUrl;
+        // alert("Đã cập nhật ảnh đại diện thành công!");
+        if(res.data.status === 'success') {
+                // ĐỪNG GÁN TRỰC TIẾP profile.anhdaidien = ...
+                // Nhan nên dùng một hàm setProfile từ component cha hoặc load lại dữ liệu
+                window.location.reload(); // Cách nhanh nhất để đồng bộ lại toàn bộ UI
+            }
       } catch (error) {
         alert("Lỗi khi cập nhật ảnh!");
       }
