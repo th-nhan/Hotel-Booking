@@ -101,21 +101,21 @@ function Sidebar({ profile, activeTab, setActiveTab }) {
       try {
         const token = localStorage.getItem('token');
 
-        
+
         await axios.post(`${import.meta.env.VITE_API_URL}/update-profile`,
           {
             name: profile.name,
-            phone: profile.phone || '',       
-            address: profile.address || '',   
+            phone: profile.phone || '',
+            address: profile.address || '',
             anhdaidien: newAvatarUrl
           },
           { headers: { Authorization: `Bearer ${token}` } }
         );
 
-        // Cập nhật UI ngay lập tức
+
         profile.anhdaidien = newAvatarUrl;
         alert("Đã cập nhật ảnh đại diện thành công!");
-
+        window.location.reload();
       } catch (error) {
         // Bắt lỗi chi tiết 
         const errorMsg = error.response?.data?.message || "Lỗi không xác định";
