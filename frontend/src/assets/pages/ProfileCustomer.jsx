@@ -96,26 +96,31 @@ function Sidebar({ profile, activeTab, setActiveTab }) {
 
   const handleChangeAvatar = async () => {
     const newAvatarUrl = window.prompt("Nhập đường dẫn (link) ảnh đại diện mới của bạn:", profile.anhdaidien || "");
-    
+
     if (newAvatarUrl !== null && newAvatarUrl !== profile.anhdaidien) {
       try {
         const token = localStorage.getItem('token');
-        // Gọi API để cập nhật riêng cái link ảnh
-        await axios.post(`${import.meta.env.VITE_API_URL}/update-profile`, 
-          { name: profile.name, anhdaidien: newAvatarUrl }, // Gửi kèm tên để API ko báo lỗi thiếu
+
+        
+        await axios.post(`${import.meta.env.VITE_API_URL}/update-profile`,
+          {
+            name: profile.name,
+            phone: profile.phone || '',       
+            address: profile.address || '',   
+            anhdaidien: newAvatarUrl
+          },
           { headers: { Authorization: `Bearer ${token}` } }
         );
-        
+
         // Cập nhật UI ngay lập tức
-        // profile.anhdaidien = newAvatarUrl;
-        // alert("Đã cập nhật ảnh đại diện thành công!");
-        if(res.data.status === 'success') {
-                // ĐỪNG GÁN TRỰC TIẾP profile.anhdaidien = ...
-                // Nhan nên dùng một hàm setProfile từ component cha hoặc load lại dữ liệu
-                window.location.reload(); // Cách nhanh nhất để đồng bộ lại toàn bộ UI
-            }
+        profile.anhdaidien = newAvatarUrl;
+        alert("Đã cập nhật ảnh đại diện thành công!");
+
       } catch (error) {
-        alert("Lỗi khi cập nhật ảnh!");
+        // Bắt lỗi chi tiết 
+        const errorMsg = error.response?.data?.message || "Lỗi không xác định";
+        alert("Lỗi từ Server: " + errorMsg);
+        console.error("Chi tiết lỗi:", error.response?.data);
       }
     }
   };
@@ -133,7 +138,7 @@ function Sidebar({ profile, activeTab, setActiveTab }) {
               ></div>
             </div>
             {/* Lớp phủ màu đen và icon Camera hiện ra khi trỏ chuột vào */}
-            <button 
+            <button
               onClick={handleChangeAvatar}
               className="absolute inset-0 bg-black/50 rounded-full flex flex-col items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity duration-300 cursor-pointer"
             >
@@ -254,9 +259,9 @@ function ProfileOverview({ profile, bookings }) {
         localStorage.setItem('user', JSON.stringify(savedUser));
         // Reset lại ô mật khẩu cho trống
         setFormData({ ...formData, current_password: '', new_password: '', new_password_confirmation: '' });
-        
+
         alert("Cập nhật thông tin cá nhân thành công!");
-      }else {
+      } else {
         alert(response.data.message); // Hiển thị lỗi nếu sai mật khẩu cũ
       }
 
@@ -331,7 +336,7 @@ function ProfileOverview({ profile, bookings }) {
           ) : (
             // CHẾ ĐỘ SỬA (FORM)
             <div className="flex flex-col gap-10 animate-[fadeIn_0.3s_ease-in-out]">
-              
+
               {/* PHẦN 1: THÔNG TIN CÁ NHÂN (Nằm trong 1 ô riêng) */}
               <div>
                 <h4 className="text-[#deb42b] font-bold text-sm mb-4 uppercase tracking-wider flex items-center gap-2">
@@ -366,7 +371,7 @@ function ProfileOverview({ profile, bookings }) {
                   <div className="flex items-center gap-2"><Lock size={16} /> Security Settings</div>
                   <span className="text-[10px] font-normal text-[#deb42b]/50 lowercase tracking-normal italic">(Leave blank if not changing)</span>
                 </h4>
-                
+
                 <div className="bg-black/20 p-6 rounded-xl border border-[#deb42b]/10 relative overflow-hidden">
                   {/* Trang trí góc thẻ */}
                   <div className="absolute top-0 right-0 w-24 h-24 bg-gradient-to-bl from-[#deb42b]/10 to-transparent rounded-bl-full pointer-events-none"></div>
@@ -377,7 +382,7 @@ function ProfileOverview({ profile, bookings }) {
                       <label className="text-[10px] uppercase tracking-widest text-[#deb42b]/60">Current Password</label>
                       <input type="password" name="current_password" value={formData.current_password} onChange={handleInputChange} placeholder="Nhập mật khẩu hiện tại để xác nhận..." className="w-full md:w-1/2 bg-[#0B1C2D]/50 border border-[#deb42b]/20 rounded-lg px-4 py-2.5 text-slate-200 focus:outline-none focus:border-[#deb42b] focus:ring-1 focus:ring-[#deb42b]/50" />
                     </div>
-                    
+
                     {/* DÒNG 2: MẬT KHẨU MỚI & XÁC NHẬN (NẰM SONG SONG) */}
                     <div className="flex flex-col gap-2">
                       <label className="text-[10px] uppercase tracking-widest text-[#deb42b]/60">New Password</label>
@@ -393,7 +398,7 @@ function ProfileOverview({ profile, bookings }) {
               </div>
 
             </div>
-            
+
           )}
         </div>
 
