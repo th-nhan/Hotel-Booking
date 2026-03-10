@@ -10,8 +10,8 @@ import { useNavigate } from 'react-router-dom';
 export default function HotelDashboard() {
   const navigate = useNavigate();
   // 1. STATE QUẢN LÝ TAB HIỆN TẠI
-  const [activeTab, setActiveTab] = useState('dashboard'); 
-  
+  const [activeTab, setActiveTab] = useState('dashboard');
+
   const [rooms, setRooms] = useState([]);
   const [stats, setStats] = useState({
     totalRooms: 0, available: 0, occupied: 0, cleaning: 0, occupancyRate: 0, revenueToday: 0
@@ -20,7 +20,7 @@ export default function HotelDashboard() {
   const [selectedRoom, setSelectedRoom] = useState(null);
 
   // --- API GỌI DỮ LIỆU ---
- const processRoomStatuses = (fetchedRooms) => {
+  const processRoomStatuses = (fetchedRooms) => {
     const today = new Date();
     today.setHours(0, 0, 0, 0); // Đưa về 0h sáng hôm nay để chỉ so sánh ngày
 
@@ -30,18 +30,18 @@ export default function HotelDashboard() {
         let dateStr = room.checkIn;
         if (dateStr.includes('/')) {
           const parts = dateStr.split('/');
-          if (parts[0].length <= 2 && parts[2].length === 4) { 
+          if (parts[0].length <= 2 && parts[2].length === 4) {
             // Đổi từ DD/MM/YYYY sang chuẩn YYYY-MM-DD của JS
             dateStr = `${parts[2]}-${parts[1]}-${parts[0]}`;
           }
         }
-        
+
         const checkInDate = new Date(dateStr);
         checkInDate.setHours(0, 0, 0, 0);
 
         // NẾU TỚI NGÀY CHECK-IN -> TỰ ĐỘNG THÀNH "ĐANG Ở"
         if (today.getTime() >= checkInDate.getTime()) {
-          return { ...room, status: 'Đang ở' }; 
+          return { ...room, status: 'Đang ở' };
         }
       }
       return room; // Các phòng khác giữ nguyên
@@ -59,7 +59,7 @@ export default function HotelDashboard() {
       const processedRooms = processRoomStatuses(response.data.rooms);
       setRooms(processedRooms);
       setStats(response.data.stats);
-      
+
     } catch (error) {
       console.error("Lỗi khi tải dữ liệu Dashboard:", error);
     } finally {
@@ -137,55 +137,118 @@ export default function HotelDashboard() {
 
   // --- HÀM XUẤT HÓA ĐƠN (PRINT PDF) ---
   const exportInvoice = (room) => {
+    // 1. Tính toán số ngày lưu trú
+    const checkInDate = new Date(room.checkIn);
+    const checkOutDate = new Date(room.checkOut);
+    const timeDiff = checkOutDate.getTime() - checkInDate.getTime();
+    let daysStayed = Math.ceil(timeDiff / (1000 * 3600 * 24));
+
+    // Nếu check-in và check-out cùng ngày (chưa qua đêm), tính tối thiểu 1 ngày
+    if (daysStayed <= 0) daysStayed = 1;
+
+    // 2. Lấy các con số và tính tổng
+    const roomPrice = Number(room.price) || 0;
+    const roomTotal = roomPrice * daysStayed;
+
+    // Backend sẽ trả về 2 biến này (nếu không có thì mặc định là 0)
+    const serviceFee = Number(room.serviceFee) || 0;
+    const deposit = Number(room.deposit) || 0;
+
+    // Tổng tiền khách phải trả = (Tiền phòng + Tiền dịch vụ) - Tiền cọc
+    const grandTotal = (roomTotal + serviceFee) - deposit;
+
+    const formatVND = (amount) => new Intl.NumberFormat('vi-VN').format(amount) + ' VND';
+
     const printWindow = window.open('', '_blank');
     printWindow.document.write(`
       <html>
         <head>
           <title>Hóa đơn - ${room.guestName}</title>
           <style>
-            body { font-family: 'Times New Roman', serif; padding: 40px; color: #0B1C2D; }
+            body { font-family: 'Times New Roman', serif; padding: 40px; color: #0B1C2D; max-width: 800px; margin: auto; }
             .header { text-align: center; border-bottom: 2px solid #D4AF37; padding-bottom: 20px; margin-bottom: 30px; }
-            h1 { color: #D4AF37; letter-spacing: 2px; }
-            .content { margin-bottom: 30px; line-height: 1.6; }
+            h1 { color: #D4AF37; letter-spacing: 2px; margin-bottom: 5px; }
+            .info-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 30px; }
             .table { width: 100%; border-collapse: collapse; margin-top: 20px; }
-            .table th, .table td { border: 1px solid #ccc; padding: 10px; text-align: left; }
-            .table th { background-color: #f8f5f0; }
-            .total { font-size: 20px; font-weight: bold; text-align: right; margin-top: 20px; color: #D4AF37; }
+            .table th, .table td { border: 1px solid #ccc; padding: 12px; text-align: right; }
+            .table th { background-color: #f8f5f0; text-align: center; font-weight: bold; }
+            .table td:first-child { text-align: left; }
+            .summary-box { margin-top: 20px; width: 50%; float: right; }
+            .summary-row { display: flex; justify-content: space-between; padding: 8px 0; border-bottom: 1px dashed #ccc; }
+            .summary-row.bold { font-weight: bold; border-bottom: none; font-size: 18px; }
+            .summary-row.total-pay { color: #D4AF37; font-size: 22px; border-top: 2px solid #0B1C2D; padding-top: 10px; margin-top: 5px; }
+            .footer { clear: both; text-align: center; margin-top: 80px; font-style: italic; color: #666; }
           </style>
         </head>
         <body>
           <div class="header">
             <h1>LA MAISON HOTEL</h1>
-            <p>HÓA ĐƠN THANH TOÁN (INVOICE)</p>
+            <p style="margin: 0;">123 Nguyễn Văn Cừ, Quận 1, TP.HCM | ĐT: 0123.456.789</p>
+            <h2 style="margin-top: 20px;">HÓA ĐƠN THANH TOÁN (INVOICE)</h2>
           </div>
-          <div class="content">
-            <p><strong>Khách hàng:</strong> ${room.guestName}</p>
-            <p><strong>Phòng:</strong> ${room.number} (${room.type})</p>
-            <p><strong>Thời gian ở:</strong> ${room.checkIn} - ${room.checkOut}</p>
-            <p><strong>Ngày xuất HĐ:</strong> ${new Date().toLocaleDateString('vi-VN')}</p>
-            
-            <table class="table">
-              <tr>
-                <th>Hạng mục</th>
-                <th>Đơn giá</th>
-                <th>Thành tiền</th>
-              </tr>
-              <tr>
-                <td>Tiền phòng (${room.type})</td>
-                <td>${new Intl.NumberFormat('vi-VN').format(room.price)} VND</td>
-                <td>${new Intl.NumberFormat('vi-VN').format(room.price)} VND</td>
-              </tr>
-            </table>
-            <div class="total">
-              TỔNG CỘNG: ${new Intl.NumberFormat('vi-VN').format(room.price)} VND
+          
+          <div class="info-grid">
+            <div>
+              <p><strong>Khách hàng:</strong> ${room.guestName}</p>
+              <p><strong>Số phòng:</strong> ${room.number} (${room.type})</p>
+            </div>
+            <div style="text-align: right;">
+              <p><strong>Ngày Check-in:</strong> ${room.checkIn}</p>
+              <p><strong>Ngày Check-out:</strong> ${room.checkOut}</p>
+              <p><strong>Ngày in HĐ:</strong> ${new Date().toLocaleDateString('vi-VN')}</p>
             </div>
           </div>
-          <p style="text-align:center; margin-top:50px; font-style: italic;">Cảm ơn quý khách đã sử dụng dịch vụ tại La Maison!</p>
+          
+          <table class="table">
+            <tr>
+              <th>Hạng mục dịch vụ</th>
+              <th>Đơn giá</th>
+              <th>Số lượng</th>
+              <th>Thành tiền</th>
+            </tr>
+            <tr>
+              <td>Tiền phòng lưu trú</td>
+              <td>${formatVND(roomPrice)} / đêm</td>
+              <td style="text-align: center;">${daysStayed} đêm</td>
+              <td>${formatVND(roomTotal)}</td>
+            </tr>
+            ${serviceFee > 0 ? `
+            <tr>
+              <td>Phí dịch vụ phát sinh (Ăn uống, giặt ủi...)</td>
+              <td>-</td>
+              <td style="text-align: center;">-</td>
+              <td>${formatVND(serviceFee)}</td>
+            </tr>` : ''}
+          </table>
+
+          <div class="summary-box">
+            <div class="summary-row">
+              <span>Tổng cộng (Subtotal):</span>
+              <span>${formatVND(roomTotal + serviceFee)}</span>
+            </div>
+            <div class="summary-row">
+              <span>Đã đặt cọc (Deposit):</span>
+              <span style="color: red;">- ${formatVND(deposit)}</span>
+            </div>
+            <div class="summary-row bold total-pay">
+              <span>SỐ TIỀN CẦN THANH TOÁN:</span>
+              <span>${formatVND(grandTotal > 0 ? grandTotal : 0)}</span>
+            </div>
+          </div>
+
+          <div class="footer">
+            <p>Cảm ơn quý khách đã sử dụng dịch vụ tại La Maison Hotel!</p>
+            <p>Hẹn gặp lại quý khách.</p>
+          </div>
         </body>
       </html>
     `);
     printWindow.document.close();
-    printWindow.print();
+
+    // Thêm delay nhỏ để CSS kịp tải trước khi bung hộp thoại in
+    setTimeout(() => {
+      printWindow.print();
+    }, 250);
   };
 
   if (loading && rooms.length === 0) {
@@ -346,9 +409,9 @@ export default function HotelDashboard() {
         <header className="h-20 px-8 flex items-center justify-between border-b border-[#0B1C2D]/10 bg-[#F8F5F0]/80 backdrop-blur-md z-10 relative">
           <div>
             <h2 className="text-2xl font-serif font-bold uppercase tracking-wider">{
-              activeTab === 'dashboard' ? 'Overview' : 
-              activeTab === 'roomMap' ? 'Room Map' : 
-              activeTab === 'guests' ? 'Guest Management' : 'Reports & Invoices'
+              activeTab === 'dashboard' ? 'Overview' :
+                activeTab === 'roomMap' ? 'Room Map' :
+                  activeTab === 'guests' ? 'Guest Management' : 'Reports & Invoices'
             }</h2>
             <p className="text-sm text-[#0B1C2D]/60">{new Date().toLocaleDateString('en-US', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' })}</p>
           </div>
@@ -382,8 +445,8 @@ export default function HotelDashboard() {
                   <h2 className="text-4xl font-serif font-bold mt-1">Phòng {selectedRoom.number}</h2>
                 </div>
                 <span className={`px-3 py-1 text-xs font-bold uppercase tracking-wider rounded ${selectedRoom.status === 'Trống' ? 'bg-[#D4AF37]/20 text-[#D4AF37]' :
-                    selectedRoom.status === 'Đã đặt' ? 'bg-white/20 text-white' :
-                      selectedRoom.status === 'Đang ở' ? 'bg-[#D4AF37] text-[#0B1C2D]' : 'bg-gray-400 text-white'
+                  selectedRoom.status === 'Đã đặt' ? 'bg-white/20 text-white' :
+                    selectedRoom.status === 'Đang ở' ? 'bg-[#D4AF37] text-[#0B1C2D]' : 'bg-gray-400 text-white'
                   }`}>
                   {selectedRoom.status}
                 </span>
@@ -469,8 +532,8 @@ function KPICard({ title, value, subtitle, icon, color, progress }) {
   const isGold = color === 'gold';
   return (
     <div className={`p-6 rounded-2xl border transition-transform hover:-translate-y-1 ${isNavy ? 'bg-[#0B1C2D] text-white border-[#0B1C2D] shadow-xl shadow-[#0B1C2D]/20' :
-        isGold ? 'bg-gradient-to-br from-[#D4AF37] to-[#B5952F] text-[#0B1C2D] border-[#D4AF37] shadow-xl shadow-[#D4AF37]/30' :
-          'bg-white text-[#0B1C2D] border-[#0B1C2D]/10 shadow-xl shadow-[#0B1C2D]/5'
+      isGold ? 'bg-gradient-to-br from-[#D4AF37] to-[#B5952F] text-[#0B1C2D] border-[#D4AF37] shadow-xl shadow-[#D4AF37]/30' :
+        'bg-white text-[#0B1C2D] border-[#0B1C2D]/10 shadow-xl shadow-[#0B1C2D]/5'
       }`}>
       <div className="flex justify-between items-start mb-4">
         <div>

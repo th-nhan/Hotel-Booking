@@ -13,7 +13,7 @@ class DashboardController extends Controller
     {
         try {
             $today = Carbon::today()->toDateString();
-            
+
             // Lấy tháng và năm hiện tại để tính thống kê
             $currentMonth = Carbon::now()->month;
             $currentYear = Carbon::now()->year;
@@ -31,12 +31,18 @@ class DashboardController extends Controller
                 ->whereDate('phieu_dat_phong.NgayCheckOutDuKien', '>=', $today)
                 ->where('phieu_dat_phong.TrangThaiThanhToan', '!=', 'Đã hủy')
                 ->orderBy('phieu_dat_phong.NgayCheckIn', 'desc') // Sắp xếp lấy phiếu mới nhất nếu có trùng
-                ->select('chi_tiet_phieu_dat_phong.PhongID', 'phieu_dat_phong.NgayCheckIn', 'phieu_dat_phong.NgayCheckOutDuKien', 'khach_hang.HoTen')
+                ->select(
+                    'chi_tiet_phieu_dat_phong.PhongID',
+                    'phieu_dat_phong.NgayCheckIn',
+                    'phieu_dat_phong.NgayCheckOutDuKien',
+                    'phieu_dat_phong.TienCoc',  
+                    'phieu_dat_phong.PhuThu',
+                    'khach_hang.HoTen'
+                )
                 ->get()
-                ->keyBy('PhongID'); // keyBy để map siêu nhanh với ID phòng
-
+                ->keyBy('PhongID');
             $roomsData = [];
-            
+
             // Khởi tạo các biến đếm KPI
             $stats = [
                 'totalRooms' => count($phongs),
@@ -59,14 +65,14 @@ class DashboardController extends Controller
                 $guestName = null;
                 $checkIn = null;
                 $checkOut = null;
-                
+
                 // Lấy trạng thái gốc từ Database
                 $currentStatus = $p->TinhTrang;
 
                 // NẾU PHÒNG NÀY ĐANG NẰM TRONG DANH SÁCH KHÁCH ĐẶT/Ở
                 if ($activeBookings->has($p->PhongID)) {
                     $booking = $activeBookings->get($p->PhongID);
-                    
+
                     $guestName = $booking->HoTen ?? 'Khách vãng lai';
                     $checkIn = Carbon::parse($booking->NgayCheckIn)->format('Y-m-d');
                     $checkOut = Carbon::parse($booking->NgayCheckOutDuKien)->format('Y-m-d');
@@ -77,7 +83,7 @@ class DashboardController extends Controller
                     } else {
                         $currentStatus = 'Đã đặt';
                     }
-                } 
+                }
                 // AUTO FIX LỖI DB: Trạng thái DB ghi là "Đã đặt/Đang ở" nhưng không có phiếu nào thực tế -> Ép về "Trống"
                 elseif ($currentStatus === 'Đã đặt' || $currentStatus === 'Đang ở') {
                     $currentStatus = 'Trống';
@@ -102,7 +108,9 @@ class DashboardController extends Controller
                     'price' => $p->GiaPhong ?? 0,
                     'guestName' => $guestName,
                     'checkIn' => $checkIn,
-                    'checkOut' => $checkOut
+                    'checkOut' => $checkOut,
+                    'deposit' => isset($booking) ? ($booking->TienCoc ?? 0) : 0, 
+                    'serviceFee' => isset($booking) ? ($booking->PhuThu ?? 0) : 0
                 ];
             }
 
@@ -112,12 +120,12 @@ class DashboardController extends Controller
                 ->whereDate('NgayCheckOutDuKien', '>=', $today)
                 ->where('TrangThaiThanhToan', '!=', 'Đã hủy')
                 ->sum('TongTienPhong');
-            
+
             $stats['revenueToday'] = $revenue ?? 0;
-            
+
             // TÍNH TỶ LỆ LẤP ĐẦY (%)
-            $stats['occupancyRate'] = $stats['totalRooms'] > 0 
-                ? round(($stats['occupied'] / $stats['totalRooms']) * 100, 1) 
+            $stats['occupancyRate'] = $stats['totalRooms'] > 0
+                ? round(($stats['occupied'] / $stats['totalRooms']) * 100, 1)
                 : 0;
 
             // 5. TRẢ VỀ JSON CHO REACT
@@ -126,7 +134,6 @@ class DashboardController extends Controller
                 // Sắp xếp tầng từ cao xuống thấp (Tầng 5 nằm trên tầng 1)
                 'rooms' => collect($roomsData)->sortByDesc('floor')->values()->all()
             ]);
-
         } catch (Exception $e) {
             return response()->json([
                 'error' => true,
