@@ -39,7 +39,8 @@ class ProfileController extends Controller
                     'phieu_dat_phong.TongTienPhong as amount',
                     'phieu_dat_phong.TienCoc as deposit',
                     'loai_phong.TenLoai as room',
-                    'loai_phong.AnhDienDien as AnhDaiDien' 
+                    'loai_phong.AnhDienDien as AnhDaiDien',
+                    'phong.TenPhong as room_name'
                 )
                 ->get();
 
@@ -66,6 +67,7 @@ class ProfileController extends Controller
                 return [
                     'id' => $b->id,
                     'room' => $b->room,
+                    'room_name' => $b->room_name,
                     'status' => $statusEn,
                     'duration' => $checkIn . ' - ' . $checkOut,
                     'amount' => number_format($displayAmount, 0, ',', '.') . 'đ',

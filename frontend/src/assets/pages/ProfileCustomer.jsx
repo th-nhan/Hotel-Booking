@@ -506,8 +506,8 @@ function BookingCard({ booking }) {
 
             <div className="mt-2 grid grid-cols-2 gap-y-2 text-sm">
               <div className="flex flex-col">
-                <span className="text-[10px] uppercase tracking-widest text-[#deb42b]/40">Booking ID</span>
-                <span className="text-[#deb42b]/80 font-mono">{booking.id}</span>
+                <span className="text-[10px] uppercase tracking-widest text-[#deb42b]/40">Room</span>
+                <span className="text-[#deb42b]/80 font-mono">{booking.room_name}</span>
               </div>
               <div className="flex flex-col">
                 <span className="text-[10px] uppercase tracking-widest text-[#deb42b]/40">Stay Duration</span>
