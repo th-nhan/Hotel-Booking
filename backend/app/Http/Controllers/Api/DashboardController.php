@@ -14,83 +14,99 @@ class DashboardController extends Controller
         try {
             $today = Carbon::today()->toDateString();
             
-            // <-- MỚI THÊM: Lấy tháng và năm hiện tại
+            // Lấy tháng và năm hiện tại để tính thống kê
             $currentMonth = Carbon::now()->month;
             $currentYear = Carbon::now()->year;
 
-            // 1. LẤY DỮ LIỆU PHÒNG 
+            // 1. LẤY DỮ LIỆU TẤT CẢ CÁC PHÒNG TỪ BẢNG 'phong' VÀ 'loai_phong'
             $phongs = DB::table('phong')
                 ->join('loai_phong', 'phong.LoaiPhongID', '=', 'loai_phong.LoaiPhongID')
-                ->select('phong.*', 'loai_phong.TenLoai') 
+                ->select('phong.*', 'loai_phong.TenLoai')
                 ->get();
 
-            // 2. <-- MỚI THÊM (Rất quan trọng): Quét tìm những phòng đang có khách đặt trong HÔM NAY để hiện màu lên sơ đồ
-            $bookedToday = DB::table('phieu_dat_phong')
+            // 2. LẤY TẤT CẢ PHIẾU ĐẶT PHÒNG ĐANG CÓ HIỆU LỰC (CheckOut >= Hôm nay)
+            $activeBookings = DB::table('phieu_dat_phong')
                 ->join('chi_tiet_phieu_dat_phong', 'phieu_dat_phong.PhieuDatPhongID', '=', 'chi_tiet_phieu_dat_phong.PhieuDatPhongID')
-                ->leftJoin('khach_hang', 'phieu_dat_phong.KhachHangID', '=', 'khach_hang.KhachHangID') 
-                ->whereDate('phieu_dat_phong.NgayCheckIn', '<=', $today)
+                ->leftJoin('khach_hang', 'phieu_dat_phong.KhachHangID', '=', 'khach_hang.KhachHangID')
                 ->whereDate('phieu_dat_phong.NgayCheckOutDuKien', '>=', $today)
-                ->where('phieu_dat_phong.TrangThaiThanhToan', '!=', 'Đã hủy') 
+                ->where('phieu_dat_phong.TrangThaiThanhToan', '!=', 'Đã hủy')
+                ->orderBy('phieu_dat_phong.NgayCheckIn', 'desc') // Sắp xếp lấy phiếu mới nhất nếu có trùng
                 ->select('chi_tiet_phieu_dat_phong.PhongID', 'phieu_dat_phong.NgayCheckIn', 'phieu_dat_phong.NgayCheckOutDuKien', 'khach_hang.HoTen')
                 ->get()
-                ->keyBy('PhongID');
+                ->keyBy('PhongID'); // keyBy để map siêu nhanh với ID phòng
 
             $roomsData = [];
+            
+            // Khởi tạo các biến đếm KPI
             $stats = [
                 'totalRooms' => count($phongs),
                 'available' => 0,
                 'occupied' => 0,
                 'cleaning' => 0,
                 'revenueToday' => 0,
-                'bookingsThisMonth' => 0 // <-- MỚI THÊM: Khởi tạo biến
+                'bookingsThisMonth' => DB::table('phieu_dat_phong')
+                    ->whereMonth('NgayTao', $currentMonth)
+                    ->whereYear('NgayTao', $currentYear)
+                    ->count()
             ];
 
-            // <-- MỚI THÊM: Truy vấn đếm tổng số phiếu đặt phòng trong tháng này
-            $stats['bookingsThisMonth'] = DB::table('phieu_dat_phong')
-                ->whereMonth('NgayTao', $currentMonth)
-                ->whereYear('NgayTao', $currentYear)
-                ->count();
-
-            // 3. Xử lý dữ liệu từng phòng
+            // 3. XỬ LÝ DỮ LIỆU TỪNG PHÒNG ĐỂ GỬI LÊN GIAO DIỆN
             foreach ($phongs as $p) {
+                // Tính tầng dựa trên tên phòng (VD: 501 -> Tầng 5)
                 $floor = floor((int)$p->TenPhong / 100);
-                if ($floor == 0) $floor = 1; 
+                if ($floor == 0) $floor = 1;
 
                 $guestName = null;
                 $checkIn = null;
                 $checkOut = null;
                 
+                // Lấy trạng thái gốc từ Database
                 $currentStatus = $p->TinhTrang;
 
-                // <-- MỚI THÊM: Logic ép phòng đổi màu nếu phát hiện hôm nay có người đặt
-                if ($bookedToday->has($p->PhongID)) {
-                    $booking = $bookedToday->get($p->PhongID);
+                // NẾU PHÒNG NÀY ĐANG NẰM TRONG DANH SÁCH KHÁCH ĐẶT/Ở
+                if ($activeBookings->has($p->PhongID)) {
+                    $booking = $activeBookings->get($p->PhongID);
                     
-                    $currentStatus = 'Đã đặt'; // Ghi đè trạng thái ảo để UI đổi màu
                     $guestName = $booking->HoTen ?? 'Khách vãng lai';
                     $checkIn = Carbon::parse($booking->NgayCheckIn)->format('Y-m-d');
                     $checkOut = Carbon::parse($booking->NgayCheckOutDuKien)->format('Y-m-d');
+
+                    // AUTO CHECK-IN: Tự động đổi 'Đã đặt' thành 'Đang ở' nếu hôm nay >= ngày Check-in
+                    if ($today >= $checkIn) {
+                        $currentStatus = 'Đang ở';
+                    } else {
+                        $currentStatus = 'Đã đặt';
+                    }
+                } 
+                // AUTO FIX LỖI DB: Trạng thái DB ghi là "Đã đặt/Đang ở" nhưng không có phiếu nào thực tế -> Ép về "Trống"
+                elseif ($currentStatus === 'Đã đặt' || $currentStatus === 'Đang ở') {
+                    $currentStatus = 'Trống';
                 }
 
-                // Cộng dồn thống kê theo trạng thái mới nhất
-                if ($currentStatus === 'Trống') $stats['available']++;
-                elseif ($currentStatus === 'Đang dọn') $stats['cleaning']++;
-                else $stats['occupied']++;
+                // CỘNG DỒN THỐNG KÊ (Dựa theo trạng thái chuẩn đã nấu xong)
+                if ($currentStatus === 'Trống') {
+                    $stats['available']++;
+                } elseif ($currentStatus === 'Đang dọn') {
+                    $stats['cleaning']++;
+                } else {
+                    $stats['occupied']++; // Cả 'Đã đặt' và 'Đang ở' đều tính là có người chiếm giữ
+                }
 
+                // Đẩy phòng đã hoàn thiện vào mảng
                 $roomsData[] = [
                     'id' => $p->PhongID,
                     'number' => $p->TenPhong,
                     'floor' => $floor,
                     'type' => $p->TenLoai ?? 'Standard',
-                    'status' => $currentStatus, 
-                    'price' => $p->GiaPhong ?? 0, 
+                    'status' => $currentStatus,
+                    'price' => $p->GiaPhong ?? 0,
                     'guestName' => $guestName,
                     'checkIn' => $checkIn,
                     'checkOut' => $checkOut
                 ];
             }
 
-            // 4. Tính tổng doanh thu hôm nay
+            // 4. TÍNH TỔNG DOANH THU HÔM NAY (Phòng đang ở)
             $revenue = DB::table('phieu_dat_phong')
                 ->whereDate('NgayCheckIn', '<=', $today)
                 ->whereDate('NgayCheckOutDuKien', '>=', $today)
@@ -98,11 +114,17 @@ class DashboardController extends Controller
                 ->sum('TongTienPhong');
             
             $stats['revenueToday'] = $revenue ?? 0;
-            $stats['occupancyRate'] = $stats['totalRooms'] > 0 ? round(($stats['occupied'] / $stats['totalRooms']) * 100, 1) : 0;
+            
+            // TÍNH TỶ LỆ LẤP ĐẦY (%)
+            $stats['occupancyRate'] = $stats['totalRooms'] > 0 
+                ? round(($stats['occupied'] / $stats['totalRooms']) * 100, 1) 
+                : 0;
 
+            // 5. TRẢ VỀ JSON CHO REACT
             return response()->json([
                 'stats' => $stats,
-                'rooms' => collect($roomsData)->sortByDesc('floor')->values()->all() 
+                // Sắp xếp tầng từ cao xuống thấp (Tầng 5 nằm trên tầng 1)
+                'rooms' => collect($roomsData)->sortByDesc('floor')->values()->all()
             ]);
 
         } catch (Exception $e) {
