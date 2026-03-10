@@ -36,7 +36,7 @@ class DashboardController extends Controller
                     'phieu_dat_phong.NgayCheckIn',
                     'phieu_dat_phong.NgayCheckOutDuKien',
                     'phieu_dat_phong.TienCoc',  
-                    'phieu_dat_phong.PhuThu',
+                    'phieu_dat_phong.PhiPhuThu',
                     'khach_hang.HoTen'
                 )
                 ->get()
