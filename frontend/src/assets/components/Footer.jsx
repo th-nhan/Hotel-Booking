@@ -1,11 +1,12 @@
 import React from 'react';
-
+import { useNavigate } from 'react-router-dom';
 const Footer = () => {
+  const navigate = useNavigate();
   return (
     <footer className="bg-navy-deep text-white pt-24 pb-12">
-      <div className="container mx-auto px-8 lg:px-16">
+      <div className="container mx-auto px-8 lg:px-12">
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-12 lg:gap-16 mb-24">
-          
+
           <div className="space-y-8">
             <h5 className="font-serif text-2xl tracking-widest font-bold">LA MAISON DTN</h5>
             <p className="text-sm text-white/50 font-light leading-relaxed">
@@ -13,9 +14,9 @@ const Footer = () => {
             </p>
             <div className="flex space-x-5">
               {['facebook', 'photo_camera', 'play_circle_outline'].map((icon) => (
-                <a 
+                <a
                   key={icon}
-                  className="w-10 h-10 rounded-full border border-white/10 flex items-center justify-center hover:bg-primary hover:border-primary transition-all duration-300" 
+                  className="w-10 h-10 rounded-full border border-white/10 flex items-center justify-center hover:bg-primary hover:border-primary transition-all duration-300"
                   href="#"
                 >
                   <span className="material-icons-outlined text-lg">{icon}</span>
@@ -56,23 +57,21 @@ const Footer = () => {
             </ul>
           </div>
 
-          <div>
-            <h6 className="text-[10px] font-bold uppercase tracking-[0.3em] text-primary mb-10">Newsletter</h6>
-            <p className="text-xs text-white/50 mb-8 font-light leading-relaxed">
-              Join our inner circle for exclusive updates, curated experiences, and seasonal offers.
-            </p>
-            <div className="flex border-b border-white/20 pb-2 group focus-within:border-primary transition-all">
-              <input 
-                className="bg-transparent border-none text-white text-sm focus:ring-0 w-full px-0 placeholder:text-white/20 placeholder:font-light" 
-                placeholder="Email Address" 
-                type="email"
-              />
-              <button className="text-primary font-bold text-[10px] uppercase tracking-[0.2em] transition-all hover:translate-x-1">
-                Join
-              </button>
-            </div>
-          </div>
+          <div className="max-w-sm">
+            <h6 className="text-[11px] font-semibold uppercase tracking-[0.4em] text-primary mb-6">
+              Voices of Our Guests
+            </h6>
 
+            <p className="text-sm text-white/60 mb-10 font-light leading-relaxed">
+              Discover refined impressions from our distinguished guests and share your own
+              experience of timeless elegance at La Maison DTN.
+            </p>
+
+            <button onClick={()=> navigate('/reviews')} className="group relative text-primary font-semibold text-[11px] uppercase tracking-[0.25em] transition-all duration-300">
+              Share Your Experience
+              <span className="block h-[1px] w-0 bg-primary mt-1 transition-all duration-300 group-hover:w-full"></span>
+            </button>
+          </div>
         </div>
 
         <div className="pt-12 border-t border-white/5 flex flex-col md:flex-row justify-between items-center text-[9px] uppercase tracking-[0.3em] text-white/30 font-semibold">

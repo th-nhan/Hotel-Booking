@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 
 const Navbar = ({ scrolled }) => {
-  const navItems = ['Accommodations', 'Dining', 'Wellness', 'Experiences'];
+  const navItems = ['Accommodations', 'Dining',  'Experiences', 'Wellness'];
   const navigate = useNavigate();
 
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
