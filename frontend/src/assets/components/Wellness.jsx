@@ -21,16 +21,16 @@ const Wellness = () => {
     const navigate = useNavigate();
 
     return (
-        <div id='wellness' className="bg-[#fdfbf7] dark:bg-[#1a1814] font-sans text-slate-900 dark:text-slate-100 min-h-screen flex flex-col overflow-x-hidden selection:bg-[#d4af35]/30">
+        <div id='wellness' className="bg-[#fdfbf7] font-sans text-slate-900 dark:text-slate-100 min-h-screen flex flex-col overflow-x-hidden selection:bg-[#d4af35]/30">
             <main className="flex-1 w-full max-w-[1440px] mx-auto">
                 {/* Signature Experiences */}
-                <section className="px-6 md:px-10  bg-[#fdfbf7] dark:bg-[#1a1814] relative">
+                <section className="px-6 md:px-10 bg-[#fdfbf7] dark:text-primary relative">
                     <div className="flex flex-col md:flex-row justify-between items-end mb-12 gap-6">
                         <div>
                             <h3 className="text-[#d4af35] font-medium tracking-widest text-sm uppercase mb-2">Our Offerings</h3>
-                            <h2 className="text-3xl md:text-4xl font-display font-bold text-slate-900 dark:text-white">Signature Experiences</h2>
+                            <h2 className="text-3xl md:text-4xl font-display font-bold text-slate-900 ">Signature Experiences</h2>
                         </div>
-                        <div className="h-px bg-slate-200 dark:bg-slate-800 flex-1 mx-8 hidden md:block self-center"></div>
+                        
                         <p className="text-slate-500 dark:text-slate-400 max-w-md text-sm md:text-base leading-relaxed">
                             Curated wellness journeys combining ancient healing traditions with modern luxury architecture.
                         </p>
@@ -122,7 +122,7 @@ const Wellness = () => {
                 </section>
 
                 {/* Minimalist Feature Section */}
-                <section className="py-24 px-6 md:px-10  bg-white dark:bg-[#15130f] border-y border-[#d4af35]/10">
+                <section className="py-24 px-6 md:px-10  bg-white border-y border-[#d4af35]/10">
                     <div className="grid grid-cols-1 md:grid-cols-3 gap-12 text-center">
                         <div className="flex flex-col items-center gap-4">
                             <div className="w-16 h-16 rounded-full bg-[#d4af35]/10 flex items-center justify-center text-[#d4af35] mb-2">

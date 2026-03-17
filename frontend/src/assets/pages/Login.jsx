@@ -5,7 +5,7 @@ import axios from 'axios';
 
 const Login = () => {
     const navigate = useNavigate();
-    
+
     // State để lưu trữ dữ liệu người dùng nhập
     const [email, setEmail] = useState('');
     const [password, setPassword] = useState('');
@@ -14,13 +14,13 @@ const Login = () => {
     // Xử lý khi bấm nút Submit
     const handleLogin = async (e) => {
         e.preventDefault(); // Ngăn trình duyệt reload lại trang
-        
+
         try {
             const response = await axios.post(`${import.meta.env.VITE_API_URL}/login`, {
                 username: email,
                 password: password
             });
-            
+
             if (response.data.status === 'success') {
                 message.success('Đăng nhập thành công!');
 
@@ -38,7 +38,7 @@ const Login = () => {
         }
     };
 
-    
+
     const goldGradientStyle = {
         background: 'linear-gradient(135deg, #d4af35 0%, #a68a2e 100%)',
         WebkitBackgroundClip: 'text',
@@ -48,12 +48,12 @@ const Login = () => {
     return (
         <div className="font-sans antialiased text-[#0B1C2D] bg-[#f8f7f6] min-h-screen flex flex-col">
             <div className="relative flex min-h-screen w-full flex-col overflow-hidden">
-                
+
                 {/* Ảnh nền có lớp phủ mờ */}
                 <div className="absolute inset-0 z-0">
-                    <img 
-                        alt="Grand luxury hotel lobby" 
-                        className="h-full w-full object-cover blur-[2px] scale-105" 
+                    <img
+                        alt="Grand luxury hotel lobby"
+                        className="h-full w-full object-cover blur-[2px] scale-105"
                         src="https://wonder.vn/wp-content/uploads/2017/10/1-16.jpg"
                     />
                     <div className="absolute inset-0 bg-[#0B1C2D]/40 backdrop-blur-[1px]"></div>
@@ -61,32 +61,32 @@ const Login = () => {
 
                 {/* Nội dung Form */}
                 <div className="relative z-10 flex h-full grow flex-col items-center justify-center p-4">
-                    
+
                     <div className="w-full max-w-[480px] bg-[#F8F5F0] rounded-xl relative border border-white/20 shadow-[0_20px_40px_-10px_rgba(0,0,0,0.3)]">
                         {/* Viền góc trang trí */}
                         <div className="absolute top-4 left-4 w-8 h-8 border-t-2 border-l-2 border-[#d4af35]/40 rounded-tl-lg pointer-events-none"></div>
                         <div className="absolute top-4 right-4 w-8 h-8 border-t-2 border-r-2 border-[#d4af35]/40 rounded-tr-lg pointer-events-none"></div>
                         <div className="absolute bottom-4 left-4 w-8 h-8 border-b-2 border-l-2 border-[#d4af35]/40 rounded-bl-lg pointer-events-none"></div>
                         <div className="absolute bottom-4 right-4 w-8 h-8 border-b-2 border-r-2 border-[#d4af35]/40 rounded-br-lg pointer-events-none"></div>
-                        
+
                         <div className="px-8 py-10 md:px-12 md:py-14 flex flex-col items-center">
-                            
+
                             {/* Logo */}
                             <div className="flex flex-col items-center mb-8">
-                               
+
                                 <h1 className="text-3xl font-bold tracking-tight mb-1" style={goldGradientStyle}>DTN</h1>
                                 <p className="text-xs font-medium tracking-[0.2em] text-[#0B1C2D]/60 uppercase">La Maison</p>
                             </div>
 
                             {/* Tabs */}
                             <div className="w-full mb-8">
-                                <div className="flex border-b border-[#e5e0d2] w-full">
-                                    <button className="flex-1 pb-3 text-sm font-semibold tracking-wide border-b-2 border-[#d4af35] text-[#0B1C2D] transition-colors">
+                                <div className="flex w-full">
+                                    <button className=" mr-2 flex-1 dark:bg-primary pb-3 text-sm font-semibold tracking-wide border-b-2 border-[#d4af35] text-[#0B1C2D] transition-colors">
                                         Login
                                     </button>
-                                    <button 
+                                    <button
                                         onClick={() => navigate('/register')}
-                                        className="flex-1 pb-3 text-sm font-semibold tracking-wide border-b-2 border-transparent text-[#0B1C2D]/40 hover:text-[#0B1C2D]/70 transition-colors"
+                                        className="flex-1 pb-3 dark:bg-primary text-sm font-semibold tracking-wide border-b-2 border-transparent text-[#0B1C2D]/40 hover:text-[#0B1C2D]/70 transition-colors"
                                     >
                                         Register
                                     </button>
@@ -102,14 +102,14 @@ const Login = () => {
                                         <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
                                             <span className="material-symbols-outlined text-[#d4af35]/70 text-[20px]">mail</span>
                                         </div>
-                                        <input 
-                                            id="email" 
-                                            type="email" 
+                                        <input
+                                            id="email"
+                                            type="email"
                                             required
                                             value={email}
                                             onChange={(e) => setEmail(e.target.value)}
-                                            placeholder="guest@lamaison.dtn" 
-                                            className="block w-full rounded-lg border-[#e5e0d2] bg-white py-3 pl-10 pr-3 text-[#0B1C2D] placeholder-[#0B1C2D]/30 focus:border-[#d4af35] focus:outline-none focus:ring-1 focus:ring-[#d4af35] sm:text-sm transition-all shadow-sm" 
+                                            placeholder="guest@lamaison.dtn"
+                                            className="block w-full rounded-lg border-[#e5e0d2] bg-white py-3 pl-10 pr-3 text-[#0B1C2D] placeholder-[#0B1C2D]/30 focus:border-[#d4af35] focus:outline-none focus:ring-1 focus:ring-[#d4af35] sm:text-sm transition-all shadow-sm"
                                         />
                                     </div>
                                 </div>
@@ -119,22 +119,24 @@ const Login = () => {
                                     <label className="text-xs font-medium uppercase tracking-wider text-[#0B1C2D]/70 ml-1" htmlFor="password">Password</label>
                                     <div className="relative group">
                                         <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                                            <span className="material-symbols-outlined text-[#d4af35]/70 text-[20px]">lock</span>
+                                            <span className="material-symbols-outlined  text-[#d4af35]/70 text-[20px]">lock</span>
                                         </div>
-                                        <input 
-                                            id="password" 
-                                            type={showPassword ? "text" : "password"} 
+                                        <input
+                                            id="password"
+                                            type={showPassword ? "text" : "password"}
                                             required
                                             value={password}
                                             onChange={(e) => setPassword(e.target.value)}
-                                            placeholder="••••••••" 
-                                            className="block w-full rounded-lg border-[#e5e0d2] bg-white py-3 pl-10 pr-10 text-[#0B1C2D] placeholder-[#0B1C2D]/30 focus:border-[#d4af35] focus:outline-none focus:ring-1 focus:ring-[#d4af35] sm:text-sm transition-all shadow-sm" 
+                                            placeholder="••••••••"
+                                            className="block w-full rounded-lg border-[#e5e0d2] bg-white py-3 pl-10 pr-10 text-[#0B1C2D] placeholder-[#0B1C2D]/30 focus:border-[#d4af35] focus:outline-none focus:ring-1 focus:ring-[#d4af35] sm:text-sm transition-all shadow-sm"
                                         />
-                                        <button 
-                                            type="button" 
+                                        <button
+                                            type="button"
                                             onClick={() => setShowPassword(!showPassword)}
-                                            className="absolute inset-y-0 right-0 pr-3 flex items-center text-[#0B1C2D]/40 hover:text-[#0B1C2D] transition-colors"
-                                        >
+                                            className="
+                                                absolute inset-y-0 right-0 pr-3 flex items-center transition-colors
+                                                text-[#0B1C2D]/40 hover:text-[#0B1C2D]
+                                               dark:text-gray-500 dark:hover:text-primary dark:bg-transparent">
                                             <span className="material-symbols-outlined text-[20px]">
                                                 {showPassword ? 'visibility' : 'visibility_off'}
                                             </span>
@@ -148,8 +150,8 @@ const Login = () => {
                                 </div>
 
                                 {/* Submit Button */}
-                                <button 
-                                    type="submit" 
+                                <button
+                                    type="submit"
                                     className="mt-4 w-full flex items-center justify-center rounded-lg bg-[#d4af35] py-3.5 px-4 text-sm font-bold text-white shadow-[0_0_15px_rgba(212,175,53,0.3)] hover:bg-[#b08d2b] hover:shadow-lg transition-all transform active:scale-[0.98] tracking-wide uppercase"
                                 >
                                     Enter La Maison

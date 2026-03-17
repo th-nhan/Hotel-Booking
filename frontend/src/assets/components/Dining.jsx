@@ -7,7 +7,7 @@ const Dining = () => {
             {/* Main Content */}
             <main className="flex-1 pt-16">
                 {/* Menu Preview Section */}
-                <section className="bg-[#1a1810] px-4 py-24 sm:px-10 relative overflow-hidden">
+                <section className="bg-[#1a1810] px-4 py-24 sm:px-10 relative overflow-hidden dark:bg-[#1a1810]">
                     {/* Background decorative elements */}
                     <div className="absolute top-0 right-0 -mr-20 -mt-20 h-96 w-96 rounded-full bg-primary/5 blur-3xl"></div>
                     <div className="absolute bottom-0 left-0 -ml-20 -mb-20 h-96 w-96 rounded-full bg-primary/5 blur-3xl"></div>
@@ -21,7 +21,7 @@ const Dining = () => {
 
                         <div className="grid gap-8">
                             {/* Menu Item 1 */}
-                            <div className="group flex flex-col items-stretch overflow-hidden rounded-xl border border-primary/20 bg-[#F8F5F0] transition-all hover:border-primary/50 md:flex-row md:items-center">
+                            <div className="group flex flex-col items-stretch overflow-hidden rounded-xl border border-primary/20 bg-[#F8F5F0] transition-all hover:border-primary/50 md:flex-row md:items-center  bg-white dark:bg-[#2a261a]">
                                 <div className="h-64 md:h-auto md:w-2/5 md:min-h-[300px] relative overflow-hidden">
                                     <div
                                         className="absolute inset-0 bg-cover bg-center transition-transform duration-500 group-hover:scale-105"

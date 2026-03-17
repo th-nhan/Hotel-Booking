@@ -40,8 +40,8 @@ const Introduction = () => {
             </div>
 
             <button className="flex items-center space-x-4 group pt-4">
-              <span className="text-xs font-bold uppercase tracking-[0.2em] border-b border-navy-deep pb-1 group-hover:border-primary group-hover:text-primary transition-all">Learn Our Story</span>
-              <span className="material-icons-outlined text-primary group-hover:translate-x-2 transition-transform">arrow_forward</span>
+              <span className="text-xs font-bold uppercase tracking-[0.2em] border-b border-navy-deep pb-1 group-hover:border-primary group-hover:text-primary transition-all dark:text-white dark:border-white">Learn Our Story</span>
+              <span className="material-icons-outlined text-primary group-hover:translate-x-2 transition-transform dark:text-white group-hover:text-primary ">arrow_forward</span>
             </button>
           </div>
 

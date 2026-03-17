@@ -87,15 +87,15 @@ const Register = () => {
 
                             {/* Tabs */}
                             <div className="w-full mb-6">
-                                <div className="flex border-b border-[#e5e0d2] w-full">
+                                <div className="flex  w-full">
                                     <button
                                         type="button"
                                         onClick={() => navigate('/login')}
-                                        className="flex-1 pb-3 text-sm font-semibold tracking-wide border-b-2 border-transparent text-[#0B1C2D]/40 hover:text-[#0B1C2D]/70 transition-colors"
+                                        className="flex-1 pb-3 dark:bg-primary mr-2 text-sm font-semibold tracking-wide border-b-2 border-transparent text-[#0B1C2D]/40 hover:text-[#0B1C2D]/70 transition-colors"
                                     >
                                         Login
                                     </button>
-                                    <button className="flex-1 pb-3 text-sm font-semibold tracking-wide border-b-2 border-[#d4af35] text-[#0B1C2D] transition-colors">
+                                    <button className="flex-1 dark:bg-primary  pb-3 text-sm font-semibold tracking-wide border-b-2 border-[#d4af35] text-[#0B1C2D] transition-colors">
                                         Register
                                     </button>
                                 </div>
@@ -159,7 +159,7 @@ const Register = () => {
                                         <button
                                             type="button"
                                             onClick={() => setShowPassword(!showPassword)}
-                                            className="absolute inset-y-0 right-0 pr-3 flex items-center text-[#0B1C2D]/40 hover:text-[#0B1C2D] transition-colors"
+                                            className="absolute inset-y-0 right-0 pr-3 flex items-center text-[#0B1C2D]/40 hover:text-[#0B1C2D] transition-colors  dark:text-gray-500 dark:hover:text-primary dark:bg-transparent"
                                         >
                                             <span className="material-symbols-outlined text-[20px]">
                                                 {showPassword ? 'visibility' : 'visibility_off'}
