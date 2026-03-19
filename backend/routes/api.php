@@ -42,3 +42,5 @@ Route::get('/test', function () {
 Route::get('/review', [ReviewController::class, 'index']);
 Route::post('/review', [ReviewController::class, 'store']);
 Route::delete('/review/{id}', [ReviewController::class, 'destroy']);
+Route::post('/review/{id}/like', [ReviewController::class, 'toggleLike']);
+Route::post('/review/{id}/reply', [ReviewController::class, 'addReply']);
