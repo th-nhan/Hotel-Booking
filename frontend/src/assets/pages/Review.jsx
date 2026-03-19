@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import axios from 'axios';
 import { useNavigate } from 'react-router-dom';
-
+import { useToast } from '../components/useToast';
 const API_URL = import.meta.env.VITE_API_URL;
 
 const Header = () => {
@@ -72,7 +72,8 @@ const Hero = () => (
     </section>
 );
 
-const ReviewForm = ({ onReviewSuccess }) => {
+
+const ReviewForm = ({ onReviewSuccess, triggerToast }) => {
     const [rating, setRating] = useState(5);
     const [content, setContent] = useState('');
     const [loading, setLoading] = useState(false);
@@ -80,17 +81,20 @@ const ReviewForm = ({ onReviewSuccess }) => {
 
     const handleSubmit = async (e) => {
         e.preventDefault();
-        if (!content) return alert("Vui lòng viết vài dòng chia sẻ nhé!");
-        
+        if (!content) return triggerToast("Lỗi", "Vui lòng viết vài dòng chia sẻ nhé!");
+
         const storedUser = localStorage.getItem('user');
         if (!storedUser) {
-            alert("Bạn cần đăng nhập để gửi đánh giá nhé!");
-            navigate('/login');
+            triggerToast("Yêu cầu đăng nhập", "Bạn cần đăng nhập để gửi đánh giá nhé!");
+            setTimeout(() => navigate('/login'), 1500);
             return;
         }
-        
+
         const user = JSON.parse(storedUser);
         const currentUserId = user.KhachHangID || user.id;
+
+        const userName = user.HoTen || user.name || 'Khách Hàng';
+        const userAvatar = user.AnhDaiDien || `https://ui-avatars.com/api/?name=${userName}&background=D4AF37&color=fff`;
 
         setLoading(true);
         try {
@@ -100,13 +104,14 @@ const ReviewForm = ({ onReviewSuccess }) => {
                 BinhLuan: content
             });
 
-            alert("Cảm ơn bạn đã chia sẻ trải nghiệm!");
+            triggerToast(userName, "Đã gửi đánh giá thành công! Cảm ơn bạn.", userAvatar);
+
             setContent('');
             setRating(5);
             onReviewSuccess();
         } catch (error) {
             console.error("Lỗi gửi review:", error);
-            alert("Lỗi: " + (error.response?.data?.message || "Không thể gửi đánh giá"));
+            triggerToast("Lỗi gửi đánh giá", error.response?.data?.message || "Không thể gửi đánh giá");
         } finally {
             setLoading(false);
         }
@@ -166,14 +171,14 @@ const ReviewForm = ({ onReviewSuccess }) => {
     );
 };
 
-// COMPONENT TESTIMONIALS ĐÃ TÍCH HỢP LIKE & REPLY
-const Testimonials = ({ reviews, onRefresh }) => {
+// 👇 ĐÃ THÊM triggerToast VÀO ĐÂY 👇
+const Testimonials = ({ reviews, onRefresh, triggerToast }) => {
     const safeReviews = Array.isArray(reviews) ? reviews : [];
-    
+
     // State quản lý việc Like và Trả lời
-    const [likedReviews, setLikedReviews] = useState({}); // Lưu trạng thái thả tim tạm thời
-    const [replyingTo, setReplyingTo] = useState(null); // ID của đánh giá đang được bấm trả lời
-    const [replyText, setReplyText] = useState(''); // Nội dung câu trả lời
+    const [likedReviews, setLikedReviews] = useState({});
+    const [replyingTo, setReplyingTo] = useState(null);
+    const [replyText, setReplyText] = useState('');
     const [isSubmitting, setIsSubmitting] = useState(false);
     const navigate = useNavigate();
 
@@ -181,58 +186,59 @@ const Testimonials = ({ reviews, onRefresh }) => {
     const handleLike = async (reviewId) => {
         const storedUser = localStorage.getItem('user');
         if (!storedUser) {
-            alert("Bạn cần đăng nhập để thả tim!");
-            navigate('/login');
+            triggerToast("Yêu cầu đăng nhập", "Bạn cần đăng nhập để thả tim!");
+            setTimeout(() => navigate('/login'), 1500);
             return;
         }
 
         const user = JSON.parse(storedUser);
         const currentUserId = user.KhachHangID || user.id;
 
-        // Cập nhật UI ngay lập tức cho mượt
         setLikedReviews(prev => ({ ...prev, [reviewId]: !prev[reviewId] }));
-        
+
         try {
-            // GỌI API LƯU LIKE VÀO DATABASE
             await axios.post(`${API_URL}/review/${reviewId}/like`, { KhachHangID: currentUserId });
-            if (onRefresh) onRefresh(); // Tải lại data để đồng bộ số like
+            if (onRefresh) onRefresh();
         } catch (error) {
             console.error("Lỗi khi thả tim:", error);
-            // Trả lại trạng thái cũ nếu lỗi
+
             setLikedReviews(prev => ({ ...prev, [reviewId]: !prev[reviewId] }));
         }
     };
 
-    // Xử lý Gửi câu trả lời
+
     const handleReplySubmit = async (e, reviewId) => {
         e.preventDefault();
-        if (!replyText.trim()) return alert("Vui lòng nhập nội dung trả lời!");
+        if (!replyText.trim()) return triggerToast("Lỗi", "Vui lòng nhập nội dung trả lời!");
 
         const storedUser = localStorage.getItem('user');
         if (!storedUser) {
-            alert("Bạn cần đăng nhập để trả lời bình luận!");
-            navigate('/login');
+            triggerToast("Yêu cầu đăng nhập", "Bạn cần đăng nhập để trả lời bình luận!");
+            setTimeout(() => navigate('/login'), 1500);
             return;
         }
 
         const user = JSON.parse(storedUser);
         const currentUserId = user.KhachHangID || user.id;
 
+        const userName = user.HoTen || user.name || 'Khách Hàng';
+        const userAvatar = user.AnhDaiDien || `https://ui-avatars.com/api/?name=${userName}&background=D4AF37&color=fff`;
+
         setIsSubmitting(true);
         try {
-            // GỌI API LƯU CÂU TRẢ LỜI VÀO DATABASE
             await axios.post(`${API_URL}/review/${reviewId}/reply`, {
                 KhachHangID: currentUserId,
                 NoiDung: replyText
             });
 
-            alert("Đã gửi phản hồi thành công!");
+            triggerToast(userName, "Câu trả lời của bạn đã được gửi thành công!", userAvatar);
+
             setReplyText('');
             setReplyingTo(null);
-            if (onRefresh) onRefresh(); // Tải lại danh sách đánh giá
+            if (onRefresh) onRefresh();
         } catch (error) {
             console.error("Lỗi gửi phản hồi:", error);
-            alert("Lỗi: " + (error.response?.data?.message || "Không thể gửi phản hồi lúc này."));
+            triggerToast("Lỗi gửi phản hồi", error.response?.data?.message || "Không thể gửi phản hồi lúc này.");
         } finally {
             setIsSubmitting(false);
         }
@@ -251,7 +257,7 @@ const Testimonials = ({ reviews, onRefresh }) => {
             ) : (
                 safeReviews.map((testimonial) => (
                     <div key={testimonial.DanhGiaID} className="bg-ivory border-l-4 border-primary shadow-sm hover:shadow-xl hover:-translate-y-1 transition-all duration-300 p-8 rounded-r-xl">
-                        
+
                         <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-6">
                             <div className="flex items-center gap-4">
                                 <div className="w-12 h-12 rounded-full bg-navy-deep/5 flex items-center justify-center border border-primary/20 overflow-hidden">
@@ -282,7 +288,7 @@ const Testimonials = ({ reviews, onRefresh }) => {
 
                         {/* --- NÚT LIKE & REPLY --- */}
                         <div className="flex items-center gap-6 mt-4 pt-4 border-t border-navy-deep/5">
-                            <button 
+                            <button
                                 onClick={() => handleLike(testimonial.DanhGiaID)}
                                 className={`flex items-center gap-1.5 text-sm font-bold transition-colors ${likedReviews[testimonial.DanhGiaID] || testimonial.DaLike ? 'text-red-500' : 'text-navy-deep/40 hover:text-red-500'}`}
                             >
@@ -291,8 +297,8 @@ const Testimonials = ({ reviews, onRefresh }) => {
                                 </span>
                                 {testimonial.SoLuotThich || 0}
                             </button>
-                            
-                            <button 
+
+                            <button
                                 onClick={() => setReplyingTo(replyingTo === testimonial.DanhGiaID ? null : testimonial.DanhGiaID)}
                                 className="flex items-center gap-1.5 text-sm font-bold text-navy-deep/40 hover:text-primary transition-colors"
                             >
@@ -304,8 +310,8 @@ const Testimonials = ({ reviews, onRefresh }) => {
                         {/* --- FORM TRẢ LỜI --- */}
                         {replyingTo === testimonial.DanhGiaID && (
                             <form onSubmit={(e) => handleReplySubmit(e, testimonial.DanhGiaID)} className="mt-4 flex gap-3 animate-fade-in">
-                                <input 
-                                    type="text" 
+                                <input
+                                    type="text"
                                     value={replyText}
                                     onChange={(e) => setReplyText(e.target.value)}
                                     placeholder="Viết câu trả lời của bạn..."
@@ -355,9 +361,11 @@ const Footer = () => (
 export default function ReviewPage() {
     const [reviews, setReviews] = useState([]);
 
+    const { showToast, ToastComponent } = useToast();
+
     const fetchReviews = async () => {
         try {
-           
+
             let currentUserId = null;
             const storedUser = localStorage.getItem('user');
             if (storedUser) {
@@ -382,17 +390,20 @@ export default function ReviewPage() {
     }, []);
 
     return (
-        <div className="min-h-screen w-full flex-col selection:bg-primary/30">
+        <div className="min-h-screen w-full flex-col selection:bg-primary/30 relative">
             <Header />
             <main className="flex-1">
                 <Hero />
                 <div className="max-w-5xl mx-auto px-6 mb-20">
-                    <ReviewForm onReviewSuccess={fetchReviews} />
-                    
-                    <Testimonials reviews={reviews} onRefresh={fetchReviews} />
+                    <ReviewForm onReviewSuccess={fetchReviews} triggerToast={showToast} />
+                    <Testimonials reviews={reviews} onRefresh={fetchReviews} triggerToast={showToast} />
                 </div>
             </main>
             <Footer />
+
+            <div className="fixed z-[9999]">
+                <ToastComponent />
+            </div>
         </div>
     );
 }
