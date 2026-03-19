@@ -114,6 +114,7 @@ class AuthController extends Controller
                 'phone' => $khachHang ? $khachHang->SoDienThoai : '',
                 'address' => $khachHang ? $khachHang->DiaChi : '',
                 'cccd' => $khachHang ? $khachHang->CCCD : '',
+                'AnhDaiDien' => $khachHang ? $khachHang->AnhDaiDien : null
             ]
         ]);
     }
