@@ -41,3 +41,4 @@ Route::get('/test', function () {
 
 Route::get('/review', [ReviewController::class, 'index']);
 Route::post('/review', [ReviewController::class, 'store']);
+Route::delete('/review/{id}', [ReviewController::class, 'destroy']);
