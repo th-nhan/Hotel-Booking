@@ -3,7 +3,8 @@ import axios from 'axios';
 import {
   LayoutDashboard, Map as MapIcon, CalendarDays, Users, FileText, Settings,
   Search, Download, Bell, UserCircle, LogOut, X,
-  Sparkles, BedDouble, CheckCircle2, RefreshCw, Printer, LogIn, PaintBucket
+  Sparkles, BedDouble, CheckCircle2, RefreshCw, Printer, LogIn, PaintBucket,
+  MessageSquare, Star // <-- THÊM ICON MỚI Ở ĐÂY
 } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 
@@ -19,47 +20,58 @@ export default function HotelDashboard() {
   const [loading, setLoading] = useState(true);
   const [selectedRoom, setSelectedRoom] = useState(null);
 
-  // --- API GỌI DỮ LIỆU ---
+  // --- THÊM STATE CHO REVIEWS ---
+  const [reviews, setReviews] = useState([]);
+  const [loadingReviews, setLoadingReviews] = useState(false);
+
+  // --- API GỌI DỮ LIỆU PHÒNG CHUNG ---
   const processRoomStatuses = (fetchedRooms) => {
     const today = new Date();
-    today.setHours(0, 0, 0, 0); // Đưa về 0h sáng hôm nay để chỉ so sánh ngày
+    today.setHours(0, 0, 0, 0);
 
     return fetchedRooms.map(room => {
-      if (room.status === 'Đã đặt' && room.checkIn) {
-        // Xử lý an toàn để đọc được cả ngày kiểu 25/10/2024 hoặc 2024-10-25
-        let dateStr = room.checkIn;
-        if (dateStr.includes('/')) {
-          const parts = dateStr.split('/');
-          if (parts[0].length <= 2 && parts[2].length === 4) {
-            // Đổi từ DD/MM/YYYY sang chuẩn YYYY-MM-DD của JS
-            dateStr = `${parts[2]}-${parts[1]}-${parts[0]}`;
-          }
-        }
+      
+      let checkInDate = null;
+      let checkOutDate = null;
 
-        const checkInDate = new Date(dateStr);
+      if (room.checkIn) {
+        let inStr = room.checkIn;
+        if (inStr.includes('/')) inStr = inStr.split('/').reverse().join('-'); 
+        checkInDate = new Date(inStr);
         checkInDate.setHours(0, 0, 0, 0);
+      }
 
-        // NẾU TỚI NGÀY CHECK-IN -> TỰ ĐỘNG THÀNH "ĐANG Ở"
-        if (today.getTime() >= checkInDate.getTime()) {
+      if (room.checkOut) {
+        let outStr = room.checkOut;
+        if (outStr.includes('/')) outStr = outStr.split('/').reverse().join('-');
+        checkOutDate = new Date(outStr);
+        checkOutDate.setHours(0, 0, 0, 0);
+      }
+
+      
+      if (checkOutDate && today.getTime() > checkOutDate.getTime()) {
+        return { ...room, status: 'Trống', guestName: null };
+      }
+
+      
+      if (room.status === 'Đã đặt' && checkInDate && today.getTime() >= checkInDate.getTime()) {
+        
+        if (!checkOutDate || today.getTime() <= checkOutDate.getTime()) {
           return { ...room, status: 'Đang ở' };
         }
       }
-      return room; // Các phòng khác giữ nguyên
+
+      return room; 
     });
   };
 
-  // 2. CẬP NHẬT LẠI HÀM FETCH DATA
   const fetchDashboardData = async () => {
     setLoading(true);
     try {
       const response = await axios.get(`${import.meta.env.VITE_API_URL}/dashboard`);
-      // THÊM DÒNG NÀY ĐỂ SOI DỮ LIỆU THẬT TỪ BACKEND TRẢ VỀ:
-      console.log("DỮ LIỆU TỪ LARAVEL:", response.data);
-      // Cho dữ liệu chạy qua "bộ lọc ngày tháng" trước khi lưu vào State
       const processedRooms = processRoomStatuses(response.data.rooms);
       setRooms(processedRooms);
       setStats(response.data.stats);
-
     } catch (error) {
       console.error("Lỗi khi tải dữ liệu Dashboard:", error);
     } finally {
@@ -67,11 +79,36 @@ export default function HotelDashboard() {
     }
   };
 
-  // 3. ĐỒNG BỘ CẬP NHẬT CHO NGĂN KÉO (RIGHT DRAWER)
+  // --- API GỌI DỮ LIỆU ĐÁNH GIÁ (Chỉ gọi khi bấm qua Tab Reviews) ---
+  const fetchReviews = async () => {
+    setLoadingReviews(true);
+    try {
+      const response = await axios.get(`${import.meta.env.VITE_API_URL}/review`);
+      const data = Array.isArray(response.data) ? response.data : (response.data.data || []);
+      setReviews(data);
+    } catch (error) {
+      console.error("Lỗi lấy dữ liệu đánh giá:", error);
+    } finally {
+      setLoadingReviews(false);
+    }
+  };
+
+  // Hàm xử lý xóa đánh giá
+  const handleDeleteReview = async (id) => {
+    if (!window.confirm("Bạn có chắc chắn muốn xóa đánh giá này không? Hành động này không thể hoàn tác!")) return;
+    try {
+      await axios.delete(`${import.meta.env.VITE_API_URL}/review/${id}`);
+      alert("Đã xóa đánh giá thành công!");
+      setReviews(reviews.filter(review => review.DanhGiaID !== id));
+    } catch (error) {
+      alert("Lỗi xóa đánh giá: " + error.message);
+    }
+  };
+
+  // --- EFFECTS ---
   useEffect(() => {
     if (selectedRoom) {
       const updated = rooms.find(r => r.id === selectedRoom.id);
-      // Nếu trạng thái phòng thay đổi (từ Đã đặt -> Đang ở), tự cập nhật giao diện ngăn kéo
       if (updated && updated.status !== selectedRoom.status) {
         setSelectedRoom(updated);
       }
@@ -83,6 +120,13 @@ export default function HotelDashboard() {
     const interval = setInterval(fetchDashboardData, 30000);
     return () => clearInterval(interval);
   }, []);
+
+  // Effect chạy fetchReviews khi người dùng chuyển sang tab 'reviews'
+  useEffect(() => {
+    if (activeTab === 'reviews') {
+      fetchReviews();
+    }
+  }, [activeTab]);
 
   // --- MÀU SẮC TRẠNG THÁI ---
   const getRoomStyle = (status) => {
@@ -135,26 +179,18 @@ export default function HotelDashboard() {
     navigate('/login');
   };
 
-  // --- HÀM XUẤT HÓA ĐƠN (PRINT PDF) ---
+  // --- HÀM XUẤT HÓA ĐƠN ---
   const exportInvoice = (room) => {
-    // 1. Tính toán số ngày lưu trú
     const checkInDate = new Date(room.checkIn);
     const checkOutDate = new Date(room.checkOut);
     const timeDiff = checkOutDate.getTime() - checkInDate.getTime();
     let daysStayed = Math.ceil(timeDiff / (1000 * 3600 * 24));
-
-    // Nếu check-in và check-out cùng ngày (chưa qua đêm), tính tối thiểu 1 ngày
     if (daysStayed <= 0) daysStayed = 1;
 
-    // 2. Lấy các con số và tính tổng
     const roomPrice = Number(room.price) || 0;
     const roomTotal = roomPrice * daysStayed;
-
-    // Backend sẽ trả về 2 biến này (nếu không có thì mặc định là 0)
     const serviceFee = Number(room.serviceFee) || 0;
     const deposit = Number(room.deposit) || 0;
-
-    // Tổng tiền khách phải trả = (Tiền phòng + Tiền dịch vụ) - Tiền cọc
     const grandTotal = (roomTotal + serviceFee) - deposit;
 
     const formatVND = (amount) => new Intl.NumberFormat('vi-VN').format(amount) + ' VND';
@@ -186,7 +222,6 @@ export default function HotelDashboard() {
             <p style="margin: 0;">123 Nguyễn Văn Cừ, Quận 1, TP.HCM | ĐT: 0123.456.789</p>
             <h2 style="margin-top: 20px;">HÓA ĐƠN THANH TOÁN (INVOICE)</h2>
           </div>
-          
           <div class="info-grid">
             <div>
               <p><strong>Khách hàng:</strong> ${room.guestName}</p>
@@ -198,14 +233,8 @@ export default function HotelDashboard() {
               <p><strong>Ngày in HĐ:</strong> ${new Date().toLocaleDateString('vi-VN')}</p>
             </div>
           </div>
-          
           <table class="table">
-            <tr>
-              <th>Hạng mục dịch vụ</th>
-              <th>Đơn giá</th>
-              <th>Số lượng</th>
-              <th>Thành tiền</th>
-            </tr>
+            <tr><th>Hạng mục dịch vụ</th><th>Đơn giá</th><th>Số lượng</th><th>Thành tiền</th></tr>
             <tr>
               <td>Tiền phòng lưu trú</td>
               <td>${formatVND(roomPrice)} / đêm</td>
@@ -214,41 +243,21 @@ export default function HotelDashboard() {
             </tr>
             ${serviceFee > 0 ? `
             <tr>
-              <td>Phí dịch vụ phát sinh (Ăn uống, giặt ủi...)</td>
-              <td>-</td>
-              <td style="text-align: center;">-</td>
+              <td>Phí dịch vụ phát sinh</td><td>-</td><td style="text-align: center;">-</td>
               <td>${formatVND(serviceFee)}</td>
             </tr>` : ''}
           </table>
-
           <div class="summary-box">
-            <div class="summary-row">
-              <span>Tổng cộng (Subtotal):</span>
-              <span>${formatVND(roomTotal + serviceFee)}</span>
-            </div>
-            <div class="summary-row">
-              <span>Đã đặt cọc (Deposit):</span>
-              <span style="color: red;">- ${formatVND(deposit)}</span>
-            </div>
-            <div class="summary-row bold total-pay">
-              <span>SỐ TIỀN CẦN THANH TOÁN:</span>
-              <span>${formatVND(grandTotal > 0 ? grandTotal : 0)}</span>
-            </div>
+            <div class="summary-row"><span>Tổng cộng:</span><span>${formatVND(roomTotal + serviceFee)}</span></div>
+            <div class="summary-row"><span>Đã đặt cọc:</span><span style="color: red;">- ${formatVND(deposit)}</span></div>
+            <div class="summary-row bold total-pay"><span>CẦN THANH TOÁN:</span><span>${formatVND(grandTotal > 0 ? grandTotal : 0)}</span></div>
           </div>
-
-          <div class="footer">
-            <p>Cảm ơn quý khách đã sử dụng dịch vụ tại La Maison Hotel!</p>
-            <p>Hẹn gặp lại quý khách.</p>
-          </div>
+          <div class="footer"><p>Cảm ơn quý khách đã sử dụng dịch vụ tại La Maison Hotel!</p></div>
         </body>
       </html>
     `);
     printWindow.document.close();
-
-    // Thêm delay nhỏ để CSS kịp tải trước khi bung hộp thoại in
-    setTimeout(() => {
-      printWindow.print();
-    }, 250);
+    setTimeout(() => { printWindow.print(); }, 250);
   };
 
   if (loading && rooms.length === 0) {
@@ -257,7 +266,7 @@ export default function HotelDashboard() {
 
   const floors = [...new Set(rooms.map(r => r.floor))].sort((a, b) => b - a);
 
-  // ================= RENDER CÁC TAB =================
+  // ================= RENDER CÁC TAB CHÍNH =================
   const renderDashboard = () => (
     <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 animate-fade-in">
       <KPICard title="Tổng số phòng" value={stats.totalRooms} icon={<BedDouble />} color="navy" />
@@ -296,11 +305,7 @@ export default function HotelDashboard() {
                   <button
                     key={room.id}
                     onClick={() => setSelectedRoom(room)}
-                    className={`
-                      h-14 rounded-lg flex flex-col items-center justify-center font-bold transition-all duration-300 transform hover:-translate-y-1 relative
-                      ${getRoomStyle(room.status)}
-                      ${selectedRoom?.id === room.id ? 'ring-4 ring-[#D4AF37]/50 ring-offset-2 z-10' : ''}
-                    `}
+                    className={`h-14 rounded-lg flex flex-col items-center justify-center font-bold transition-all duration-300 transform hover:-translate-y-1 relative ${getRoomStyle(room.status)} ${selectedRoom?.id === room.id ? 'ring-4 ring-[#D4AF37]/50 ring-offset-2 z-10' : ''}`}
                   >
                     <span className="text-lg">{room.number}</span>
                     {(room.status === 'Đã đặt' || room.status === 'Đang ở') && <span className="absolute bottom-1 text-[10px] truncate w-full px-1">{room.guestName?.split(' ').pop()}</span>}
@@ -371,6 +376,78 @@ export default function HotelDashboard() {
     </div>
   );
 
+  // --- RENDER TAB REVIEWS ---
+  const renderReviews = () => (
+    <div className="bg-white rounded-2xl border border-[#0B1C2D]/10 shadow-xl shadow-[#0B1C2D]/5 overflow-hidden flex flex-col animate-fade-in">
+      <div className="p-6 border-b border-[#0B1C2D]/10 flex justify-between items-center bg-[#F8F5F0]">
+        <h3 className="text-lg font-serif font-bold">Quản lý Đánh Giá</h3>
+        <div className="bg-white px-4 py-2 rounded-lg font-bold text-sm text-[#0B1C2D] border border-[#0B1C2D]/10 shadow-sm flex items-center gap-2">
+          <MessageSquare className="w-4 h-4 text-[#D4AF37]" />
+          Tổng cộng: {reviews.length}
+        </div>
+      </div>
+      <div className="overflow-x-auto">
+        {loadingReviews ? (
+          <div className="text-center py-10 text-gray-500 font-bold animate-pulse">Đang tải dữ liệu...</div>
+        ) : (
+          <table className="w-full text-left text-sm">
+            <thead className="bg-white text-[#0B1C2D]/60 uppercase tracking-widest text-[10px] border-b border-[#0B1C2D]/10">
+              <tr>
+                <th className="px-6 py-4 font-bold">ID</th>
+                <th className="px-6 py-4 font-bold">Khách hàng</th>
+                <th className="px-6 py-4 font-bold">Đánh giá</th>
+                <th className="px-6 py-4 font-bold">Nội dung</th>
+                <th className="px-6 py-4 font-bold">Ngày đăng</th>
+                <th className="px-6 py-4 font-bold text-center">Thao tác</th>
+              </tr>
+            </thead>
+            <tbody className="divide-y divide-[#0B1C2D]/5">
+              {reviews.length === 0 ? (
+                <tr>
+                  <td colSpan="6" className="text-center py-8 text-gray-500 italic">
+                    Chưa có đánh giá nào.
+                  </td>
+                </tr>
+              ) : (
+                reviews.map((review) => (
+                  <tr key={review.DanhGiaID} className="hover:bg-[#F8F5F0]/50 transition-colors">
+                    <td className="px-6 py-4 font-bold text-gray-400">
+                      #{review.DanhGiaID}
+                    </td>
+                    <td className="px-6 py-4 font-bold text-[#0B1C2D]">
+                      {review.TenKhachHang || "Khách ẩn danh"}
+                    </td>
+                    <td className="px-6 py-4">
+                      <div className="flex text-[#D4AF37]">
+                        {[...Array(review.SoSao)].map((_, i) => (
+                          <Star key={i} className="w-4 h-4 fill-current" />
+                        ))}
+                      </div>
+                    </td>
+                    <td className="px-6 py-4 max-w-xs truncate text-gray-700" title={review.BinhLuan}>
+                      {review.BinhLuan}
+                    </td>
+                    <td className="px-6 py-4 text-xs text-gray-500">
+                      {new Date(review.NgayDanhGia).toLocaleDateString('vi-VN')}
+                    </td>
+                    <td className="px-6 py-4 text-center">
+                      <button
+                        onClick={() => handleDeleteReview(review.DanhGiaID)}
+                        className="bg-red-50 text-red-600 hover:bg-red-600 hover:text-white px-3 py-1.5 rounded text-xs uppercase tracking-wider font-bold transition-colors border border-red-200 hover:border-red-600"
+                      >
+                        Xóa
+                      </button>
+                    </td>
+                  </tr>
+                ))
+              )}
+            </tbody>
+          </table>
+        )}
+      </div>
+    </div>
+  );
+
   return (
     <div className="flex h-screen font-sans bg-[#F8F5F0] text-[#0B1C2D] overflow-hidden selection:bg-[#D4AF37]/30 custom-scrollbar">
       <style dangerouslySetInnerHTML={{
@@ -387,7 +464,7 @@ export default function HotelDashboard() {
       `}} />
 
       {/* --- SIDEBAR --- */}
-      <aside className="w-64 bg-[#0B1C2D] text-white flex flex-col z-20 shadow-2xl">
+      <aside className="w-64 bg-[#0B1C2D] text-white flex flex-col z-20 shadow-2xl shrink-0">
         <div className="h-20 flex items-center justify-center border-b border-white/10 gap-3">
           <Sparkles className="w-6 h-6 text-[#D4AF37]" />
           <h1 className="text-xl font-serif font-bold tracking-widest text-[#D4AF37]">LA MAISON</h1>
@@ -396,7 +473,10 @@ export default function HotelDashboard() {
           <NavItem icon={<LayoutDashboard />} label="Overview" active={activeTab === 'dashboard'} onClick={() => setActiveTab('dashboard')} />
           <NavItem icon={<MapIcon />} label="Room Map" active={activeTab === 'roomMap'} onClick={() => setActiveTab('roomMap')} />
           <NavItem icon={<Users />} label="Guests" active={activeTab === 'guests'} onClick={() => setActiveTab('guests')} />
-          <NavItem icon={<FileText />} label="Invoices & Reports" active={activeTab === 'reports'} onClick={() => setActiveTab('reports')} />
+          <NavItem icon={<FileText />} label="Invoices" active={activeTab === 'reports'} onClick={() => setActiveTab('reports')} />
+          {/* 👇 NÚT MENU REVIEWS MỚI 👇 */}
+          <NavItem icon={<MessageSquare />} label="Reviews" active={activeTab === 'reviews'} onClick={() => setActiveTab('reviews')} />
+
           <div className="pt-8 border-t border-white/10 mt-8"></div>
           <NavItem onClick={handleLogout} icon={<LogOut />} label="Logout" />
         </nav>
@@ -406,12 +486,13 @@ export default function HotelDashboard() {
       <div className="flex-1 flex flex-col relative h-screen">
         <div className="absolute inset-0 z-0 bg-marble pointer-events-none"></div>
 
-        <header className="h-20 px-8 flex items-center justify-between border-b border-[#0B1C2D]/10 bg-[#F8F5F0]/80 backdrop-blur-md z-10 relative">
+        <header className="h-20 px-8 flex items-center justify-between border-b border-[#0B1C2D]/10 bg-[#F8F5F0]/80 backdrop-blur-md z-10 relative shrink-0">
           <div>
             <h2 className="text-2xl font-serif font-bold uppercase tracking-wider">{
               activeTab === 'dashboard' ? 'Overview' :
                 activeTab === 'roomMap' ? 'Room Map' :
-                  activeTab === 'guests' ? 'Guest Management' : 'Reports & Invoices'
+                  activeTab === 'guests' ? 'Guest Management' :
+                    activeTab === 'reviews' ? 'Review Management' : 'Reports & Invoices'
             }</h2>
             <p className="text-sm text-[#0B1C2D]/60">{new Date().toLocaleDateString('en-US', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' })}</p>
           </div>
@@ -428,6 +509,8 @@ export default function HotelDashboard() {
           {activeTab === 'roomMap' && renderRoomMap()}
           {activeTab === 'guests' && renderGuests()}
           {activeTab === 'reports' && renderReports()}
+          {/* 👇 GỌI HÀM RENDER REVIEWS 👇 */}
+          {activeTab === 'reviews' && renderReviews()}
         </main>
       </div>
 
@@ -506,7 +589,6 @@ export default function HotelDashboard() {
       {selectedRoom && (
         <div className="fixed inset-0 bg-[#0B1C2D]/20 backdrop-blur-sm z-40" onClick={() => setSelectedRoom(null)}></div>
       )}
-
     </div>
   );
 }

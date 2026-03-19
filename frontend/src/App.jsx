@@ -9,7 +9,6 @@ import ProfileCustomer from './assets/pages/ProfileCustomer';
 import ReviewPage from './assets/pages/Review';
 import ScrollToTop from "./assets/components/ScrollToTop";
 
-
 function App() {
   return (
     <BrowserRouter>
@@ -22,10 +21,11 @@ function App() {
         <Route path="/room-map" element={<RoomMap />} />
         <Route path="/booking-page" element={<BookingPage />} />
 
-        <Route path="/dashboard" element={<HotelDashboard />} />
         <Route path="/profile" element={<ProfileCustomer />} />
         <Route path="/reviews" element={<ReviewPage />} />
 
+        {/* ----------------------------ADMIN-------------------------- */}
+        <Route path="/dashboard" element={<HotelDashboard />} />
 
 
       </Routes>
