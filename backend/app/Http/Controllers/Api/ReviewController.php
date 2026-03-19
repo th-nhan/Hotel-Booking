@@ -50,4 +50,23 @@ class ReviewController extends Controller
             ], 500);
         }
     }
+
+    public function destroy($id)
+    {
+        try {
+            // Lấy ID từ URL và thực hiện xóa
+            $deleted = DB::table('danh_gia')->where('DanhGiaID', $id)->delete();
+
+            if ($deleted) {
+                return response()->json(['message' => 'Đã xóa đánh giá thành công!'], 200);
+            }
+
+            return response()->json(['message' => 'Không tìm thấy đánh giá này!'], 404);
+            
+        } catch (\Exception $e) {
+            return response()->json([
+                'message' => 'Lỗi Database: ' . $e->getMessage()
+            ], 500);
+        }
+    }
 }
