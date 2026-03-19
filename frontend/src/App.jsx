@@ -23,6 +23,7 @@ function App() {
 
         <Route path="/profile" element={<ProfileCustomer />} />
         <Route path="/reviews" element={<ReviewPage />} />
+        
 
         {/* ----------------------------ADMIN-------------------------- */}
         <Route path="/dashboard" element={<HotelDashboard />} />

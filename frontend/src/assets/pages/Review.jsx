@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import React, { useState, useEffect } from 'react';
 import axios from 'axios';
 import { useNavigate } from 'react-router-dom';
 
@@ -10,9 +10,7 @@ const Header = () => {
     const [isLoggedIn, setIsLoggedIn] = useState(false);
 
     useEffect(() => {
-
         const storedUser = localStorage.getItem('user');
-
         if (storedUser) {
             try {
                 const parsedUser = JSON.parse(storedUser);
@@ -23,6 +21,7 @@ const Header = () => {
             }
         }
     }, []);
+
     return (
         <header className="sticky top-0 left-0 right-0 z-[990] flex items-center justify-between border-b border-primary/20 bg-background-light/80 backdrop-blur-md px-6 md:px-20 py-4">
             <div className="flex items-center gap-3">
@@ -40,7 +39,7 @@ const Header = () => {
                 ) : (
                     <button
                         onClick={() => navigate('/login')}
-                        className="text-xs uppercase tracking-widest font-bold text-whitecd f hover:text-primary transition-colors px-2 py-2"
+                        className="text-xs uppercase tracking-widest font-bold text-navy-deep hover:text-primary transition-colors px-2 py-2"
                     >
                         Login
                     </button>
@@ -50,10 +49,8 @@ const Header = () => {
                 </button>
             </div>
         </header>
-    )
-
+    );
 };
-
 
 const Hero = () => (
     <section className="relative h-[460px] w-full flex items-center justify-center overflow-hidden">
@@ -84,33 +81,24 @@ const ReviewForm = ({ onReviewSuccess }) => {
     const handleSubmit = async (e) => {
         e.preventDefault();
         if (!content) return alert("Vui lòng viết vài dòng chia sẻ nhé!");
+        
         const storedUser = localStorage.getItem('user');
         if (!storedUser) {
             alert("Bạn cần đăng nhập để gửi đánh giá nhé!");
-            navigate('/login')
+            navigate('/login');
             return;
         }
+        
         const user = JSON.parse(storedUser);
         const currentUserId = user.KhachHangID || user.id;
 
-        //test
-        console.log("Dữ liệu chuẩn bị gửi đi:", {
-            KhachHangID: currentUserId,
-            SoSao: rating,
-            BinhLuan: content
-        });
-
         setLoading(true);
         try {
-            const response = await axios.post(`${API_URL}/review`, {
+            await axios.post(`${API_URL}/review`, {
                 KhachHangID: currentUserId,
                 SoSao: rating,
                 BinhLuan: content
             });
-
-
-            //test
-            console.log("Kết quả từ server:", response.data);
 
             alert("Cảm ơn bạn đã chia sẻ trải nghiệm!");
             setContent('');
@@ -130,7 +118,6 @@ const ReviewForm = ({ onReviewSuccess }) => {
                 <h2 className="font-display text-3xl text-navy-deep mb-2">Share Your Experience</h2>
                 <p className="text-navy-deep/60 text-sm tracking-widest uppercase">We value your distinguished perspective</p>
             </div>
-            {/* Đổi grid-cols thành flex để form đẹp hơn khi bỏ ô Email */}
             <form className="flex flex-col gap-8" onSubmit={handleSubmit}>
                 <div className="flex flex-col items-center">
                     <span className="text-xs uppercase tracking-widest font-bold text-navy-deep/70 mb-4">Service Rating</span>
@@ -178,9 +165,78 @@ const ReviewForm = ({ onReviewSuccess }) => {
         </section>
     );
 };
-const Testimonials = ({ reviews }) => {
 
+// COMPONENT TESTIMONIALS ĐÃ TÍCH HỢP LIKE & REPLY
+const Testimonials = ({ reviews, onRefresh }) => {
     const safeReviews = Array.isArray(reviews) ? reviews : [];
+    
+    // State quản lý việc Like và Trả lời
+    const [likedReviews, setLikedReviews] = useState({}); // Lưu trạng thái thả tim tạm thời
+    const [replyingTo, setReplyingTo] = useState(null); // ID của đánh giá đang được bấm trả lời
+    const [replyText, setReplyText] = useState(''); // Nội dung câu trả lời
+    const [isSubmitting, setIsSubmitting] = useState(false);
+    const navigate = useNavigate();
+
+    // Xử lý Thả tim
+    const handleLike = async (reviewId) => {
+        const storedUser = localStorage.getItem('user');
+        if (!storedUser) {
+            alert("Bạn cần đăng nhập để thả tim!");
+            navigate('/login');
+            return;
+        }
+
+        const user = JSON.parse(storedUser);
+        const currentUserId = user.KhachHangID || user.id;
+
+        // Cập nhật UI ngay lập tức cho mượt
+        setLikedReviews(prev => ({ ...prev, [reviewId]: !prev[reviewId] }));
+        
+        try {
+            // GỌI API LƯU LIKE VÀO DATABASE
+            await axios.post(`${API_URL}/review/${reviewId}/like`, { KhachHangID: currentUserId });
+            if (onRefresh) onRefresh(); // Tải lại data để đồng bộ số like
+        } catch (error) {
+            console.error("Lỗi khi thả tim:", error);
+            // Trả lại trạng thái cũ nếu lỗi
+            setLikedReviews(prev => ({ ...prev, [reviewId]: !prev[reviewId] }));
+        }
+    };
+
+    // Xử lý Gửi câu trả lời
+    const handleReplySubmit = async (e, reviewId) => {
+        e.preventDefault();
+        if (!replyText.trim()) return alert("Vui lòng nhập nội dung trả lời!");
+
+        const storedUser = localStorage.getItem('user');
+        if (!storedUser) {
+            alert("Bạn cần đăng nhập để trả lời bình luận!");
+            navigate('/login');
+            return;
+        }
+
+        const user = JSON.parse(storedUser);
+        const currentUserId = user.KhachHangID || user.id;
+
+        setIsSubmitting(true);
+        try {
+            // GỌI API LƯU CÂU TRẢ LỜI VÀO DATABASE
+            await axios.post(`${API_URL}/review/${reviewId}/reply`, {
+                KhachHangID: currentUserId,
+                NoiDung: replyText
+            });
+
+            alert("Đã gửi phản hồi thành công!");
+            setReplyText('');
+            setReplyingTo(null);
+            if (onRefresh) onRefresh(); // Tải lại danh sách đánh giá
+        } catch (error) {
+            console.error("Lỗi gửi phản hồi:", error);
+            alert("Lỗi: " + (error.response?.data?.message || "Không thể gửi phản hồi lúc này."));
+        } finally {
+            setIsSubmitting(false);
+        }
+    };
 
     return (
         <div className="space-y-8">
@@ -193,18 +249,18 @@ const Testimonials = ({ reviews }) => {
                     <p className="text-navy-deep/40 italic">Chưa có đánh giá nào từ khách hàng.</p>
                 </div>
             ) : (
-                safeReviews.map((testimonial, idx) => (
-                    <div key={idx} className="bg-ivory border-l-4 border-primary shadow-sm hover:shadow-xl hover:-translate-y-1 transition-all duration-300 p-8 rounded-r-xl">
+                safeReviews.map((testimonial) => (
+                    <div key={testimonial.DanhGiaID} className="bg-ivory border-l-4 border-primary shadow-sm hover:shadow-xl hover:-translate-y-1 transition-all duration-300 p-8 rounded-r-xl">
+                        
                         <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-6">
                             <div className="flex items-center gap-4">
-                                <div className="w-12 h-12 rounded-full bg-navy-deep/5 flex items-center justify-center border border-primary/20">
+                                <div className="w-12 h-12 rounded-full bg-navy-deep/5 flex items-center justify-center border border-primary/20 overflow-hidden">
                                     <div
-                                        className="w-full h-full rounded-full bg-cover bg-center transition-all duration-300"
+                                        className="w-full h-full bg-cover bg-center transition-all duration-300"
                                         style={{ backgroundImage: `url('${testimonial.AnhDaiDien || "https://cafefcdn.com/zoom/600_315/203337114487263232/2022/3/3/photo1646280815645-1646280816151764748403.jpg"}')` }}
                                     ></div>
                                 </div>
                                 <div>
-
                                     <p className="font-display font-bold text-navy-deep">
                                         {testimonial.TenKhachHang || "Khách hàng ẩn danh"}
                                     </p>
@@ -219,9 +275,65 @@ const Testimonials = ({ reviews }) => {
                                 {testimonial.NgayDanhGia ? new Date(testimonial.NgayDanhGia).toLocaleDateString() : 'Recent'}
                             </div>
                         </div>
-                        <p className="font-display italic text-lg text-navy-deep/80 leading-relaxed pl-4 border-l border-navy-deep/10">
+
+                        <p className="font-display italic text-lg text-navy-deep/80 leading-relaxed pl-4 border-l border-navy-deep/10 mb-6">
                             "{testimonial.BinhLuan}"
                         </p>
+
+                        {/* --- NÚT LIKE & REPLY --- */}
+                        <div className="flex items-center gap-6 mt-4 pt-4 border-t border-navy-deep/5">
+                            <button 
+                                onClick={() => handleLike(testimonial.DanhGiaID)}
+                                className={`flex items-center gap-1.5 text-sm font-bold transition-colors ${likedReviews[testimonial.DanhGiaID] || testimonial.DaLike ? 'text-red-500' : 'text-navy-deep/40 hover:text-red-500'}`}
+                            >
+                                <span className="material-symbols-outlined" style={{ fontVariationSettings: (likedReviews[testimonial.DanhGiaID] || testimonial.DaLike) ? "'FILL' 1" : "'FILL' 0" }}>
+                                    favorite
+                                </span>
+                                {testimonial.SoLuotThich || 0}
+                            </button>
+                            
+                            <button 
+                                onClick={() => setReplyingTo(replyingTo === testimonial.DanhGiaID ? null : testimonial.DanhGiaID)}
+                                className="flex items-center gap-1.5 text-sm font-bold text-navy-deep/40 hover:text-primary transition-colors"
+                            >
+                                <span className="material-symbols-outlined text-lg">chat_bubble</span>
+                                Trả lời
+                            </button>
+                        </div>
+
+                        {/* --- FORM TRẢ LỜI --- */}
+                        {replyingTo === testimonial.DanhGiaID && (
+                            <form onSubmit={(e) => handleReplySubmit(e, testimonial.DanhGiaID)} className="mt-4 flex gap-3 animate-fade-in">
+                                <input 
+                                    type="text" 
+                                    value={replyText}
+                                    onChange={(e) => setReplyText(e.target.value)}
+                                    placeholder="Viết câu trả lời của bạn..."
+                                    className="flex-1 bg-white border border-navy-deep/10 rounded-full px-5 py-2 text-sm focus:outline-none focus:border-primary focus:ring-1 focus:ring-primary"
+                                />
+                                <button type="submit" disabled={isSubmitting} className="bg-primary text-white px-6 py-2 rounded-full text-sm font-bold uppercase tracking-wider hover:bg-navy-deep transition-colors disabled:opacity-50">
+                                    Gửi
+                                </button>
+                            </form>
+                        )}
+
+                        {/* --- HIỂN THỊ CÁC CÂU TRẢ LỜI CŨ TỪ API --- */}
+                        {testimonial.replies && testimonial.replies.length > 0 && (
+                            <div className="mt-6 ml-8 pl-4 border-l-2 border-primary/20 space-y-4">
+                                {testimonial.replies.map((reply, idx) => (
+                                    <div key={idx} className="bg-navy-deep/5 p-4 rounded-lg">
+                                        <div className="flex justify-between items-start mb-2">
+                                            <span className="font-bold text-sm text-navy-deep">{reply.TenNguoiTraLoi || "Khách"}</span>
+                                            <span className="text-xs text-navy-deep/40">
+                                                {reply.NgayTraLoi ? new Date(reply.NgayTraLoi).toLocaleDateString() : ''}
+                                            </span>
+                                        </div>
+                                        <p className="text-sm text-navy-deep/80">{reply.NoiDung}</p>
+                                    </div>
+                                ))}
+                            </div>
+                        )}
+
                     </div>
                 ))
             )}
@@ -230,9 +342,8 @@ const Testimonials = ({ reviews }) => {
 };
 
 const Footer = () => (
-    <footer className="bg-navy-deep text-ivory text-primary py-16 px-6 border-t border-primary/20 mt-20">
+    <footer className="bg-navy-deep text-ivory py-16 px-6 border-t border-primary/20 mt-20">
         <div className="max-w-7xl mx-auto flex flex-col items-center">
-
             <p className="text-ivory/50 text-sm mb-6 italic">
                 Thank you for choosing La Maison DTN — where every stay is a timeless experience.
             </p>
@@ -246,7 +357,17 @@ export default function ReviewPage() {
 
     const fetchReviews = async () => {
         try {
-            const response = await axios.get(`${API_URL}/review`);
+           
+            let currentUserId = null;
+            const storedUser = localStorage.getItem('user');
+            if (storedUser) {
+                const user = JSON.parse(storedUser);
+                currentUserId = user.KhachHangID || user.id;
+            }
+
+            const response = await axios.get(`${API_URL}/review`, {
+                params: { KhachHangID: currentUserId }
+            });
 
             const data = Array.isArray(response.data) ? response.data : (response.data.data || []);
             setReviews(data);
@@ -261,13 +382,14 @@ export default function ReviewPage() {
     }, []);
 
     return (
-        <div className=" min-h-screen w-full flex-col selection:bg-primary/30">
+        <div className="min-h-screen w-full flex-col selection:bg-primary/30">
             <Header />
             <main className="flex-1">
                 <Hero />
                 <div className="max-w-5xl mx-auto px-6 mb-20">
                     <ReviewForm onReviewSuccess={fetchReviews} />
-                    <Testimonials reviews={reviews} />
+                    
+                    <Testimonials reviews={reviews} onRefresh={fetchReviews} />
                 </div>
             </main>
             <Footer />
