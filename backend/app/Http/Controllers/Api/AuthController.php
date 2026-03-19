@@ -107,6 +107,7 @@ class AuthController extends Controller
             'token_type' => 'Bearer',
             'user' => [
                 'id' => $user->TaiKhoanID,
+                'KhachHangID' => $khachHang ? $khachHang->KhachHangID : null,
                 'name' => $user->HoTen,
                 'email' => $user->Email,
                 'role' => $user->VaiTroID,
