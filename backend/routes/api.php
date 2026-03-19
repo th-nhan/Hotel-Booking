@@ -8,8 +8,7 @@ use App\Http\Controllers\Api\TraPhongController;
 use App\Http\Controllers\Api\AuthController;
 use App\Http\Controllers\Api\DashboardController;
 use App\Http\Controllers\Api\ProfileController;
-
-
+use App\Http\Controllers\Api\ReviewController;
 
 Route::get('/user', function (Request $request) {
     return $request->user();
@@ -39,3 +38,6 @@ Route::get('/test', function () {
         'message' => 'Backend Vercel đã thông đường 100%!'
     ]);
 });
+
+Route::get('/review', [ReviewController::class, 'index']);
+Route::post('/review', [ReviewController::class, 'store']);
