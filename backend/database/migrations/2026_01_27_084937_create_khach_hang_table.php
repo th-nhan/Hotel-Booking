@@ -15,9 +15,11 @@ return new class extends Migration
             $table->id('KhachHangID');
             $table->string('HoTen', 100);
             $table->string('Email', 100);
-            $table->string('DiaChi', 100);
-            $table->string('SoDienThoai', 20);
-            $table->string('CCCD', 20);
+            $table->string('DiaChi', 100)->nullable();
+            $table->string('SoDienThoai', 20)->nullable();
+            $table->string('CCCD', 20)->nullable();
+            $table->string('AnhDaiDien')->nullable();
+
             $table->text('GhiChu')->nullable();
             $table->dateTime('NgayTao')->nullable();
             $table->unsignedBigInteger('TaiKhoanID')->nullable();

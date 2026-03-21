@@ -34,8 +34,8 @@ class DatPhongController extends Controller
             ->join('chi_tiet_phieu_dat_phong', 'phieu_dat_phong.PhieuDatPhongID', '=', 'chi_tiet_phieu_dat_phong.PhieuDatPhongID')
             ->where('chi_tiet_phieu_dat_phong.PhongID', $phongId)
             ->where(function ($query) use ($checkIn, $checkOut) {
-                //$query->whereRaw('? < ("NgayCheckOutDuKien" + INTERVAL \'1 day\')', 
-                $query->whereRaw('? < (NgayCheckOutDuKien + INTERVAL 1 DAY)',
+                $query->whereRaw('? < ("NgayCheckOutDuKien" + INTERVAL \'1 day\')', 
+                // $query->whereRaw('? < (NgayCheckOutDuKien + INTERVAL 1 DAY)',
                 [$checkOut])
               ->where('NgayCheckOutDuKien', '>', $checkIn);
             })
