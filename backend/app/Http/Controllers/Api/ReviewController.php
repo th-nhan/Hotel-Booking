@@ -13,8 +13,9 @@ class ReviewController extends Controller
     {
         try {
             $khachHangId = $request->query('KhachHangID');
+            $timeRange = $request->query('time_range', 'all');
 
-            $danhGiaList = DB::table('danh_gia')
+            $query = DB::table('danh_gia')
                 ->join('khach_hang', 'danh_gia.KhachHangID', '=', 'khach_hang.KhachHangID')
                 ->select(
                     'danh_gia.DanhGiaID',
@@ -22,15 +23,20 @@ class ReviewController extends Controller
                     'danh_gia.BinhLuan',
                     'danh_gia.NgayDanhGia',
                     'khach_hang.HoTen as TenKhachHang',
-                    'khach_hang.AnhDaiDien',
-                )
-                ->orderBy('danh_gia.NgayDanhGia', 'desc')
-                ->get();
+                    'khach_hang.AnhDaiDien'
+                );
+
+            if ($timeRange === '1') {
+                $query->where('danh_gia.NgayDanhGia', '>=', Carbon::now()->subMonth());
+            } elseif ($timeRange === '3') {
+                $query->where('danh_gia.NgayDanhGia', '>=', Carbon::now()->subMonths(3));
+            }
+
+            $danhGiaList = $query->orderBy('danh_gia.NgayDanhGia', 'desc')->get();
 
             if ($danhGiaList->isEmpty()) {
                 return response()->json([]);
             }
-
             $danhGiaIds = $danhGiaList->pluck('DanhGiaID')->toArray();
 
             $likesCount = DB::table('chi_tiet_like')
