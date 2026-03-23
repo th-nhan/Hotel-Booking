@@ -4,7 +4,7 @@ import {
   LayoutDashboard, Map as MapIcon, CalendarDays, Users, FileText, Settings,
   Search, Download, Bell, UserCircle, LogOut, X,
   Sparkles, BedDouble, CheckCircle2, RefreshCw, Printer, LogIn, PaintBucket,
-  MessageSquare, Star // <-- THÊM ICON MỚI Ở ĐÂY
+  MessageSquare, Star, Calendar, Bot // Đã thêm icon Bot cho nút AI
 } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 
@@ -23,6 +23,10 @@ export default function HotelDashboard() {
   // --- THÊM STATE CHO REVIEWS ---
   const [reviews, setReviews] = useState([]);
   const [loadingReviews, setLoadingReviews] = useState(false);
+  const [timeRange, setTimeRange] = useState('all');
+  
+  // Thêm state loading riêng cho nút AI
+  const [isAnalyzing, setIsAnalyzing] = useState(false);
 
   // --- API GỌI DỮ LIỆU PHÒNG CHUNG ---
   const processRoomStatuses = (fetchedRooms) => {
@@ -30,7 +34,6 @@ export default function HotelDashboard() {
     today.setHours(0, 0, 0, 0);
 
     return fetchedRooms.map(room => {
-      
       let checkInDate = null;
       let checkOutDate = null;
 
@@ -47,15 +50,12 @@ export default function HotelDashboard() {
         checkOutDate = new Date(outStr);
         checkOutDate.setHours(0, 0, 0, 0);
       }
-
       
       if (checkOutDate && today.getTime() > checkOutDate.getTime()) {
         return { ...room, status: 'Trống', guestName: null };
       }
-
       
       if (room.status === 'Đã đặt' && checkInDate && today.getTime() >= checkInDate.getTime()) {
-        
         if (!checkOutDate || today.getTime() <= checkOutDate.getTime()) {
           return { ...room, status: 'Đang ở' };
         }
@@ -79,11 +79,13 @@ export default function HotelDashboard() {
     }
   };
 
-  // --- API GỌI DỮ LIỆU ĐÁNH GIÁ (Chỉ gọi khi bấm qua Tab Reviews) ---
+  // --- API GỌI DỮ LIỆU ĐÁNH GIÁ CÓ LỌC THỜI GIAN ---
   const fetchReviews = async () => {
     setLoadingReviews(true);
     try {
-      const response = await axios.get(`${import.meta.env.VITE_API_URL}/review`);
+      const response = await axios.get(`${import.meta.env.VITE_API_URL}/review`, {
+        params: { time_range: timeRange } 
+      });
       const data = Array.isArray(response.data) ? response.data : (response.data.data || []);
       setReviews(data);
     } catch (error) {
@@ -93,7 +95,6 @@ export default function HotelDashboard() {
     }
   };
 
-  // Hàm xử lý xóa đánh giá
   const handleDeleteReview = async (id) => {
     if (!window.confirm("Bạn có chắc chắn muốn xóa đánh giá này không? Hành động này không thể hoàn tác!")) return;
     try {
@@ -105,6 +106,39 @@ export default function HotelDashboard() {
     }
   };
 
+  // --- HÀM XUẤT BÁO CÁO AI (Đã được chuyển từ AIAnalyzer sang đây) ---
+  const handleAnalyzeAndDownload = async () => {
+    setIsAnalyzing(true);
+    try {
+        const response = await axios.post(`${import.meta.env.VITE_API_URL}/reviews/analyze-export`, {
+            time_range: timeRange 
+        }, {
+            responseType: 'blob', 
+        });
+
+        const url = window.URL.createObjectURL(new Blob([response.data]));
+        const link = document.createElement('a');
+        link.href = url;
+        const timeLabel = timeRange === 'all' ? 'Tat_Ca' : timeRange + '_Thang';
+        link.setAttribute('download', `Bao_Cao_AI_${timeLabel}_${Date.now()}.xlsx`); 
+        document.body.appendChild(link);
+        link.click();
+        
+        link.parentNode.removeChild(link);
+        window.URL.revokeObjectURL(url);
+        
+    } catch (error) {
+        console.error("Lỗi tải file:", error);
+        if(error.response && error.response.status === 404) {
+            alert("Không có đánh giá nào trong khoảng thời gian này để phân tích!");
+        } else {
+            alert("Đã có lỗi xảy ra khi gọi AI. Vui lòng kiểm tra lại server!");
+        }
+    } finally {
+        setIsAnalyzing(false);
+    }
+  };
+
   // --- EFFECTS ---
   useEffect(() => {
     if (selectedRoom) {
@@ -113,7 +147,7 @@ export default function HotelDashboard() {
         setSelectedRoom(updated);
       }
     }
-  }, [rooms]);
+  }, [rooms, selectedRoom]);
 
   useEffect(() => {
     fetchDashboardData();
@@ -121,14 +155,12 @@ export default function HotelDashboard() {
     return () => clearInterval(interval);
   }, []);
 
-  // Effect chạy fetchReviews khi người dùng chuyển sang tab 'reviews'
   useEffect(() => {
     if (activeTab === 'reviews') {
       fetchReviews();
     }
-  }, [activeTab]);
+  }, [activeTab, timeRange]);
 
-  // --- MÀU SẮC TRẠNG THÁI ---
   const getRoomStyle = (status) => {
     switch (status) {
       case 'Trống': return 'border border-[#D4AF37] text-[#D4AF37] bg-transparent hover:bg-[#D4AF37]/10';
@@ -139,7 +171,6 @@ export default function HotelDashboard() {
     }
   };
 
-  // --- CÁC HÀM XỬ LÝ (ACTIONS) ---
   const handleCheckIn = async () => {
     if (!selectedRoom || !window.confirm(`Xác nhận khách đã nhận phòng ${selectedRoom.number}?`)) return;
     try {
@@ -179,7 +210,6 @@ export default function HotelDashboard() {
     navigate('/login');
   };
 
-  // --- HÀM XUẤT HÓA ĐƠN ---
   const exportInvoice = (room) => {
     const checkInDate = new Date(room.checkIn);
     const checkOutDate = new Date(room.checkOut);
@@ -376,73 +406,120 @@ export default function HotelDashboard() {
     </div>
   );
 
-  // --- RENDER TAB REVIEWS ---
+  // --- RENDER TAB REVIEWS GỌN GÀNG NHẤT ---
   const renderReviews = () => (
     <div className="bg-white rounded-2xl border border-[#0B1C2D]/10 shadow-xl shadow-[#0B1C2D]/5 overflow-hidden flex flex-col animate-fade-in">
-      <div className="p-6 border-b border-[#0B1C2D]/10 flex justify-between items-center bg-[#F8F5F0]">
-        <h3 className="text-lg font-serif font-bold">Quản lý Đánh Giá</h3>
-        <div className="bg-white px-4 py-2 rounded-lg font-bold text-sm text-[#0B1C2D] border border-[#0B1C2D]/10 shadow-sm flex items-center gap-2">
-          <MessageSquare className="w-4 h-4 text-[#D4AF37]" />
-          Tổng cộng: {reviews.length}
+      <div className="p-6 border-b border-[#0B1C2D]/10 flex flex-wrap justify-between items-center bg-[#F8F5F0] gap-4">
+        <div className="flex items-center gap-3">
+            <h3 className="text-lg font-serif font-bold">Quản lý Đánh Giá</h3>
+            <div className="bg-white px-3 py-1.5 rounded-lg font-bold text-xs text-[#0B1C2D] border border-[#0B1C2D]/10 shadow-sm flex items-center gap-2">
+                <MessageSquare className="w-3 h-3 text-[#D4AF37]" />
+                {reviews.length} đánh giá
+            </div>
+        </div>
+        
+        <div className="flex items-center gap-3">
+          {/* Một Ô Chọn Thời Gian Duy Nhất Cho Cả Bảng Và Nút Xuất Excel */}
+          <div className="relative flex items-center bg-white border border-[#0B1C2D]/10 hover:border-[#D4AF37] rounded-lg px-3 py-2 shadow-sm transition-colors">
+            <Calendar className="w-4 h-4 text-gray-500 mr-2 flex-shrink-0" />
+            <select 
+              className="bg-transparent text-sm font-bold text-[#0B1C2D] outline-none cursor-pointer w-full min-w-[140px]"
+              value={timeRange}
+              onChange={(e) => setTimeRange(e.target.value)}
+              disabled={isAnalyzing || loadingReviews}
+            >
+              <option value="all">Tất cả thời gian</option>
+              <option value="1">1 tháng gần nhất</option>
+              <option value="3">3 tháng gần nhất</option>
+            </select>
+          </div>
+
+          {/* Nút Xuất AI Gộp Thẳng Vào Đây */}
+          <button 
+            onClick={handleAnalyzeAndDownload} 
+            disabled={isAnalyzing || reviews.length === 0}
+            className={`
+                flex items-center justify-center gap-2 px-4 py-2 rounded-lg text-sm font-bold transition-all duration-300 shadow-sm
+                ${isAnalyzing || reviews.length === 0
+                    ? 'bg-gray-200 text-gray-400 cursor-not-allowed border border-gray-200' 
+                    : 'bg-[#0B1C2D] text-[#D4AF37] hover:bg-[#D4AF37] hover:text-[#0B1C2D] border border-transparent hover:border-[#0B1C2D]'
+                }
+            `}
+          >
+            {isAnalyzing ? (
+                <>
+                    <RefreshCw className="w-4 h-4 animate-spin" />
+                    <span>AI Đang xử lý...</span>
+                </>
+            ) : (
+                <>
+                    <Bot className="w-4 h-4" />
+                    <span>AI Xuất Báo Cáo</span>
+                </>
+            )}
+          </button>
         </div>
       </div>
+      
       <div className="overflow-x-auto">
         {loadingReviews ? (
           <div className="text-center py-10 text-gray-500 font-bold animate-pulse">Đang tải dữ liệu...</div>
         ) : (
-          <table className="w-full text-left text-sm">
-            <thead className="bg-white text-[#0B1C2D]/60 uppercase tracking-widest text-[10px] border-b border-[#0B1C2D]/10">
-              <tr>
-                <th className="px-6 py-4 font-bold">ID</th>
-                <th className="px-6 py-4 font-bold">Khách hàng</th>
-                <th className="px-6 py-4 font-bold">Đánh giá</th>
-                <th className="px-6 py-4 font-bold">Nội dung</th>
-                <th className="px-6 py-4 font-bold">Ngày đăng</th>
-                <th className="px-6 py-4 font-bold text-center">Thao tác</th>
-              </tr>
-            </thead>
-            <tbody className="divide-y divide-[#0B1C2D]/5">
-              {reviews.length === 0 ? (
+          <div className="">
+            <table className="w-full text-left text-sm">
+              <thead className="bg-white text-[#0B1C2D]/60 uppercase tracking-widest text-[10px] border-b border-[#0B1C2D]/10">
                 <tr>
-                  <td colSpan="6" className="text-center py-8 text-gray-500 italic">
-                    Chưa có đánh giá nào.
-                  </td>
+                  <th className="px-6 py-4 font-bold">ID</th>
+                  <th className="px-6 py-4 font-bold">Khách hàng</th>
+                  <th className="px-6 py-4 font-bold">Đánh giá</th>
+                  <th className="px-6 py-4 font-bold">Nội dung</th>
+                  <th className="px-6 py-4 font-bold">Ngày đăng</th>
+                  <th className="px-6 py-4 font-bold text-center">Thao tác</th>
                 </tr>
-              ) : (
-                reviews.map((review) => (
-                  <tr key={review.DanhGiaID} className="hover:bg-[#F8F5F0]/50 transition-colors">
-                    <td className="px-6 py-4 font-bold text-gray-400">
-                      #{review.DanhGiaID}
-                    </td>
-                    <td className="px-6 py-4 font-bold text-[#0B1C2D]">
-                      {review.TenKhachHang || "Khách ẩn danh"}
-                    </td>
-                    <td className="px-6 py-4">
-                      <div className="flex text-[#D4AF37]">
-                        {[...Array(review.SoSao)].map((_, i) => (
-                          <Star key={i} className="w-4 h-4 fill-current" />
-                        ))}
-                      </div>
-                    </td>
-                    <td className="px-6 py-4 max-w-xs truncate text-gray-700" title={review.BinhLuan}>
-                      {review.BinhLuan}
-                    </td>
-                    <td className="px-6 py-4 text-xs text-gray-500">
-                      {new Date(review.NgayDanhGia).toLocaleDateString('vi-VN')}
-                    </td>
-                    <td className="px-6 py-4 text-center">
-                      <button
-                        onClick={() => handleDeleteReview(review.DanhGiaID)}
-                        className="bg-red-50 text-red-600 hover:bg-red-600 hover:text-white px-3 py-1.5 rounded text-xs uppercase tracking-wider font-bold transition-colors border border-red-200 hover:border-red-600"
-                      >
-                        Xóa
-                      </button>
+              </thead>
+              <tbody className="divide-y divide-[#0B1C2D]/5">
+                {reviews.length === 0 ? (
+                  <tr>
+                    <td colSpan="6" className="text-center py-8 text-gray-500 italic">
+                      Chưa có đánh giá nào.
                     </td>
                   </tr>
-                ))
-              )}
-            </tbody>
-          </table>
+                ) : (
+                  reviews.map((review) => (
+                    <tr key={review.DanhGiaID} className="hover:bg-[#F8F5F0]/50 transition-colors">
+                      <td className="px-6 py-4 font-bold text-gray-400">
+                        #{review.DanhGiaID}
+                      </td>
+                      <td className="px-6 py-4 font-bold text-[#0B1C2D]">
+                        {review.TenKhachHang || "Khách ẩn danh"}
+                      </td>
+                      <td className="px-6 py-4">
+                        <div className="flex text-[#D4AF37]">
+                          {[...Array(review.SoSao)].map((_, i) => (
+                            <Star key={i} className="w-4 h-4 fill-current" />
+                          ))}
+                        </div>
+                      </td>
+                      <td className="px-6 py-4 max-w-xs truncate text-gray-700" title={review.BinhLuan}>
+                        {review.BinhLuan}
+                      </td>
+                      <td className="px-6 py-4 text-xs text-gray-500">
+                        {new Date(review.NgayDanhGia).toLocaleDateString('vi-VN')}
+                      </td>
+                      <td className="px-6 py-4 text-center">
+                        <button
+                          onClick={() => handleDeleteReview(review.DanhGiaID)}
+                          className="bg-red-50 text-red-600 hover:bg-red-600 hover:text-white px-3 py-1.5 rounded text-xs uppercase tracking-wider font-bold transition-colors border border-red-200 hover:border-red-600"
+                        >
+                          Xóa
+                        </button>
+                      </td>
+                    </tr>
+                  ))
+                )}
+              </tbody>
+            </table>
+          </div>
         )}
       </div>
     </div>
@@ -474,7 +551,6 @@ export default function HotelDashboard() {
           <NavItem icon={<MapIcon />} label="Room Map" active={activeTab === 'roomMap'} onClick={() => setActiveTab('roomMap')} />
           <NavItem icon={<Users />} label="Guests" active={activeTab === 'guests'} onClick={() => setActiveTab('guests')} />
           <NavItem icon={<FileText />} label="Invoices" active={activeTab === 'reports'} onClick={() => setActiveTab('reports')} />
-          {/* 👇 NÚT MENU REVIEWS MỚI 👇 */}
           <NavItem icon={<MessageSquare />} label="Reviews" active={activeTab === 'reviews'} onClick={() => setActiveTab('reviews')} />
 
           <div className="pt-8 border-t border-white/10 mt-8"></div>
@@ -504,12 +580,10 @@ export default function HotelDashboard() {
         </header>
 
         <main className="flex-1 overflow-y-auto p-8 z-10 relative custom-scrollbar space-y-8">
-          {/* SWITCH RENDERING DỰA VÀO TAB */}
           {activeTab === 'dashboard' && renderDashboard()}
           {activeTab === 'roomMap' && renderRoomMap()}
           {activeTab === 'guests' && renderGuests()}
           {activeTab === 'reports' && renderReports()}
-          {/* 👇 GỌI HÀM RENDER REVIEWS 👇 */}
           {activeTab === 'reviews' && renderReviews()}
         </main>
       </div>
@@ -564,7 +638,6 @@ export default function HotelDashboard() {
               )}
             </div>
 
-            {/* ACTION BUTTONS DỰA THEO TRẠNG THÁI */}
             <div className="p-6 border-t border-[#0B1C2D]/10 bg-[#F8F5F0] space-y-3">
               {selectedRoom.status === 'Đã đặt' && (
                 <button onClick={handleCheckIn} className="w-full h-12 bg-[#0B1C2D] hover:bg-[#1a365d] text-[#D4AF37] font-bold uppercase tracking-widest text-sm rounded-lg transition-colors flex items-center justify-center gap-2 shadow-lg">
@@ -593,7 +666,6 @@ export default function HotelDashboard() {
   );
 }
 
-// Sub components
 function NavItem({ icon, label, active, onClick }) {
   return (
     <a href="#"
