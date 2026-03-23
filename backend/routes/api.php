@@ -10,6 +10,10 @@ use App\Http\Controllers\Api\DashboardController;
 use App\Http\Controllers\Api\ProfileController;
 use App\Http\Controllers\Api\ReviewController;
 
+use App\Http\Controllers\Api\ReviewAIController;
+
+Route::post('/reviews/analyze-export', [ReviewAIController::class, 'analyzeAndExport']);
+
 Route::get('/user', function (Request $request) {
     return $request->user();
 })->middleware('auth:sanctum');
