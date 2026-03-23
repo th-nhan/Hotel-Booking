@@ -16,6 +16,7 @@ class ReviewAIController extends Controller
 {
     public function analyzeAndExport(Request $request)
     {
+        config(['excel.temporary_files.local_path' => '/tmp']);
         // 1. NHẬN YÊU CẦU THỜI GIAN TỪ REACTJS (Mặc định là '1' nếu không có)
         $timeRange = $request->input('time_range', '1');
 
