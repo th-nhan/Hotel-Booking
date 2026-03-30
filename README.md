@@ -1,151 +1,182 @@
-markdown
-
-Copy code
 <div align="center">
 
-# 🏨 **La Maison DTN** – *Luxury Hotel Management & Booking System*
+# 🏨 La Maison DTN
 
-[![Luxury Hotel Banner](https://via.placeholder.com/1200x300/1e3a8a/ffffff?text=La+Maison+DTN+-+5+Star+Luxury)](https://lamaisondtn.com)
+### ✨ Luxury Hotel Management & Booking System
 
-</div>
+<p>
+Nền tảng đặt phòng & quản lý khách sạn 5★ phong cách châu Âu tại Việt Nam
+</p>
 
-**La Maison DTN** là nền tảng đặt phòng và quản lý khách sạn cao cấp dành cho khách sạn 5 sao phong cách châu Âu tại Việt Nam.
+<img src="https://img.shields.io/badge/Status-Production-brightgreen" />
+<img src="https://img.shields.io/badge/Frontend-ReactJS-blue" />
+<img src="https://img.shields.io/badge/Backend-Laravel-red" />
+<img src="https://img.shields.io/badge/Database-MySQL-blueviolet" />
 
-<div align="center">
-<img src="https://img.shields.io/badge/Status-Production-brightgreen" alt="Status">
-<img src="https://img.shields.io/badge/Frontend-ReactJS-blue" alt="Frontend">
-<img src="https://img.shields.io/badge/Backend-Laravel-red" alt="Backend">
-<img src="https://img.shields.io/badge/Database-MySQL-blueviolet" alt="Database">
 </div>
 
 ---
 
-## ✨ **Tính năng nổi bật**
+## 📌 Overview
 
-### 👤 **Khách hàng**
-✨ Tính năng
+**La Maison DTN** là hệ thống quản lý và đặt phòng khách sạn cao cấp, được xây dựng nhằm mang lại trải nghiệm đặt phòng mượt mà, hiện đại và trực quan.
 
-📝 Mô tả
+🔹 Thiết kế hướng đến **UX/UI luxury**
+🔹 Tối ưu cho **khách sạn 5 sao**
+🔹 Kiến trúc tách biệt **Frontend – Backend (REST API)**
 
-Đăng ký/Đăng nhập
+---
 
-Bảo mật JWT Auth
+## ✨ Features
 
-Room Map tương tác
+### 👤 Customer
 
-Khám phá phòng trực quan
+| Tính năng             | Mô tả                       |
+| --------------------- | --------------------------- |
+| 🔐 Authentication     | Đăng ký / đăng nhập với JWT |
+| 🗺 Room Map           | Xem phòng trực quan         |
+| ⚡ Quick Booking       | Đặt phòng nhanh             |
+| 📅 Booking Management | Quản lý & lịch sử đặt phòng |
+| 📄 Export             | Tải file booking            |
+| 👤 Profile            | Quản lý thông tin cá nhân   |
 
-Đặt phòng nhanh
+---
 
-Check-in/out linh hoạt
+### 🛠 Admin
 
-Quản lý booking
+| Tính năng              | Mô tả               |
+| ---------------------- | ------------------- |
+| 🏨 Room Management     | Quản lý phòng & giá |
+| 📊 Dashboard           | Thống kê hệ thống   |
+| 👥 Customer Management | Quản lý khách hàng  |
+| 💰 Revenue Reports     | Báo cáo doanh thu   |
 
-Xem lịch sử & tải file
+---
 
-Hồ sơ cá nhân
+## 🧱 Tech Stack
 
-Cập nhật thông tin
+### 🔹 Architecture
 
-🛠 Quản trị viên
-Quản lý phòng & giá
-Dashboard thống kê
-Quản lý khách hàng
-Báo cáo doanh thu
-🛠 Tech Stack
-mermaid
-
-Copy code
+```mermaid
 graph TB
-    A[ReactJS + Tailwind] --> B[Axios API Calls]
+    A[ReactJS + Tailwind] --> B[Axios]
     B --> C[Laravel REST API]
-    C --> D[MySQL Database]
+    C --> D[MySQL]
     E[React Router] --> A
-    F[Laravel Auth] --> C
-Frontend
+    F[Laravel Auth + JWT] --> C
+```
 
-Copy code
-React 18+ | React Router | Axios | TailwindCSS | Lucide Icons
-Backend
+### 🔹 Frontend
 
-Copy code
-Laravel 10+ | REST API | JWT Auth | MySQL | Eloquent ORM
-🚀 Quick Start
-Prerequisites
-bash
+```
+React 18+, React Router, Axios, TailwindCSS, Lucide Icons
+```
 
-Copy code
-Node.js 18+  PHP 8.1+  Composer  MySQL 8.0+
-1. Backend Setup
-bash
+### 🔹 Backend
 
-Copy code
+```
+Laravel 10+, REST API, JWT Auth, MySQL, Eloquent ORM
+```
+
+---
+
+## 🚀 Getting Started
+
+### ⚙️ Prerequisites
+
+```
+Node.js >= 18
+PHP >= 8.1
+Composer
+MySQL >= 8.0
+```
+
+---
+
+### 🔧 Backend Setup
+
+```bash
 cd backend
 composer install
 cp .env.example .env
 php artisan key:generate
 php artisan migrate --seed
 php artisan serve
-2. Frontend Setup
-bash
+```
 
-Copy code
+---
+
+### 🌐 Frontend Setup
+
+```bash
 cd frontend
 npm install
 npm run dev
-<div align="center">
-🌐 **Frontend
+```
 
-🔧 **Backend
+---
 
-http://localhost:3000
+## 📡 API Endpoints
 
-http://localhost:8000
-
-</div>
-📊 API Endpoints
-yaml
-
-Copy code
+```yaml
 /auth:
   POST /login
   POST /register
-  
+
 /rooms:
   GET /rooms
   GET /rooms/{id}
-  
+
 /bookings:
   POST /bookings
   GET /bookings
   GET /bookings/{id}
-🤝 Contributing
-bash
+```
 
-Copy code
-# Fork & Clone
+---
+
+## 🤝 Contributing
+
+```bash
+# Clone project
 git clone your-fork-url
 cd la-maison-dtn
 
-# Install & Run
-npm install && composer install
-npm run dev & php artisan serve
-Fork repository
-Create feature branch
-Commit changes
-Push & PR
-📄 License
-License: MIT
+# Install dependencies
+npm install
+composer install
 
-👨‍💻 Contact
+# Run project
+npm run dev
+php artisan serve
+```
 
-Copy code
-👨‍💻 Developer: Đỗ Thành Nhân
-📧 Email: dothanhnhan1024@gmail.com
-🌐 Demo: [https://lamaisondtn.com](https://hotel-booking-umber-one.vercel.app/)
-📱 Hotline: +84 386356750
+### Workflow
+
+* Fork repository
+* Create feature branch
+* Commit changes
+* Push & Create Pull Request
+
+---
+
+## 📄 License
+
+MIT License
+
+---
+
+## 👨‍💻 Contact
+
+* 👤 Developer: **Đỗ Thành Nhân**
+* 📧 Email: **[dothanhnhan1024@gmail.com](mailto:dothanhnhan1024@gmail.com)**
+* 🌐 Demo: https://hotel-booking-umber-one.vercel.app/
+* 📱 Hotline: +84 386 356 750
+
+---
+
 <div align="center">
-⭐ Star us on GitHub if this project helped you!
 
+⭐ **If you find this project useful, give it a star!** ⭐
 
-</div> 
+</div>
