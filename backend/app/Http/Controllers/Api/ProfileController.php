@@ -71,7 +71,7 @@ class ProfileController extends Controller
                     'status' => $statusEn,
                     'duration' => $checkIn . ' - ' . $checkOut,
                     'amount' => number_format($displayAmount, 0, ',', '.') . 'đ',
-                    'total' => number_format(($displayAmount*100)/30, 0, ',', '.') . 'đ',
+                    'total' => number_format($b->amount, 0, ',', '.') . 'đ',
                     'amountLabel' => $amountLabel,
                     'image' => $b->AnhDaiDien,
                 ];

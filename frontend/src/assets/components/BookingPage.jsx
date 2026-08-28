@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState} from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
 import axios from 'axios';
 import { message } from 'antd';
@@ -27,23 +27,35 @@ const BookingPage = () => {
   // Tự động lấy thông tin User từ LocalStorage (nếu đã đăng nhập)
   const storedUser = JSON.parse(localStorage.getItem('user') || '{}');
 
- const [formData, setFormData] = useState({
+  const [formData, setFormData] = useState({
     HoTen: storedUser.HoTen || storedUser.name || '',
     Email: storedUser.Email || storedUser.email || '',
     DiaChi: storedUser.DiaChi || storedUser.address || '',
     SoDienThoai: storedUser.SoDienThoai || storedUser.phone || '',
-    CCCD: storedUser.cccd || '',
+    CCCD: storedUser.CCCD || storedUser.cccd || '',
     NgayCheckIn: passedCheckIn,
     NgayCheckOutDuKien: passedCheckOut,
     HinhThucThanhToan: 'Tại quầy'
   });
 
-  const [tongTien, setTongTien] = useState(0);
-  const [tienCoc, setTienCoc] = useState(0);
-  const [soDem, setSoDem] = useState(0);
   const [errorMsg, setErrorMsg] = useState('');
   const [suggestions, setSuggestions] = useState([]);
   const today = new Date().toISOString().split('T')[0];
+
+  // Tính toán số đêm và tiền trực tiếp (Derived State chuẩn React - tránh render lặp)
+  const soDem = (() => {
+    if (formData.NgayCheckIn && formData.NgayCheckOutDuKien) {
+      const start = new Date(formData.NgayCheckIn);
+      const end = new Date(formData.NgayCheckOutDuKien);
+      const diffTime = end - start;
+      const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+      return diffDays > 0 ? diffDays : 0;
+    }
+    return 0;
+  })();
+
+  const tongTien = room && soDem > 0 ? soDem * room.GiaPhong : 0;
+  const tienCoc = formData.HinhThucThanhToan === 'Tại quầy' ? tongTien * 0.3 : 0;
 
   // Logic: Đổi phòng nếu phòng hiện tại bị trùng lịch
   const handleSelectRoom = (newRoom) => {
@@ -52,27 +64,6 @@ const BookingPage = () => {
     setSuggestions([]);        
     window.scrollTo({ top: 0, behavior: 'smooth' }); 
   };
-
-  // Logic: Tính toán tiền khi thay đổi ngày
-  useEffect(() => {
-    if (formData.NgayCheckIn && formData.NgayCheckOutDuKien && room) {
-      const start = new Date(formData.NgayCheckIn);
-      const end = new Date(formData.NgayCheckOutDuKien);
-      const diffTime = end - start;
-      const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
-      
-      if (diffDays > 0) {
-        setSoDem(diffDays);
-        const total = diffDays * room.GiaPhong;
-        setTongTien(total);
-        setTienCoc(formData.HinhThucThanhToan === 'Tại quầy' ? total * 0.3 : 0);
-      } else {
-        setSoDem(0);
-        setTongTien(0);
-        setTienCoc(0);
-      }
-    }
-  }, [formData.NgayCheckIn, formData.NgayCheckOutDuKien, formData.HinhThucThanhToan, room]);
 
   const handleChange = (e) => {
     setFormData({ ...formData, [e.target.name]: e.target.value });
@@ -93,7 +84,7 @@ const BookingPage = () => {
       const payload = {
         ...formData,
         PhongID: room.PhongID,
-        TaiKhoanID: storedUser.TaiKhoanID || null // Gắn ID user nếu có
+        TaiKhoanID: storedUser.TaiKhoanID || storedUser.id || null // Gắn ID user nếu có
       };
 
       const response = await axios.post(`${import.meta.env.VITE_API_URL}/dat-phong`, payload);
@@ -107,16 +98,23 @@ const BookingPage = () => {
         setErrorMsg(error.response.data.message);
         setSuggestions(error.response.data.suggested_rooms || []);
       } else {
-        message.error('Lỗi: ' + (error.response?.data?.message || error.message));
+        const backendError = error.response?.data?.message || 
+          (error.response?.data?.errors ? Object.values(error.response.data.errors).flat().join(' ') : error.message);
+        message.error('Lỗi: ' + backendError);
       }
     }
   };
 
   if (!room) {
     return (
-      <div className="min-h-screen bg-[#201d12] flex flex-col items-center justify-center text-white">
-        <h2 className="text-2xl font-display mb-4">Vui lòng chọn phòng trước!</h2>
-        <button onClick={() => navigate(-1)} className="text-[#d4af35] underline underline-offset-4">Quay lại sơ đồ</button>
+      <div className="min-h-screen bg-[#201d12] flex flex-col items-center justify-center text-white p-6 text-center">
+        <h2 className="text-2xl font-display mb-4">Vui lòng chọn phòng trên sơ đồ trước!</h2>
+        <button 
+          onClick={() => navigate('/room-map')} 
+          className="bg-[#d4af35] text-[#201d12] font-bold px-6 py-3 rounded-lg hover:bg-[#b08d2b] transition-all uppercase tracking-wider text-sm"
+        >
+          Đến sơ đồ chọn phòng
+        </button>
       </div>
     );
   }
@@ -127,7 +125,7 @@ const BookingPage = () => {
     <div className="bg-[#201d12] text-slate-100 font-sans antialiased min-h-screen flex flex-col">
       {/* Header */}
       <header className="flex items-center justify-between whitespace-nowrap border-b border-white/10 bg-[#201d12]/90 px-6 py-4 sticky top-0 z-50 backdrop-blur-md">
-        <div className="flex items-center gap-4 text-white cursor-pointer" onClick={() => navigate(-1)}>
+        <div className="flex items-center gap-4 text-white cursor-pointer" onClick={() => navigate('/room-map')}>
           <button className="bg-transparent border-none shadow-none outline-none p-2 hover:bg-white/10 rounded-full transition-colors text-white flex items-center justify-center">
   <ChevronLeft className="w-6 h-6" />
 </button>
@@ -141,7 +139,7 @@ const BookingPage = () => {
         <div className="lg:w-6/12 w-full relative flex flex-col items-center justify-center overflow-hidden group">
           <div 
             className="absolute inset-0 w-full h-full bg-cover bg-center opacity-50 transition-transform duration-700 group-hover:scale-105" 
-            style={{ backgroundImage: `url('${room.AnhDienDien || 'https://images.unsplash.com/photo-1590490360182-c33d57733427?q=80&w=800&auto=format&fit=crop'}')` }}
+            style={{ backgroundImage: `url('${room.AnhDaiDien || room.AnhDienDien || 'https://images.unsplash.com/photo-1590490360182-c33d57733427?q=80&w=800&auto=format&fit=crop'}')` }}
           />
           <div className="absolute inset-0 bg-gradient-to-t from-[#201d12] via-[#201d12]/60 to-transparent" />
           
@@ -159,7 +157,7 @@ const BookingPage = () => {
                 <Users className="w-5 h-5 text-[#d4af35] shrink-0" />
                 <div className="text-left">
                   <p className="text-[10px] text-white/50 uppercase tracking-widest">Sức chứa</p>
-                  <p className="text-sm font-semibold text-white">Tối đa {room.SoLuongToiDa} khách</p>
+                  <p className="text-sm font-semibold text-white">Tối đa {room.SoLuongToiDa || room.SoLuongKhach || 2} khách</p>
                 </div>
               </div>
               <div className="flex items-start gap-3 p-4 rounded-xl bg-black/40 backdrop-blur-md border border-white/10">
@@ -268,13 +266,21 @@ const BookingPage = () => {
                 </div>
               </div>
               
-              <div>
-                <label className="block text-xs text-white/50 uppercase tracking-widest mb-2 ml-1">Hình thức thanh toán</label>
-                <select name="HinhThucThanhToan" value={formData.HinhThucThanhToan} onChange={handleChange} className={`${inputClasses} appearance-none cursor-pointer`}>
-                  <option className="text-black" value="Tại quầy">Tiền mặt tại quầy (Cần cọc trước 30%)</option>
-                  <option className="text-black" value="Chuyển khoản">Chuyển khoản Ngân hàng</option>
-                  <option className="text-black" value="Momo">Ví điện tử Momo</option>
-                </select>
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
+                <div>
+                  <label className="block text-xs text-white/50 uppercase tracking-widest mb-2 ml-1">Số lượng khách</label>
+                  <div className="w-full bg-white/5 border border-white/10 rounded-lg py-3 px-4 text-white/80 text-sm">
+                    {adults} người lớn {children > 0 ? `, ${children} trẻ em` : ''}
+                  </div>
+                </div>
+                <div>
+                  <label className="block text-xs text-white/50 uppercase tracking-widest mb-2 ml-1">Hình thức thanh toán</label>
+                  <select name="HinhThucThanhToan" value={formData.HinhThucThanhToan} onChange={handleChange} className={`${inputClasses} appearance-none cursor-pointer`}>
+                    <option className="text-black" value="Tại quầy">Tiền mặt tại quầy (Cần cọc trước 30%)</option>
+                    <option className="text-black" value="Chuyển khoản">Chuyển khoản Ngân hàng</option>
+                    <option className="text-black" value="Momo">Ví điện tử Momo</option>
+                  </select>
+                </div>
               </div>
             </div>
             

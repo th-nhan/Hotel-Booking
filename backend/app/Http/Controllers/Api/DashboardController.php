@@ -65,6 +65,8 @@ class DashboardController extends Controller
                 $guestName = null;
                 $checkIn = null;
                 $checkOut = null;
+                $deposit = 0;
+                $serviceFee = 0;
 
                 // Lấy trạng thái gốc từ Database
                 $currentStatus = $p->TinhTrang;
@@ -76,6 +78,8 @@ class DashboardController extends Controller
                     $guestName = $booking->HoTen ?? 'Khách vãng lai';
                     $checkIn = Carbon::parse($booking->NgayCheckIn)->format('Y-m-d');
                     $checkOut = Carbon::parse($booking->NgayCheckOutDuKien)->format('Y-m-d');
+                    $deposit = $booking->TienCoc ?? 0;
+                    $serviceFee = $booking->PhiPhuThu ?? 0;
 
                     // AUTO CHECK-IN: Tự động đổi 'Đã đặt' thành 'Đang ở' nếu hôm nay >= ngày Check-in
                     if ($today >= $checkIn) {
@@ -109,8 +113,8 @@ class DashboardController extends Controller
                     'guestName' => $guestName,
                     'checkIn' => $checkIn,
                     'checkOut' => $checkOut,
-                    'deposit' => isset($booking) ? ($booking->TienCoc ?? 0) : 0, 
-                    'serviceFee' => isset($booking) ? ($booking->PhuThu ?? 0) : 0
+                    'deposit' => $deposit, 
+                    'serviceFee' => $serviceFee
                 ];
             }
 

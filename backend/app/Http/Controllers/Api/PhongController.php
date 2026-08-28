@@ -49,6 +49,7 @@ class PhongController extends Controller
                         $query->where('phieu_dat_phong.NgayCheckIn', '<', $checkOut)
                               ->where('phieu_dat_phong.NgayCheckOutDuKien', '>', $checkIn);
                     })
+                    ->where('phieu_dat_phong.TrangThaiThanhToan', '!=', 'Đã hủy')
                     ->pluck('chi_tiet_phieu_dat_phong.PhongID') // Lấy ID phòng từ bảng chi tiết
                     ->toArray();
 

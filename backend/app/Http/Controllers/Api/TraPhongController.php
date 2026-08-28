@@ -59,4 +59,56 @@ class TraPhongController extends Controller
             return response()->json(['message' => 'Lỗi: ' . $e->getMessage()], 500);
         }
     }
+
+    public function nhanPhong(Request $request)
+    {
+        $request->validate([
+            'PhongID' => 'required|exists:phong,PhongID',
+        ]);
+
+        $phongId = $request->PhongID;
+        $now = Carbon::now();
+
+        try {
+            DB::table('phong')
+                ->where('PhongID', $phongId)
+                ->update([
+                    'TinhTrang' => 'Đang ở',
+                    'updated_at' => $now
+                ]);
+
+            return response()->json([
+                'status' => 'success',
+                'message' => 'Nhận phòng thành công!'
+            ]);
+        } catch (\Exception $e) {
+            return response()->json(['message' => 'Lỗi: ' . $e->getMessage()], 500);
+        }
+    }
+
+    public function hoanTatDon(Request $request)
+    {
+        $request->validate([
+            'PhongID' => 'required|exists:phong,PhongID',
+        ]);
+
+        $phongId = $request->PhongID;
+        $now = Carbon::now();
+
+        try {
+            DB::table('phong')
+                ->where('PhongID', $phongId)
+                ->update([
+                    'TinhTrang' => 'Trống',
+                    'updated_at' => $now
+                ]);
+
+            return response()->json([
+                'status' => 'success',
+                'message' => 'Phòng đã sẵn sàng đón khách mới!'
+            ]);
+        } catch (\Exception $e) {
+            return response()->json(['message' => 'Lỗi: ' . $e->getMessage()], 500);
+        }
+    }
 }

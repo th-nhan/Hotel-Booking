@@ -2,25 +2,23 @@ import React, { useState, useEffect } from 'react';
 import axios from 'axios';
 import { useNavigate } from 'react-router-dom';
 import { useToast } from '../components/useToast';
-const API_URL = import.meta.env.VITE_API_URL;
+const API_URL = import.meta.env.VITE_API_URL || 'http://127.0.0.1:8000/api';
 
 const Header = () => {
     const navigate = useNavigate();
-    const [userName, setUserName] = useState('');
-    const [isLoggedIn, setIsLoggedIn] = useState(false);
-
-    useEffect(() => {
-        const storedUser = localStorage.getItem('user');
-        if (storedUser) {
-            try {
-                const parsedUser = JSON.parse(storedUser);
-                setUserName(parsedUser.HoTen || parsedUser.name || 'Khách Hàng');
-                setIsLoggedIn(true);
-            } catch (error) {
-                console.error("Lỗi đọc dữ liệu user:", error);
-            }
+    
+    // Đọc thông tin user trực tiếp (Derived state chuẩn React, không cần useEffect setState)
+    const user = (() => {
+        try {
+            const stored = localStorage.getItem('user');
+            return stored ? JSON.parse(stored) : null;
+        } catch {
+            return null;
         }
-    }, []);
+    })();
+
+    const userName = user?.HoTen || user?.name || 'Khách Hàng';
+    const isLoggedIn = !!user;
 
     return (
         <header className="sticky top-0 left-0 right-0 z-[990] flex items-center justify-between border-b border-primary/20 bg-background-light/80 backdrop-blur-md px-6 md:px-20 py-4">
@@ -91,15 +89,15 @@ const ReviewForm = ({ onReviewSuccess, triggerToast }) => {
         }
 
         const user = JSON.parse(storedUser);
-        const currentUserId = user.KhachHangID || user.id;
-
         const userName = user.HoTen || user.name || 'Khách Hàng';
         const userAvatar = user.AnhDaiDien || `https://ui-avatars.com/api/?name=${userName}&background=D4AF37&color=fff`;
 
         setLoading(true);
         try {
             await axios.post(`${API_URL}/review`, {
-                KhachHangID: currentUserId,
+                TaiKhoanID: user.id || user.TaiKhoanID,
+                KhachHangID: user.KhachHangID,
+                HoTen: userName,
                 SoSao: rating,
                 BinhLuan: content
             });
@@ -192,16 +190,18 @@ const Testimonials = ({ reviews, onRefresh, triggerToast }) => {
         }
 
         const user = JSON.parse(storedUser);
-        const currentUserId = user.KhachHangID || user.id;
 
         setLikedReviews(prev => ({ ...prev, [reviewId]: !prev[reviewId] }));
 
         try {
-            await axios.post(`${API_URL}/review/${reviewId}/like`, { KhachHangID: currentUserId });
+            await axios.post(`${API_URL}/review/${reviewId}/like`, { 
+                TaiKhoanID: user.id || user.TaiKhoanID,
+                KhachHangID: user.KhachHangID,
+                HoTen: user.HoTen || user.name || 'Khách Hàng'
+            });
             if (onRefresh) onRefresh();
         } catch (error) {
             console.error("Lỗi khi thả tim:", error);
-
             setLikedReviews(prev => ({ ...prev, [reviewId]: !prev[reviewId] }));
         }
     };
@@ -219,15 +219,15 @@ const Testimonials = ({ reviews, onRefresh, triggerToast }) => {
         }
 
         const user = JSON.parse(storedUser);
-        const currentUserId = user.KhachHangID || user.id;
-
         const userName = user.HoTen || user.name || 'Khách Hàng';
         const userAvatar = user.AnhDaiDien || `https://ui-avatars.com/api/?name=${userName}&background=D4AF37&color=fff`;
 
         setIsSubmitting(true);
         try {
             await axios.post(`${API_URL}/review/${reviewId}/reply`, {
-                KhachHangID: currentUserId,
+                TaiKhoanID: user.id || user.TaiKhoanID,
+                KhachHangID: user.KhachHangID,
+                HoTen: userName,
                 NoiDung: replyText
             });
 
@@ -360,12 +360,10 @@ const Footer = () => (
 
 export default function ReviewPage() {
     const [reviews, setReviews] = useState([]);
-
     const { showToast, ToastComponent } = useToast();
 
     const fetchReviews = async () => {
         try {
-
             let currentUserId = null;
             const storedUser = localStorage.getItem('user');
             if (storedUser) {
@@ -386,7 +384,38 @@ export default function ReviewPage() {
     };
 
     useEffect(() => {
-        fetchReviews();
+        let isCancelled = false;
+
+        let currentUserId = null;
+        try {
+            const storedUser = localStorage.getItem('user');
+            if (storedUser) {
+                const user = JSON.parse(storedUser);
+                currentUserId = user.KhachHangID || user.id;
+            }
+        } catch (err) {
+            console.error(err);
+        }
+
+        axios.get(`${API_URL}/review`, {
+            params: { KhachHangID: currentUserId }
+        })
+        .then((response) => {
+            if (!isCancelled) {
+                const data = Array.isArray(response.data) ? response.data : (response.data.data || []);
+                setReviews(data);
+            }
+        })
+        .catch((error) => {
+            console.error("Lỗi lấy dữ liệu:", error);
+            if (!isCancelled) {
+                setReviews([]);
+            }
+        });
+
+        return () => {
+            isCancelled = true;
+        };
     }, []);
 
     return (

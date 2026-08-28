@@ -21,6 +21,8 @@ Route::get('/user', function (Request $request) {
 Route::get('/phongs', [PhongController::class, 'index']);
 Route::post('/dat-phong', [DatPhongController::class, 'store']);
 Route::post('/tra-phong', [TraPhongController::class, 'checkout']);
+Route::post('/nhan-phong', [TraPhongController::class, 'nhanPhong']);
+Route::post('/hoan-tat-don', [TraPhongController::class, 'hoanTatDon']);
 
 Route::post('/register', [AuthController::class, 'register']);
 Route::post('/login', [AuthController::class, 'login']);
