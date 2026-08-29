@@ -2,12 +2,15 @@ import React, { useState, useEffect } from 'react';
 import axios from 'axios';
 import { useNavigate } from 'react-router-dom';
 import { useToast } from '../components/useToast';
+import { useLanguage } from '../../context/LanguageContext';
+
 const API_URL = import.meta.env.VITE_API_URL || 'http://127.0.0.1:8000/api';
 
 const Header = () => {
     const navigate = useNavigate();
+    const { language, setLanguage, t } = useLanguage();
     
-    // Đọc thông tin user trực tiếp (Derived state chuẩn React, không cần useEffect setState)
+    // Đọc thông tin user trực tiếp
     const user = (() => {
         try {
             const stored = localStorage.getItem('user');
@@ -17,18 +20,27 @@ const Header = () => {
         }
     })();
 
-    const userName = user?.HoTen || user?.name || 'Khách Hàng';
+    const userName = user?.HoTen || user?.name || t('navbar.guest');
     const isLoggedIn = !!user;
 
     return (
         <header className="sticky top-0 left-0 right-0 z-[990] flex items-center justify-between border-b border-primary/20 bg-background-light/80 backdrop-blur-md px-6 md:px-20 py-4">
             <div className="flex items-center gap-3">
                 <a href="/" className="font-display text-xl font-bold tracking-widest text-navy-deep hover:text-primary transition-colors">
-                    LA MAISON DTN
+                    {t('navbar.brand')}
                 </a>
             </div>
 
             <div className="flex items-center gap-4">
+                <button
+                    onClick={() => setLanguage(language === 'vi' ? 'en' : 'vi')}
+                    className="px-3 py-1 text-xs font-bold text-navy-deep hover:text-primary rounded-full border border-navy-deep/20 bg-black/5 hover:bg-black/10 transition-colors flex items-center gap-1.5 cursor-pointer"
+                    title={t('navbar.language')}
+                >
+                    <span className="material-icons-outlined text-sm">language</span>
+                    <span>{language === 'vi' ? '🇻🇳 VI' : '🇬🇧 EN'}</span>
+                </button>
+
                 {isLoggedIn ? (
                     <div onClick={() => navigate('/profile')} className="flex items-center gap-2 text-navy-deep/70 cursor-pointer hover:text-primary transition-colors">
                         <span className="material-symbols-outlined text-navy-deep/40">account_circle</span>
@@ -37,41 +49,44 @@ const Header = () => {
                 ) : (
                     <button
                         onClick={() => navigate('/login')}
-                        className="text-xs uppercase tracking-widest font-bold text-navy-deep hover:text-primary transition-colors px-2 py-2"
+                        className="text-xs uppercase tracking-widest font-bold text-navy-deep hover:text-primary transition-colors px-2 py-2 cursor-pointer"
                     >
-                        Login
+                        {t('navbar.login')}
                     </button>
                 )}
-                <button onClick={() => navigate('/room-map')} className="bg-primary text-ivory px-6 py-2 text-xs uppercase tracking-widest font-bold hover:text-white transition-all rounded">
-                    Book Stay
+                <button onClick={() => navigate('/room-map')} className="bg-primary text-navy-deep px-6 py-2 text-xs uppercase tracking-widest font-bold hover:text-white transition-all rounded cursor-pointer">
+                    {t('navbar.bookNow')}
                 </button>
             </div>
         </header>
     );
 };
 
-const Hero = () => (
-    <section className="relative h-[460px] w-full flex items-center justify-center overflow-hidden">
-        <div className="absolute inset-0 z-0">
-            <div className="absolute inset-0 bg-navy-deep/40 z-10 backdrop-blur-[2px]"></div>
-            <div
-                className="w-full h-full bg-cover bg-center scale-105"
-                style={{ backgroundImage: "url('https://lh3.googleusercontent.com/aida-public/AB6AXuD1Hu0BuA4hkHgSuEd8idXqGujxWqiy95YDtoxoM__I9YgwKc_vUgUZhQ8UxOnphgGgOMkotzynDHN5bOe-nfP7GtwbPT6wlyRQBElmHc3X0t0hrXDFQtc-lsqqNJZd_wkDjo0OLiNNOj7bobashuXbZw_tnEpq6iwl8ZQcRUDxcNq9breWp2IML2RnTdFLxPyZCZ51vsTwzJxmTHQDWIpZ4tfICBMs1YRe8r8qs5dNbRLLyabcJBoxJSIXGlJr6bKHvHrZS-ni6KU')" }}
-            ></div>
-        </div>
-        <div className="relative z-20 text-center px-4 text-white">
-            <div className="mb-4 flex justify-center opacity-80">
-                <span className="material-symbols-outlined text-primary text-5xl">auto_awesome</span>
+const Hero = () => {
+    const { t } = useLanguage();
+    return (
+        <section className="relative h-[460px] w-full flex items-center justify-center overflow-hidden">
+            <div className="absolute inset-0 z-0">
+                <div className="absolute inset-0 bg-navy-deep/40 z-10 backdrop-blur-[2px]"></div>
+                <div
+                    className="w-full h-full bg-cover bg-center scale-105"
+                    style={{ backgroundImage: "url('https://lh3.googleusercontent.com/aida-public/AB6AXuD1Hu0BuA4hkHgSuEd8idXqGujxWqiy95YDtoxoM__I9YgwKc_vUgUZhQ8UxOnphgGgOMkotzynDHN5bOe-nfP7GtwbPT6wlyRQBElmHc3X0t0hrXDFQtc-lsqqNJZd_wkDjo0OLiNNOj7bobashuXbZw_tnEpq6iwl8ZQcRUDxcNq9breWp2IML2RnTdFLxPyZCZ51vsTwzJxmTHQDWIpZ4tfICBMs1YRe8r8qs5dNbRLLyabcJBoxJSIXGlJr6bKHvHrZS-ni6KU')" }}
+                ></div>
             </div>
-            <h1 className="font-display text-5xl md:text-7xl text-ivory leading-tight mb-4 drop-shadow-lg">Guest Experiences</h1>
-            <div className="h-[1px] w-24 bg-primary mx-auto"></div>
-            <p className="mt-6 text-ivory/90 font-display italic text-lg md:text-xl tracking-wide">A chronicle of neoclassical elegance and refined stays.</p>
-        </div>
-    </section>
-);
-
+            <div className="relative z-20 text-center px-4 text-white">
+                <div className="mb-4 flex justify-center opacity-80">
+                    <span className="material-symbols-outlined text-primary text-5xl">auto_awesome</span>
+                </div>
+                <h1 className="font-display text-5xl md:text-7xl text-ivory leading-tight mb-4 drop-shadow-lg">{t('reviews.pageTitle')}</h1>
+                <div className="h-[1px] w-24 bg-primary mx-auto"></div>
+                <p className="mt-6 text-ivory/90 font-display italic text-lg md:text-xl tracking-wide">{t('reviews.pageSubtitle')}</p>
+            </div>
+        </section>
+    );
+};
 
 const ReviewForm = ({ onReviewSuccess, triggerToast }) => {
+    const { language, t } = useLanguage();
     const [rating, setRating] = useState(5);
     const [content, setContent] = useState('');
     const [loading, setLoading] = useState(false);
@@ -79,17 +94,17 @@ const ReviewForm = ({ onReviewSuccess, triggerToast }) => {
 
     const handleSubmit = async (e) => {
         e.preventDefault();
-        if (!content) return triggerToast("Lỗi", "Vui lòng viết vài dòng chia sẻ nhé!");
+        if (!content) return triggerToast(language === 'vi' ? "Lỗi" : "Error", language === 'vi' ? "Vui lòng viết vài dòng chia sẻ nhé!" : "Please write your review!");
 
         const storedUser = localStorage.getItem('user');
         if (!storedUser) {
-            triggerToast("Yêu cầu đăng nhập", "Bạn cần đăng nhập để gửi đánh giá nhé!");
+            triggerToast(language === 'vi' ? "Yêu cầu đăng nhập" : "Login Required", language === 'vi' ? "Bạn cần đăng nhập để gửi đánh giá nhé!" : "Please log in to submit a review!");
             setTimeout(() => navigate('/login'), 1500);
             return;
         }
 
         const user = JSON.parse(storedUser);
-        const userName = user.HoTen || user.name || 'Khách Hàng';
+        const userName = user.HoTen || user.name || t('navbar.guest');
         const userAvatar = user.AnhDaiDien || `https://ui-avatars.com/api/?name=${userName}&background=D4AF37&color=fff`;
 
         setLoading(true);
@@ -102,14 +117,14 @@ const ReviewForm = ({ onReviewSuccess, triggerToast }) => {
                 BinhLuan: content
             });
 
-            triggerToast(userName, "Đã gửi đánh giá thành công! Cảm ơn bạn.", userAvatar);
+            triggerToast(userName, t('reviews.successSubmit'), userAvatar);
 
             setContent('');
             setRating(5);
             onReviewSuccess();
         } catch (error) {
             console.error("Lỗi gửi review:", error);
-            triggerToast("Lỗi gửi đánh giá", error.response?.data?.message || "Không thể gửi đánh giá");
+            triggerToast(language === 'vi' ? "Lỗi gửi đánh giá" : "Review Error", error.response?.data?.message || (language === 'vi' ? "Không thể gửi đánh giá" : "Could not submit review"));
         } finally {
             setLoading(false);
         }
@@ -118,17 +133,17 @@ const ReviewForm = ({ onReviewSuccess, triggerToast }) => {
     return (
         <section className="marble-bg gold-border-gradient rounded-xl shadow-2xl p-8 md:p-12 mb-16 relative z-30 -mt-20 bg-white">
             <div className="text-center mb-10">
-                <h2 className="font-display text-3xl text-navy-deep mb-2">Share Your Experience</h2>
-                <p className="text-navy-deep/60 text-sm tracking-widest uppercase">We value your distinguished perspective</p>
+                <h2 className="font-display text-3xl text-navy-deep mb-2">{t('reviews.writeReview')}</h2>
+                <p className="text-navy-deep/60 text-sm tracking-widest uppercase">{t('reviews.pageSubtitle')}</p>
             </div>
             <form className="flex flex-col gap-8" onSubmit={handleSubmit}>
                 <div className="flex flex-col items-center">
-                    <span className="text-xs uppercase tracking-widest font-bold text-navy-deep/70 mb-4">Service Rating</span>
+                    <span className="text-xs uppercase tracking-widest font-bold text-navy-deep/70 mb-4">{t('reviews.yourRating')}</span>
                     <div className="flex gap-2">
                         {[1, 2, 3, 4, 5].map((star) => (
                             <button
                                 key={star}
-                                className="group transition-all hover:scale-110 bg-white"
+                                className="group transition-all hover:scale-110 bg-white cursor-pointer"
                                 type="button"
                                 onClick={() => setRating(star)}
                             >
@@ -145,10 +160,10 @@ const ReviewForm = ({ onReviewSuccess, triggerToast }) => {
 
                 <div className="flex flex-col">
                     <label className="flex-1 flex flex-col h-full">
-                        <span className="block text-xs uppercase tracking-widest font-bold text-navy-deep/70 mb-2">Review Content</span>
+                        <span className="block text-xs uppercase tracking-widest font-bold text-navy-deep/70 mb-2">{t('reviews.yourComment')}</span>
                         <textarea
                             className="w-full flex-1 min-h-[120px] bg-transparent border border-navy-deep/10 rounded-lg focus:ring-1 focus:ring-primary focus:border-primary p-4 transition-all placeholder:text-navy-deep/30 font-display leading-relaxed outline-none resize-none"
-                            placeholder="Detail your experience at our neoclassical estate..."
+                            placeholder={t('reviews.commentPlaceholder')}
                             value={content}
                             onChange={(e) => setContent(e.target.value)}
                             required
@@ -161,7 +176,7 @@ const ReviewForm = ({ onReviewSuccess, triggerToast }) => {
                         disabled={loading}
                         className={`${loading ? 'opacity-50' : 'hover:shadow-primary/40 hover:-translate-y-0.5'} bg-primary text-navy-deep px-12 py-4 rounded font-bold uppercase tracking-[0.3em] text-xs shadow-lg shadow-primary/20 transition-all cursor-pointer`}
                     >
-                        {loading ? 'Submitting...' : 'Submit Review'}
+                        {loading ? '...' : t('reviews.submitReview')}
                     </button>
                 </div>
             </form>
@@ -169,8 +184,8 @@ const ReviewForm = ({ onReviewSuccess, triggerToast }) => {
     );
 };
 
-// 👇 ĐÃ THÊM triggerToast VÀO ĐÂY 👇
 const Testimonials = ({ reviews, onRefresh, triggerToast }) => {
+    const { language, t } = useLanguage();
     const safeReviews = Array.isArray(reviews) ? reviews : [];
 
     // State quản lý việc Like và Trả lời
@@ -184,7 +199,7 @@ const Testimonials = ({ reviews, onRefresh, triggerToast }) => {
     const handleLike = async (reviewId) => {
         const storedUser = localStorage.getItem('user');
         if (!storedUser) {
-            triggerToast("Yêu cầu đăng nhập", "Bạn cần đăng nhập để thả tim!");
+            triggerToast(language === 'vi' ? "Yêu cầu đăng nhập" : "Login Required", language === 'vi' ? "Bạn cần đăng nhập để thả tim!" : "Please log in to like this review!");
             setTimeout(() => navigate('/login'), 1500);
             return;
         }
@@ -197,7 +212,7 @@ const Testimonials = ({ reviews, onRefresh, triggerToast }) => {
             await axios.post(`${API_URL}/review/${reviewId}/like`, { 
                 TaiKhoanID: user.id || user.TaiKhoanID,
                 KhachHangID: user.KhachHangID,
-                HoTen: user.HoTen || user.name || 'Khách Hàng'
+                HoTen: user.HoTen || user.name || t('navbar.guest')
             });
             if (onRefresh) onRefresh();
         } catch (error) {
@@ -206,20 +221,19 @@ const Testimonials = ({ reviews, onRefresh, triggerToast }) => {
         }
     };
 
-
     const handleReplySubmit = async (e, reviewId) => {
         e.preventDefault();
-        if (!replyText.trim()) return triggerToast("Lỗi", "Vui lòng nhập nội dung trả lời!");
+        if (!replyText.trim()) return triggerToast(language === 'vi' ? "Lỗi" : "Error", language === 'vi' ? "Vui lòng nhập nội dung trả lời!" : "Please type your reply!");
 
         const storedUser = localStorage.getItem('user');
         if (!storedUser) {
-            triggerToast("Yêu cầu đăng nhập", "Bạn cần đăng nhập để trả lời bình luận!");
+            triggerToast(language === 'vi' ? "Yêu cầu đăng nhập" : "Login Required", language === 'vi' ? "Bạn cần đăng nhập để trả lời bình luận!" : "Please log in to reply!");
             setTimeout(() => navigate('/login'), 1500);
             return;
         }
 
         const user = JSON.parse(storedUser);
-        const userName = user.HoTen || user.name || 'Khách Hàng';
+        const userName = user.HoTen || user.name || t('navbar.guest');
         const userAvatar = user.AnhDaiDien || `https://ui-avatars.com/api/?name=${userName}&background=D4AF37&color=fff`;
 
         setIsSubmitting(true);
@@ -231,14 +245,14 @@ const Testimonials = ({ reviews, onRefresh, triggerToast }) => {
                 NoiDung: replyText
             });
 
-            triggerToast(userName, "Câu trả lời của bạn đã được gửi thành công!", userAvatar);
+            triggerToast(userName, language === 'vi' ? "Câu trả lời của bạn đã được gửi thành công!" : "Your reply was posted successfully!", userAvatar);
 
             setReplyText('');
             setReplyingTo(null);
             if (onRefresh) onRefresh();
         } catch (error) {
             console.error("Lỗi gửi phản hồi:", error);
-            triggerToast("Lỗi gửi phản hồi", error.response?.data?.message || "Không thể gửi phản hồi lúc này.");
+            triggerToast(language === 'vi' ? "Lỗi gửi phản hồi" : "Reply Error", error.response?.data?.message || (language === 'vi' ? "Không thể gửi phản hồi lúc này." : "Could not send reply."));
         } finally {
             setIsSubmitting(false);
         }
@@ -247,12 +261,12 @@ const Testimonials = ({ reviews, onRefresh, triggerToast }) => {
     return (
         <div className="space-y-8">
             <div className="flex items-center justify-between mb-8">
-                <h3 className="font-display text-2xl text-navy-deep">Past Testimonials</h3>
+                <h3 className="font-display text-2xl text-navy-deep">{t('reviews.pageTitle')}</h3>
             </div>
 
             {safeReviews.length === 0 ? (
                 <div className="text-center py-10 border border-dashed border-navy-deep/10 rounded-xl">
-                    <p className="text-navy-deep/40 italic">Chưa có đánh giá nào từ khách hàng.</p>
+                    <p className="text-navy-deep/40 italic">{t('reviews.noReviewsYet')}</p>
                 </div>
             ) : (
                 safeReviews.map((testimonial) => (
@@ -268,7 +282,7 @@ const Testimonials = ({ reviews, onRefresh, triggerToast }) => {
                                 </div>
                                 <div>
                                     <p className="font-display font-bold text-navy-deep">
-                                        {testimonial.TenKhachHang || "Khách hàng ẩn danh"}
+                                        {testimonial.TenKhachHang || t('reviews.anonymous')}
                                     </p>
                                     <div className="flex gap-0.5 mt-1">
                                         {[1, 2, 3, 4, 5].map(star => (
@@ -286,11 +300,11 @@ const Testimonials = ({ reviews, onRefresh, triggerToast }) => {
                             "{testimonial.BinhLuan}"
                         </p>
 
-                        {/* --- NÚT LIKE & REPLY --- */}
+                        {/* NÚT LIKE & REPLY */}
                         <div className="flex items-center gap-6 mt-4 pt-4 border-t border-navy-deep/5">
                             <button
                                 onClick={() => handleLike(testimonial.DanhGiaID)}
-                                className={`flex items-center gap-1.5 text-sm font-bold transition-colors ${likedReviews[testimonial.DanhGiaID] || testimonial.DaLike ? 'text-red-500' : 'text-navy-deep/40 hover:text-red-500'}`}
+                                className={`flex items-center gap-1.5 text-sm font-bold transition-colors cursor-pointer ${likedReviews[testimonial.DanhGiaID] || testimonial.DaLike ? 'text-red-500' : 'text-navy-deep/40 hover:text-red-500'}`}
                             >
                                 <span className="material-symbols-outlined" style={{ fontVariationSettings: (likedReviews[testimonial.DanhGiaID] || testimonial.DaLike) ? "'FILL' 1" : "'FILL' 0" }}>
                                     favorite
@@ -300,36 +314,36 @@ const Testimonials = ({ reviews, onRefresh, triggerToast }) => {
 
                             <button
                                 onClick={() => setReplyingTo(replyingTo === testimonial.DanhGiaID ? null : testimonial.DanhGiaID)}
-                                className="flex items-center gap-1.5 text-sm font-bold text-navy-deep/40 hover:text-primary transition-colors"
+                                className="flex items-center gap-1.5 text-sm font-bold text-navy-deep/40 hover:text-primary transition-colors cursor-pointer"
                             >
                                 <span className="material-symbols-outlined text-lg">chat_bubble</span>
-                                Trả lời
+                                {language === 'vi' ? 'Trả lời' : 'Reply'}
                             </button>
                         </div>
 
-                        {/* --- FORM TRẢ LỜI --- */}
+                        {/* FORM TRẢ LỜI */}
                         {replyingTo === testimonial.DanhGiaID && (
                             <form onSubmit={(e) => handleReplySubmit(e, testimonial.DanhGiaID)} className="mt-4 flex gap-3 animate-fade-in">
                                 <input
                                     type="text"
                                     value={replyText}
                                     onChange={(e) => setReplyText(e.target.value)}
-                                    placeholder="Viết câu trả lời của bạn..."
+                                    placeholder={language === 'vi' ? "Viết câu trả lời của bạn..." : "Type your reply..."}
                                     className="flex-1 bg-white border border-navy-deep/10 rounded-full px-5 py-2 text-sm focus:outline-none focus:border-primary focus:ring-1 focus:ring-primary"
                                 />
-                                <button type="submit" disabled={isSubmitting} className="bg-primary text-white px-6 py-2 rounded-full text-sm font-bold uppercase tracking-wider hover:bg-navy-deep transition-colors disabled:opacity-50">
-                                    Gửi
+                                <button type="submit" disabled={isSubmitting} className="bg-primary text-white px-6 py-2 rounded-full text-sm font-bold uppercase tracking-wider hover:bg-navy-deep transition-colors disabled:opacity-50 cursor-pointer">
+                                    {language === 'vi' ? 'Gửi' : 'Send'}
                                 </button>
                             </form>
                         )}
 
-                        {/* --- HIỂN THỊ CÁC CÂU TRẢ LỜI CŨ TỪ API --- */}
+                        {/* HIỂN THỊ CÁC CÂU TRẢ LỜI CŨ TỪ API */}
                         {testimonial.replies && testimonial.replies.length > 0 && (
                             <div className="mt-6 ml-8 pl-4 border-l-2 border-primary/20 space-y-4">
                                 {testimonial.replies.map((reply, idx) => (
                                     <div key={idx} className="bg-navy-deep/5 p-4 rounded-lg">
                                         <div className="flex justify-between items-start mb-2">
-                                            <span className="font-bold text-sm text-navy-deep">{reply.TenNguoiTraLoi || "Khách"}</span>
+                                            <span className="font-bold text-sm text-navy-deep">{reply.TenNguoiTraLoi || t('navbar.guest')}</span>
                                             <span className="text-xs text-navy-deep/40">
                                                 {reply.NgayTraLoi ? new Date(reply.NgayTraLoi).toLocaleDateString() : ''}
                                             </span>
@@ -347,16 +361,19 @@ const Testimonials = ({ reviews, onRefresh, triggerToast }) => {
     );
 };
 
-const Footer = () => (
-    <footer className="bg-navy-deep text-ivory py-16 px-6 border-t border-primary/20 mt-20">
-        <div className="max-w-7xl mx-auto flex flex-col items-center">
-            <p className="text-ivory/50 text-sm mb-6 italic">
-                Thank you for choosing La Maison DTN — where every stay is a timeless experience.
-            </p>
-            <p className="text-ivory/30 text-xs tracking-widest opacity-40">© 2024 LA MAISON DTN. ALL RIGHTS RESERVED.</p>
-        </div>
-    </footer>
-);
+const Footer = () => {
+    const { t } = useLanguage();
+    return (
+        <footer className="bg-navy-deep text-ivory py-16 px-6 border-t border-primary/20 mt-20">
+            <div className="max-w-7xl mx-auto flex flex-col items-center">
+                <p className="text-ivory/50 text-sm mb-6 italic">
+                    {t('footer.about')}
+                </p>
+                <p className="text-ivory/30 text-xs tracking-widest opacity-40">{t('footer.copyright')}</p>
+            </div>
+        </footer>
+    );
+};
 
 export default function ReviewPage() {
     const [reviews, setReviews] = useState([]);
@@ -435,4 +452,4 @@ export default function ReviewPage() {
             </div>
         </div>
     );
-}
+}

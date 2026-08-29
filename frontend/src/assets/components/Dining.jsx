@@ -1,9 +1,12 @@
-import React from 'react'
-import {  Utensils, GlassWater, ArrowUpRight, Calendar } from 'lucide-react';
+import React from 'react';
+import { Utensils, GlassWater, ArrowUpRight, Calendar } from 'lucide-react';
+import { useLanguage } from '../../context/LanguageContext';
 
 const Dining = () => {
+    const { t } = useLanguage();
+
     return (
-        <div id='dining' className=" mb-10 relative flex min-h-screen w-full flex-col bg-background-light dark:bg-background-dark text-slate-900 dark:text-slate-100 font-body overflow-x-hidden antialiased">
+        <div id='dining' className="mb-10 relative flex min-h-screen w-full flex-col bg-background-light dark:bg-background-dark text-slate-900 dark:text-slate-100 font-body overflow-x-hidden antialiased">
             {/* Main Content */}
             <main className="flex-1 pt-16">
                 {/* Menu Preview Section */}
@@ -14,14 +17,14 @@ const Dining = () => {
 
                     <div className="mx-auto max-w-5xl relative z-10">
                         <div className="text-center mb-16">
-                            <span className="text-primary font-display italic text-xl">Gastronomy</span>
-                            <h2 className="mt-2 font-display text-4xl font-bold text-white sm:text-5xl">Our Menu Preview</h2>
+                            <span className="text-primary font-display italic text-xl">{t('dining.tag')}</span>
+                            <h2 className="mt-2 font-display text-4xl font-bold text-white sm:text-5xl">{t('dining.title')}</h2>
                             <div className="mx-auto mt-6 h-1 w-24 bg-primary rounded-full"></div>
                         </div>
 
                         <div className="grid gap-8">
                             {/* Menu Item 1 */}
-                            <div className="group flex flex-col items-stretch overflow-hidden rounded-xl border border-primary/20 bg-[#F8F5F0] transition-all hover:border-primary/50 md:flex-row md:items-center  bg-white dark:bg-[#2a261a]">
+                            <div className="group flex flex-col items-stretch overflow-hidden rounded-xl border border-primary/20 bg-[#F8F5F0] transition-all hover:border-primary/50 md:flex-row md:items-center bg-white dark:bg-[#2a261a]">
                                 <div className="h-64 md:h-auto md:w-2/5 md:min-h-[300px] relative overflow-hidden">
                                     <div
                                         className="absolute inset-0 bg-cover bg-center transition-transform duration-500 group-hover:scale-105"
@@ -30,16 +33,16 @@ const Dining = () => {
                                 </div>
                                 <div className="flex flex-1 flex-col justify-center p-8 md:p-10">
                                     <div className="mb-2 flex items-center justify-between">
-                                        <span className="rounded bg-primary/10 px-2 py-1 text-xs font-bold uppercase tracking-wider text-background-dark">Signature</span>
+                                        <span className="rounded bg-primary/10 px-2 py-1 text-xs font-bold uppercase tracking-wider text-background-dark">{t('dining.signature')}</span>
                                         <span className="font-display text-xl font-bold text-primary">$185</span>
                                     </div>
-                                    <h3 className="mb-3 font-display text-3xl font-bold text-background-dark">Seasonal Degustation</h3>
+                                    <h3 className="mb-3 font-display text-3xl font-bold text-background-dark">{t('dining.degustationTitle')}</h3>
                                     <p className="mb-6 text-slate-600 leading-relaxed font-light">
-                                        A 7-course journey through modern European cuisine featuring locally sourced ingredients and avant-garde techniques.
+                                        {t('dining.degustationDesc')}
                                     </p>
                                     <div className="flex items-center gap-4">
                                         <button className="rounded-lg border border-background-dark/20 px-6 py-2.5 text-sm font-bold text-background-dark transition-colors hover:bg-background-dark hover:text-dark">
-                                            View Details
+                                            {t('dining.viewDetails')}
                                         </button>
                                     </div>
                                 </div>
@@ -53,14 +56,14 @@ const Dining = () => {
                                             <div className="flex h-10 w-10 items-center justify-center rounded-full bg-primary/10 text-primary">
                                                 <Utensils size={20} />
                                             </div>
-                                            <h4 className="font-display text-xl font-bold text-white">À La Carte</h4>
+                                            <h4 className="font-display text-xl font-bold text-white">{t('dining.aLaCarteTitle')}</h4>
                                         </div>
                                         <ArrowUpRight size={20} className="text-slate-500" />
                                     </div>
                                     <p className="text-slate-400 font-light mb-6 flex-grow">
-                                        Select from our refined list of appetizers, mains, and desserts prepared to perfection.
+                                        {t('dining.aLaCarteDesc')}
                                     </p>
-                                    <a className="text-primary text-sm font-bold hover:underline" href="#">Download PDF Menu</a>
+                                    <a className="text-primary text-sm font-bold hover:underline" href="#">{t('dining.downloadPdf')}</a>
                                 </div>
 
                                 <div className="flex flex-col rounded-xl border border-primary/20 bg-[#2a261a] p-6 hover:border-primary/40 transition-colors">
@@ -69,14 +72,14 @@ const Dining = () => {
                                             <div className="flex h-10 w-10 items-center justify-center rounded-full bg-primary/10 text-primary">
                                                 <GlassWater size={20} />
                                             </div>
-                                            <h4 className="font-display text-xl font-bold text-white">Wine Pairing</h4>
+                                            <h4 className="font-display text-xl font-bold text-white">{t('dining.wineTitle')}</h4>
                                         </div>
                                         <ArrowUpRight size={20} className="text-slate-500" />
                                     </div>
                                     <p className="text-slate-400 font-light mb-6 flex-grow">
-                                        Expertly matched wines to elevate your dining experience, curated by our Head Sommelier.
+                                        {t('dining.wineDesc')}
                                     </p>
-                                    <a className="text-primary text-sm font-bold hover:underline" href="#">View Wine List</a>
+                                    <a className="text-primary text-sm font-bold hover:underline" href="#">{t('dining.viewWineList')}</a>
                                 </div>
                             </div>
                         </div>
@@ -84,16 +87,14 @@ const Dining = () => {
                         <div className="mt-12 text-center">
                             <button className="inline-flex items-center justify-center gap-2 rounded-xl bg-primary px-8 py-3 text-background-dark font-bold transition-transform hover:scale-105">
                                 <Calendar size={20} />
-                                <span className="ml-2">Reserve Your Experience</span>
+                                <span className="ml-2">{t('dining.reserveExp')}</span>
                             </button>
                         </div>
                     </div>
                 </section>
             </main>
-
-
         </div>
-    )
-}
+    );
+};
 
-export default Dining
+export default Dining;

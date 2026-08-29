@@ -2,9 +2,11 @@ import React, { useState, useEffect } from 'react';
 import axios from 'axios';
 import { useNavigate } from 'react-router-dom';
 import { message } from 'antd';
+import { useLanguage } from '../../context/LanguageContext';
 
 const RoomMap = () => {
   const navigate = useNavigate();
+  const { language, setLanguage, t } = useLanguage();
 
   // State lưu thông tin bộ lọc
   const [adults, setAdults] = useState(2);
@@ -21,7 +23,7 @@ const RoomMap = () => {
     const today = new Date();
     const nextWeek = new Date(today);
     
-    //  Mặc định lọc ngày Check-out là 7 ngày sau (1 tuần)
+    // Mặc định lọc ngày Check-out là 7 ngày sau (1 tuần)
     nextWeek.setDate(nextWeek.getDate() + 7); 
     
     const checkInDate = today.toISOString().split('T')[0];
@@ -58,7 +60,7 @@ const RoomMap = () => {
       setSelectedRoom(null); 
     } catch (error) {
       console.error("Lỗi lấy dữ liệu phòng:", error);
-      message.error("Không thể tải sơ đồ phòng!");
+      message.error(t('roomMap.noRoomsFound'));
     } finally {
       setLoading(false);
     }
@@ -66,7 +68,7 @@ const RoomMap = () => {
 
   const handleSearch = () => {
     if (new Date(checkIn) >= new Date(checkOut)) {
-      message.warning("Ngày trả phòng phải sau ngày nhận phòng!");
+      message.warning(language === 'vi' ? "Ngày trả phòng phải sau ngày nhận phòng!" : "Check-out date must be after check-in date!");
       return;
     }
 
@@ -111,6 +113,13 @@ const RoomMap = () => {
     }
   };
 
+  const getStatusText = (status) => {
+    if (status === 'Trống') return t('roomMap.statusBadge.available');
+    if (status === 'Đã đặt' || status === 'Đang dọn') return t('roomMap.statusBadge.booked');
+    if (status === 'Đang ở') return t('roomMap.statusBadge.occupied');
+    if (status === 'Không đủ chỗ') return t('roomMap.statusBadge.notEnoughSpace');
+    return status;
+  };
 
   return (
     <div className="bg-[#201d12] text-slate-100 font-sans antialiased overflow-x-hidden min-h-screen flex flex-col">
@@ -119,14 +128,23 @@ const RoomMap = () => {
           <div className="size-8 text-[#d4af35]">
             <span className="material-symbols-outlined !text-[32px]">apartment</span>
           </div>
-          <h2 className="text-white text-xl font-display font-bold leading-tight tracking-wider">LA MAISON DTN</h2>
+          <h2 className="text-white text-xl font-display font-bold leading-tight tracking-wider">{t('navbar.brand')}</h2>
         </div>
-        <div className="hidden lg:flex flex-1 justify-end gap-8 items-center">
-          <div className="flex items-center gap-4">
-            <button onClick={() => navigate('/')} className="text-slate-300 hover:text-white transition-colors">
-              <span className="material-symbols-outlined">logout</span>
-            </button>
-          </div>
+        <div className="flex flex-1 justify-end gap-4 lg:gap-8 items-center">
+          {/* Nút chuyển ngôn ngữ */}
+          <button
+            onClick={() => setLanguage(language === 'vi' ? 'en' : 'vi')}
+            className="px-3 py-1 text-xs font-bold text-white/90 hover:text-primary rounded-full border border-white/20 bg-white/5 hover:bg-white/10 transition-colors flex items-center gap-1.5 cursor-pointer"
+            title={t('navbar.language')}
+          >
+            <span className="material-icons-outlined text-sm">language</span>
+            <span>{language === 'vi' ? 'VN' : 'EN'}</span>
+          </button>
+
+          <button onClick={() => navigate('/')} className="text-slate-300 hover:text-white transition-colors cursor-pointer flex items-center gap-1 text-sm">
+            <span className="material-symbols-outlined text-base">home</span>
+            <span className="hidden sm:inline">Trang chủ</span>
+          </button>
         </div>
       </header>
 
@@ -135,18 +153,20 @@ const RoomMap = () => {
         {/* --- LEFT SIDEBAR --- */}
         <aside className="w-full lg:w-[340px] border-b lg:border-b-0 lg:border-r border-white/10 bg-[#201d12] flex flex-col p-6 overflow-y-auto">
           <div className="mb-6">
-            <h1 className="text-2xl font-display font-medium text-white mb-2">Tìm Phòng</h1>
-            <p className="text-white/50 text-sm">Lọc phòng trống theo ngày và số khách</p>
+            <h1 className="text-2xl font-display font-medium text-white mb-2">{t('roomMap.filterTitle')}</h1>
+            <p className="text-white/50 text-sm">{t('roomMap.subtitle')}</p>
           </div>
 
           <div className="mb-6">
             <div className="flex justify-between items-center mb-4">
-              <h3 className="text-[#d4af35] font-medium text-sm tracking-wide uppercase">Thời gian lưu trú (Mặc định 1 tuần)</h3>
+              <h3 className="text-[#d4af35] font-medium text-sm tracking-wide uppercase">
+                {language === 'vi' ? 'Thời gian lưu trú' : 'Stay Duration'}
+              </h3>
               <span className="material-symbols-outlined text-white/40 text-sm">calendar_month</span>
             </div>
             <div className="space-y-4 bg-white/5 p-4 rounded-xl border border-white/10">
               <div>
-                <label className="block text-xs text-white/50 uppercase tracking-widest mb-1.5 ml-1">Nhận phòng (Check-in)</label>
+                <label className="block text-xs text-white/50 uppercase tracking-widest mb-1.5 ml-1">{t('roomMap.checkIn')}</label>
                 <input 
                   type="date" 
                   value={checkIn}
@@ -156,7 +176,7 @@ const RoomMap = () => {
                 />
               </div>
               <div>
-                <label className="block text-xs text-white/50 uppercase tracking-widest mb-1.5 ml-1">Trả phòng (Check-out)</label>
+                <label className="block text-xs text-white/50 uppercase tracking-widest mb-1.5 ml-1">{t('roomMap.checkOut')}</label>
                 <input 
                   type="date" 
                   value={checkOut}
@@ -170,25 +190,25 @@ const RoomMap = () => {
 
           <div className="mb-8">
             <div className="flex justify-between items-center mb-4">
-              <h3 className="text-[#d4af35] font-medium text-sm tracking-wide uppercase">Khách</h3>
+              <h3 className="text-[#d4af35] font-medium text-sm tracking-wide uppercase">{language === 'vi' ? 'Số lượng khách' : 'Guests'}</h3>
               <span className="material-symbols-outlined text-white/40 text-sm">group</span>
             </div>
             <div className="space-y-3 bg-white/5 p-4 rounded-xl border border-white/10">
               <div className="flex items-center justify-between">
-                <span className="text-sm text-white font-medium">Người lớn</span>
+                <span className="text-sm text-white font-medium">{t('roomMap.adults')}</span>
                 <div className="flex items-center gap-3">
-                  <button onClick={() => setAdults(Math.max(1, adults - 1))} className="size-7 rounded-full bg-[#201d12] border border-white/10 flex items-center justify-center hover:bg-[#d4af35]/20 text-white hover:text-[#d4af35] hover:border-[#d4af35]/50 transition-all"><span className="material-symbols-outlined text-sm">remove</span></button>
+                  <button onClick={() => setAdults(Math.max(1, adults - 1))} className="size-7 rounded-full bg-[#201d12] border border-white/10 flex items-center justify-center hover:bg-[#d4af35]/20 text-white hover:text-[#d4af35] hover:border-[#d4af35]/50 transition-all cursor-pointer"><span className="material-symbols-outlined text-sm">remove</span></button>
                   <span className="text-white w-5 text-center font-bold">{adults}</span>
-                  <button onClick={() => setAdults(adults + 1)} className="size-7 rounded-full bg-[#201d12] border border-white/10 flex items-center justify-center hover:bg-[#d4af35]/20 text-white hover:text-[#d4af35] hover:border-[#d4af35]/50 transition-all"><span className="material-symbols-outlined text-sm">add</span></button>
+                  <button onClick={() => setAdults(adults + 1)} className="size-7 rounded-full bg-[#201d12] border border-white/10 flex items-center justify-center hover:bg-[#d4af35]/20 text-white hover:text-[#d4af35] hover:border-[#d4af35]/50 transition-all cursor-pointer"><span className="material-symbols-outlined text-sm">add</span></button>
                 </div>
               </div>
               <div className="h-px bg-white/5 w-full my-1"></div>
               <div className="flex items-center justify-between">
-                <span className="text-sm text-white font-medium">Trẻ em</span>
+                <span className="text-sm text-white font-medium">{t('roomMap.children')}</span>
                 <div className="flex items-center gap-3">
-                  <button onClick={() => setChildren(Math.max(0, children - 1))} className="size-7 rounded-full bg-[#201d12] border border-white/10 flex items-center justify-center hover:bg-[#d4af35]/20 text-white hover:text-[#d4af35] hover:border-[#d4af35]/50 transition-all"><span className="material-symbols-outlined text-sm">remove</span></button>
+                  <button onClick={() => setChildren(Math.max(0, children - 1))} className="size-7 rounded-full bg-[#201d12] border border-white/10 flex items-center justify-center hover:bg-[#d4af35]/20 text-white hover:text-[#d4af35] hover:border-[#d4af35]/50 transition-all cursor-pointer"><span className="material-symbols-outlined text-sm">remove</span></button>
                   <span className="text-white w-5 text-center font-bold">{children}</span>
-                  <button onClick={() => setChildren(children + 1)} className="size-7 rounded-full bg-[#201d12] border border-white/10 flex items-center justify-center hover:bg-[#d4af35]/20 text-white hover:text-[#d4af35] hover:border-[#d4af35]/50 transition-all"><span className="material-symbols-outlined text-sm">add</span></button>
+                  <button onClick={() => setChildren(children + 1)} className="size-7 rounded-full bg-[#201d12] border border-white/10 flex items-center justify-center hover:bg-[#d4af35]/20 text-white hover:text-[#d4af35] hover:border-[#d4af35]/50 transition-all cursor-pointer"><span className="material-symbols-outlined text-sm">add</span></button>
                 </div>
               </div>
             </div>
@@ -198,10 +218,10 @@ const RoomMap = () => {
             <button 
               onClick={handleSearch}
               disabled={loading}
-              className="w-full bg-[#d4af35] hover:bg-[#bfa030] text-[#201d12] font-bold py-3.5 rounded-lg transition-all duration-300 flex items-center justify-center gap-2 shadow-[0_4px_15px_rgba(212,175,53,0.25)] uppercase tracking-widest disabled:opacity-50"
+              className="w-full bg-[#d4af35] hover:bg-[#bfa030] text-[#201d12] font-bold py-3.5 rounded-lg transition-all duration-300 flex items-center justify-center gap-2 shadow-[0_4px_15px_rgba(212,175,53,0.25)] uppercase tracking-widest disabled:opacity-50 cursor-pointer"
             >
               <span className="material-symbols-outlined text-lg">search</span>
-              <span>{loading ? 'Đang lọc...' : 'Lọc Bộ Kết Quả'}</span>
+              <span>{loading ? t('roomMap.loading') : t('roomMap.searchBtn')}</span>
             </button>
           </div>
         </aside>
@@ -217,18 +237,18 @@ const RoomMap = () => {
           <div className="sticky top-0 bg-[#201d12]/90 backdrop-blur border border-white/10 px-6 py-3 rounded-full flex gap-6 z-20 mb-8 shadow-xl">
             <div className="flex items-center gap-2">
               <div className="size-3 rounded-full bg-[#d4af35] shadow-[0_0_10px_rgba(212,175,53,0.6)]"></div>
-              <span className="text-xs text-white uppercase tracking-wider">Trống</span>
+              <span className="text-xs text-white uppercase tracking-wider">{t('roomMap.statusAvailable')}</span>
             </div>
             <div className="flex items-center gap-2">
               <div className="size-3 rounded-full bg-white/10 border border-white/20"></div>
-              <span className="text-xs text-white/50 uppercase tracking-wider">Đã đặt / Không khả dụng</span>
+              <span className="text-xs text-white/50 uppercase tracking-wider">{t('roomMap.statusBooked')}</span>
             </div>
           </div>
 
           <div className="w-full max-w-4xl flex flex-col gap-3 relative">
             {sortedFloors.length === 0 && !loading && (
               <div className="text-center text-white/40 mt-10 italic">
-                Sơ đồ phòng trống. Vui lòng kiểm tra lại kết nối.
+                {t('roomMap.noRoomsFound')}
               </div>
             )}
             
@@ -255,7 +275,7 @@ const RoomMap = () => {
               return (
                 <div key={floor} className="flex gap-4 w-full border-b border-white/5 pb-3 items-stretch">
                   <div className="w-12 lg:w-16 shrink-0 flex items-center justify-center bg-white/5 rounded-lg border border-white/10 text-white/50 font-display text-xs lg:text-sm tracking-widest">
-                    Lầu {floor}
+                    {t('roomMap.floor')} {floor}
                   </div>
 
                   <div className={`flex-1 grid ${gridClass} gap-2 lg:gap-3`}>
@@ -292,8 +312,8 @@ const RoomMap = () => {
           {!selectedRoom ? (
             <div className="flex-1 flex flex-col items-center justify-center p-8 text-center">
               <span className="material-symbols-outlined text-[80px] text-white/10 mb-4">domain</span>
-              <h3 className="text-white/50 font-display text-lg">Chưa chọn phòng</h3>
-              <p className="text-white/30 text-sm mt-2">Vui lòng chọn một phòng từ sơ đồ để xem chi tiết hoặc thực hiện giao dịch.</p>
+              <h3 className="text-white/50 font-display text-lg">{language === 'vi' ? 'Chưa chọn phòng' : 'No Room Selected'}</h3>
+              <p className="text-white/30 text-sm mt-2">{language === 'vi' ? 'Vui lòng chọn một phòng từ sơ đồ để xem chi tiết hoặc thực hiện đặt phòng.' : 'Please select a room from the map to view details and proceed with booking.'}</p>
             </div>
           ) : (
             <>
@@ -305,7 +325,7 @@ const RoomMap = () => {
                   onError={(e) => { e.target.src = 'https://images.unsplash.com/photo-1590490360182-c33d57733427?q=80&w=800&auto=format&fit=crop' }} 
                 />
                 <div className="absolute top-4 right-4 bg-[#d4af35] text-[#201d12] font-bold text-xs px-3 py-1 rounded-full uppercase tracking-wider">
-                  {selectedRoom.TinhTrang === 'Đang dọn' ? 'Đã đặt' : selectedRoom.TinhTrang}
+                  {getStatusText(selectedRoom.TinhTrang)}
                 </div>
                 <div className="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-[#201d12] to-transparent h-24"></div>
               </div>
@@ -314,8 +334,12 @@ const RoomMap = () => {
                 <div className="flex justify-between items-start mb-2">
                   <h2 className="text-3xl font-display font-medium text-white">{selectedRoom.TenPhong}</h2>
                   <div className="text-right">
-                    <span className="text-[#d4af35] font-display text-xl font-bold">{new Intl.NumberFormat('vi-VN').format(selectedRoom.GiaPhong)}<span className="text-sm font-sans text-white/50 font-normal">đ</span></span>
-                    <p className="text-[10px] text-white/40 uppercase tracking-widest mt-1">/ Đêm</p>
+                    <span className="text-[#d4af35] font-display text-xl font-bold">
+                      {language === 'vi' 
+                        ? `${new Intl.NumberFormat('vi-VN').format(selectedRoom.GiaPhong)}đ`
+                        : `$${Math.round(selectedRoom.GiaPhong / 25000)}`}
+                    </span>
+                    <p className="text-[10px] text-white/40 uppercase tracking-widest mt-1">{t('roomMap.pricePerNight')}</p>
                   </div>
                 </div>
                 <p className="text-sm text-[#d4af35] mb-6 uppercase tracking-widest">{selectedRoom.TenLoai}</p>
@@ -323,24 +347,24 @@ const RoomMap = () => {
                 <div className="grid grid-cols-2 gap-4 mb-8 border-y border-white/10 py-5">
                   <div className="flex items-center gap-3 text-sm text-slate-300">
                     <span className="material-symbols-outlined text-[#d4af35]">group</span>
-                    <span>Tối đa {selectedRoom.SoLuongToiDa} người</span>
+                    <span>{t('roomMap.capacity')}: {selectedRoom.SoLuongToiDa} {t('roomMap.people')}</span>
                   </div>
                   <div className="flex items-center gap-3 text-sm text-slate-300">
                     <span className="material-symbols-outlined text-[#d4af35]">king_bed</span>
-                    <span>Giường King</span>
+                    <span>{language === 'vi' ? 'Giường King' : 'King Size Bed'}</span>
                   </div>
                   <div className="flex items-center gap-3 text-sm text-slate-300">
                     <span className="material-symbols-outlined text-[#d4af35]">bathtub</span>
-                    <span>Phòng tắm đá marble</span>
+                    <span>{language === 'vi' ? 'Phòng tắm đá marble' : 'Marble Bathroom'}</span>
                   </div>
                   <div className="flex items-center gap-3 text-sm text-slate-300">
                     <span className="material-symbols-outlined text-[#d4af35]">wifi</span>
-                    <span>Wifi tốc độ cao</span>
+                    <span>{language === 'vi' ? 'Wifi tốc độ cao' : 'High-speed Wifi'}</span>
                   </div>
                 </div>
 
                 <div>
-                  <h4 className="text-white/70 text-sm font-medium mb-2 uppercase tracking-wide">Mô tả</h4>
+                  <h4 className="text-white/70 text-sm font-medium mb-2 uppercase tracking-wide">{language === 'vi' ? 'Mô tả' : 'Description'}</h4>
                   <p className="text-sm text-white/40 leading-relaxed italic border-l-2 border-[#d4af35] pl-3">
                     "{selectedRoom.MoTa}"
                   </p>
@@ -358,26 +382,25 @@ const RoomMap = () => {
                           checkOut
                         } 
                       })}
-                      className="w-full bg-[#d4af35] hover:bg-[#bfa030] text-[#201d12] font-bold py-4 px-6 rounded-lg transition-all duration-300 flex items-center justify-center gap-2 shadow-[0_4px_20px_rgba(212,175,53,0.3)] uppercase tracking-widest"
+                      className="w-full bg-[#d4af35] hover:bg-[#bfa030] text-[#201d12] font-bold py-4 px-6 rounded-lg transition-all duration-300 flex items-center justify-center gap-2 shadow-[0_4px_20px_rgba(212,175,53,0.3)] uppercase tracking-widest cursor-pointer"
                     >
-                      <span>Đặt Phòng Ngay</span>
+                      <span>{t('roomMap.bookRoom')}</span>
                       <span className="material-symbols-outlined">arrow_forward</span>
                     </button>
                   )}
 
-
                   {/* LOGIC NÚT KHÓA */}
-                  {(selectedRoom.TinhTrang === 'Đã đặt' || selectedRoom.TinhTrang === 'Đang dọn') && (
+                  {(selectedRoom.TinhTrang === 'Đã đặt' || selectedRoom.TinhTrang === 'Đang dọn' || selectedRoom.TinhTrang === 'Đang ở') && (
                     <button disabled className="w-full bg-white/5 border border-white/10 text-white/40 font-bold py-4 px-6 rounded-lg flex items-center justify-center gap-2 uppercase tracking-widest cursor-not-allowed">
                       <span className="material-symbols-outlined text-lg">lock</span>
-                      <span>Phòng Đã Kín Lịch</span>
+                      <span>{language === 'vi' ? 'Phòng Đã Kín Lịch' : 'Room Unavailable'}</span>
                     </button>
                   )}
 
                   {selectedRoom.TinhTrang === 'Không đủ chỗ' && (
                     <button disabled className="w-full bg-red-500/10 border border-red-500/20 text-red-500/50 font-bold py-4 px-6 rounded-lg flex items-center justify-center gap-2 uppercase tracking-widest cursor-not-allowed">
                       <span className="material-symbols-outlined text-lg">group_off</span>
-                      <span>Vượt Quá Sức Chứa ({selectedRoom.SoLuongToiDa} Người)</span>
+                      <span>{language === 'vi' ? `Vượt Quá Sức Chứa (${selectedRoom.SoLuongToiDa} Người)` : `Exceeds Capacity (${selectedRoom.SoLuongToiDa} Guests)`}</span>
                     </button>
                   )}
                 </div>

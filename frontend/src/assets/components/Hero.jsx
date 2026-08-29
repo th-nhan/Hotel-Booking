@@ -1,8 +1,10 @@
 import React from 'react';
 import { useNavigate } from 'react-router-dom';
+import { useLanguage } from '../../context/LanguageContext';
 
 const Hero = () => {
-    const navigate = useNavigate();
+  const navigate = useNavigate();
+  const { t } = useLanguage();
 
   return (
     <section className="relative min-h-screen w-full overflow-hidden flex items-center justify-center bg-navy-deep">
@@ -20,28 +22,30 @@ const Hero = () => {
       
       <div className="relative z-20 text-center px-4 max-w-6xl w-full pt-32 lg:pt-30 pb-40">
         <span className="text-primary uppercase tracking-[0.5em] text-[10px] lg:text-xs font-bold mb-6 block drop-shadow-md">
-          Vietnam's Premiere Luxury Destination
+          {t('hero.tagline')}
         </span>
         <h1 className="font-serif text-4xl sm:text-6xl md:text-7xl lg:text-[100px] text-white mb-8 leading-[1.1] drop-shadow-xl italic">
-          Where <span className="not-italic">European Elegance</span><br/> Meets Vietnamese Soul
+          {t('hero.titleLine1')} <br />
+          <span className="whitespace-nowrap not-italic">{t('hero.titleLine2')}</span> <br />
+          {t('hero.titleLine3')}
         </h1>
         <p className="text-white/80 max-w-2xl mx-auto text-base md:text-lg font-light leading-relaxed mb-12 drop-shadow-md">
-          An architectural masterpiece blending Neoclassical grandeur with the delicate artistry of Vietnam. Discover a sanctuary of unparalleled luxury in the heart of the city.
+          {t('hero.description')}
         </p>
         
         <div className="flex flex-col sm:flex-row items-center justify-center space-y-4 sm:space-y-0 sm:space-x-6">
           <button onClick={() => navigate('/room-map')} className="bg-primary text-navy-deep px-10 py-4 rounded-sm font-bold uppercase tracking-[0.2em] text-xs transition-all hover:bg-white hover:scale-105 active:scale-95 shadow-2xl cursor-pointer">
-            Book Your Stay
+            {t('hero.bookStay')}
           </button>
           <button onClick={() => navigate('/room-map')} className="border-2 border-white text-white bg-transparent px-10 py-4 rounded-sm font-bold uppercase tracking-[0.2em] text-xs transition-all hover:bg-white hover:text-navy-deep cursor-pointer">
-            Explore Rooms
+            {t('hero.exploreRooms')}
           </button>
         </div>
       </div>
 
       {/* Scroll Indicator */}
       <div className="absolute bottom-10 left-1/2 -translate-x-1/2 z-20 text-white/60 flex flex-col items-center">
-        <span className="text-[10px] uppercase tracking-[0.3em] mb-3">Discover More</span>
+        <span className="text-[10px] uppercase tracking-[0.3em] mb-3">{t('hero.discoverMore')}</span>
         <div className="w-[1px] h-12 bg-gradient-to-b from-primary to-transparent animate-pulse"></div>
       </div>
 

@@ -1,7 +1,19 @@
 import React from 'react';
 import { useNavigate } from 'react-router-dom';
+import { useLanguage } from '../../context/LanguageContext';
+
 const Footer = () => {
   const navigate = useNavigate();
+  const { t } = useLanguage();
+
+  const links = [
+    { label: t('footer.roomsSuites'), href: '#accommodations' },
+    { label: t('footer.offersPackages'), href: '#' },
+    { label: t('footer.weddingsEvents'), href: '#' },
+    { label: t('footer.careers'), href: '#' },
+    { label: t('footer.giftVouchers'), href: '#' },
+  ];
+
   return (
     <footer className="bg-navy-deep text-white pt-24 pb-12">
       <div className="container mx-auto px-8 lg:px-12">
@@ -10,7 +22,7 @@ const Footer = () => {
           <div className="space-y-8">
             <h5 className="font-serif text-2xl tracking-widest font-bold">LA MAISON DTN</h5>
             <p className="text-sm text-white/50 font-light leading-relaxed">
-              An sanctuary of timeless beauty and cultural resonance. Experience the pinnacle of luxury hospitality in the heart of Saigon.
+              {t('footer.about')}
             </p>
             <div className="flex space-x-5">
               {['facebook', 'photo_camera', 'play_circle_outline'].map((icon) => (
@@ -26,31 +38,31 @@ const Footer = () => {
           </div>
 
           <div>
-            <h6 className="text-[10px] font-bold uppercase tracking-[0.3em] text-primary mb-10">Contact</h6>
+            <h6 className="text-[10px] font-bold uppercase tracking-[0.3em] text-primary mb-10">{t('footer.contact')}</h6>
             <ul className="space-y-6 text-sm text-white/60 font-light">
               <li className="flex items-start space-x-3">
                 <span className="material-icons-outlined text-sm pt-1">location_on</span>
-                <span>123 Elegance Boulevard, District 1, Ho Chi Minh City, Vietnam</span>
+                <span>{t('footer.address')}</span>
               </li>
               <li className="flex items-center space-x-3">
                 <span className="material-icons-outlined text-sm">phone</span>
-                <span>T: +84 (0) 28 3823 6666</span>
+                <span>{t('footer.phone')}</span>
               </li>
               <li className="flex items-center space-x-3">
                 <span className="material-icons-outlined text-sm">mail_outline</span>
-                <span>E: reservations@lamaisondtn.com</span>
+                <span>{t('footer.email')}</span>
               </li>
             </ul>
           </div>
 
           <div>
-            <h6 className="text-[10px] font-bold uppercase tracking-[0.3em] text-primary mb-10">Links</h6>
+            <h6 className="text-[10px] font-bold uppercase tracking-[0.3em] text-primary mb-10">{t('footer.links')}</h6>
             <ul className="space-y-5 text-sm text-white/60 font-light">
-              {['Rooms & Suites', 'Offers & Packages', 'Weddings & Events', 'Careers', 'Gift Vouchers'].map(link => (
-                <li key={link}>
-                  <a className="hover:text-primary transition-colors flex items-center group" href="#">
+              {links.map((item, idx) => (
+                <li key={idx}>
+                  <a className="hover:text-primary transition-colors flex items-center group" href={item.href}>
                     <span className="w-0 group-hover:w-4 h-[1px] bg-primary mr-0 group-hover:mr-2 transition-all"></span>
-                    {link}
+                    {item.label}
                   </a>
                 </li>
               ))}
@@ -59,27 +71,26 @@ const Footer = () => {
 
           <div className="max-w-sm">
             <h6 className="text-[11px] font-semibold uppercase tracking-[0.4em] text-primary mb-6">
-              Voices of Our Guests
+              {t('footer.guestVoicesTitle')}
             </h6>
 
             <p className="text-sm text-white/60 mb-10 font-light leading-relaxed">
-              Discover refined impressions from our distinguished guests and share your own
-              experience of timeless elegance at La Maison DTN.
+              {t('footer.guestVoicesDesc')}
             </p>
 
-            <button onClick={()=> navigate('/reviews')} className="group relative text-primary font-semibold text-[11px] uppercase tracking-[0.25em] transition-all duration-300">
-              Share Your Experience
+            <button onClick={()=> navigate('/reviews')} className="group relative text-primary font-semibold text-[11px] uppercase tracking-[0.25em] transition-all duration-300 cursor-pointer">
+              {t('footer.shareExperience')}
               <span className="block h-[1px] w-0 bg-primary mt-1 transition-all duration-300 group-hover:w-full"></span>
             </button>
           </div>
         </div>
 
         <div className="pt-12 border-t border-white/5 flex flex-col md:flex-row justify-between items-center text-[9px] uppercase tracking-[0.3em] text-white/30 font-semibold">
-          <p>© 2026 LA MAISON DTN Luxury Hotels. All rights reserved.</p>
+          <p>{t('footer.copyright')}</p>
           <div className="flex space-x-10 mt-6 md:mt-0">
-            <a className="hover:text-white transition-colors" href="#">Privacy Policy</a>
-            <a className="hover:text-white transition-colors" href="#">Terms of Use</a>
-            <a className="hover:text-white transition-colors" href="#">Sitemap</a>
+            <a className="hover:text-white transition-colors" href="#">{t('footer.privacyPolicy')}</a>
+            <a className="hover:text-white transition-colors" href="#">{t('footer.termsOfUse')}</a>
+            <a className="hover:text-white transition-colors" href="#">{t('footer.sitemap')}</a>
           </div>
         </div>
       </div>

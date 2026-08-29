@@ -16,9 +16,11 @@ import {
     Calendar,
     ChevronLeft
 } from 'lucide-react';
+import { useLanguage } from '../../context/LanguageContext';
 
 const Wellness = () => {
     const navigate = useNavigate();
+    const { t } = useLanguage();
 
     return (
         <div id='wellness' className="bg-[#fdfbf7] font-sans text-slate-900 dark:text-slate-100 min-h-screen flex flex-col overflow-x-hidden selection:bg-[#d4af35]/30">
@@ -27,12 +29,12 @@ const Wellness = () => {
                 <section className="px-6 md:px-10 bg-[#fdfbf7] dark:text-primary relative">
                     <div className="flex flex-col md:flex-row justify-between items-end mb-12 gap-6">
                         <div>
-                            <h3 className="text-[#d4af35] font-medium tracking-widest text-sm uppercase mb-2">Our Offerings</h3>
-                            <h2 className="text-3xl md:text-4xl font-display font-bold text-slate-900 ">Signature Experiences</h2>
+                            <h3 className="text-[#d4af35] font-medium tracking-widest text-sm uppercase mb-2">{t('wellness.offerings')}</h3>
+                            <h2 className="text-3xl md:text-4xl font-display font-bold text-slate-900 ">{t('wellness.title')}</h2>
                         </div>
                         
                         <p className="text-slate-500 dark:text-slate-400 max-w-md text-sm md:text-base leading-relaxed">
-                            Curated wellness journeys combining ancient healing traditions with modern luxury architecture.
+                            {t('wellness.subtitle')}
                         </p>
                     </div>
 
@@ -50,15 +52,15 @@ const Wellness = () => {
                                 </div>
                             </div>
                             <div className="p-8 relative">
-                                <div className="absolute -top-6 right-8 bg-[#d4af35] text-[#1a1814] text-xs font-bold px-3 py-1 rounded shadow-md uppercase tracking-wider">Most Popular</div>
-                                <h4 className="text-2xl font-display font-bold text-slate-900 dark:text-white mb-3 group-hover:text-[#d4af35] transition-colors">Himalayan Salt Therapy</h4>
+                                <div className="absolute -top-6 right-8 bg-[#d4af35] text-[#1a1814] text-xs font-bold px-3 py-1 rounded shadow-md uppercase tracking-wider">{t('wellness.mostPopular')}</div>
+                                <h4 className="text-2xl font-display font-bold text-slate-900 dark:text-white mb-3 group-hover:text-[#d4af35] transition-colors">{t('wellness.saltTherapyTitle')}</h4>
                                 <p className="text-slate-600 dark:text-slate-300 mb-6 leading-relaxed">
-                                    Breathe deeply in our exclusive salt chamber. The textured stone walls and warm amber lighting create a purifying atmosphere designed to rejuvenate the respiratory system.
+                                    {t('wellness.saltTherapyDesc')}
                                 </p>
                                 <div className="flex items-center justify-between border-t border-slate-100 dark:border-slate-800 pt-6">
-                                    <span className="text-sm font-medium text-slate-400">60 Mins • $180</span>
-                                    <button className="text-[#d4af35] font-bold text-sm uppercase tracking-wide hover:underline decoration-2 underline-offset-4 flex items-center gap-1">
-                                        Book This
+                                    <span className="text-sm font-medium text-slate-400">{t('wellness.saltTherapyTimePrice')}</span>
+                                    <button className="text-[#d4af35] font-bold text-sm uppercase tracking-wide hover:underline decoration-2 underline-offset-4 flex items-center gap-1 cursor-pointer">
+                                        {t('wellness.bookThis')}
                                         <ArrowRight className="w-4 h-4" />
                                     </button>
                                 </div>
@@ -78,14 +80,14 @@ const Wellness = () => {
                                 </div>
                             </div>
                             <div className="p-8 relative">
-                                <h4 className="text-2xl font-display font-bold text-slate-900 dark:text-white mb-3 group-hover:text-[#d4af35] transition-colors">Ethereal Steam Room</h4>
+                                <h4 className="text-2xl font-display font-bold text-slate-900 dark:text-white mb-3 group-hover:text-[#d4af35] transition-colors">{t('wellness.steamRoomTitle')}</h4>
                                 <p className="text-slate-600 dark:text-slate-300 mb-6 leading-relaxed">
-                                    Relax your muscles and mind in our steam room featuring soft, ethereal lighting and Italian marble surfaces. A true escape for detoxification and clarity.
+                                    {t('wellness.steamRoomDesc')}
                                 </p>
                                 <div className="flex items-center justify-between border-t border-slate-100 dark:border-slate-800 pt-6">
-                                    <span className="text-sm font-medium text-slate-400">45 Mins • $120</span>
-                                    <button className="text-[#d4af35] font-bold text-sm uppercase tracking-wide hover:underline decoration-2 underline-offset-4 flex items-center gap-1">
-                                        Book This
+                                    <span className="text-sm font-medium text-slate-400">{t('wellness.steamRoomTimePrice')}</span>
+                                    <button className="text-[#d4af35] font-bold text-sm uppercase tracking-wide hover:underline decoration-2 underline-offset-4 flex items-center gap-1 cursor-pointer">
+                                        {t('wellness.bookThis')}
                                         <ArrowRight className="w-4 h-4" />
                                     </button>
                                 </div>
@@ -103,16 +105,16 @@ const Wellness = () => {
                             <div className="w-full md:w-1/2 p-8 flex flex-col justify-center">
                                 <div className="flex items-center gap-2 mb-3">
                                     <Crown className="w-4 h-4 text-[#d4af35]" />
-                                    <span className="text-[#d4af35] text-xs font-bold uppercase tracking-widest">Premium Package</span>
+                                    <span className="text-[#d4af35] text-xs font-bold uppercase tracking-widest">{t('wellness.premiumPackage')}</span>
                                 </div>
-                                <h4 className="text-2xl font-display font-bold text-slate-900 dark:text-white mb-3 group-hover:text-[#d4af35] transition-colors">The Royal Awakening</h4>
+                                <h4 className="text-2xl font-display font-bold text-slate-900 dark:text-white mb-3 group-hover:text-[#d4af35] transition-colors">{t('wellness.royalTitle')}</h4>
                                 <p className="text-slate-600 dark:text-slate-300 mb-6 leading-relaxed">
-                                    Our signature full-day package combining the Salt Therapy, Steam Room access, and a 90-minute deep tissue massage. Includes a light organic lunch.
+                                    {t('wellness.royalDesc')}
                                 </p>
                                 <div className="flex items-center justify-between border-t border-slate-100 dark:border-slate-800 pt-6 mt-auto">
-                                    <span className="text-sm font-medium text-slate-400">4 Hours • $450</span>
-                                    <button className="text-[#d4af35] font-bold text-sm uppercase tracking-wide hover:underline decoration-2 underline-offset-4 flex items-center gap-1">
-                                        Book Experience
+                                    <span className="text-sm font-medium text-slate-400">{t('wellness.royalTimePrice')}</span>
+                                    <button className="text-[#d4af35] font-bold text-sm uppercase tracking-wide hover:underline decoration-2 underline-offset-4 flex items-center gap-1 cursor-pointer">
+                                        {t('wellness.bookExperience')}
                                         <ArrowRight className="w-4 h-4" />
                                     </button>
                                 </div>
@@ -128,27 +130,27 @@ const Wellness = () => {
                             <div className="w-16 h-16 rounded-full bg-[#d4af35]/10 flex items-center justify-center text-[#d4af35] mb-2">
                                 <Building2 className="w-8 h-8" />
                             </div>
-                            <h3 className="text-lg font-display font-bold text-slate-900 dark:text-white">Architectural Harmony</h3>
+                            <h3 className="text-lg font-display font-bold text-slate-900 dark:text-white">{t('wellness.archTitle')}</h3>
                             <p className="text-slate-500 dark:text-slate-400 text-sm leading-relaxed max-w-xs">
-                                Spaces designed with Italian marble and hand-carved moldings to elevate the spirit through beauty.
+                                {t('wellness.archDesc')}
                             </p>
                         </div>
                         <div className="flex flex-col items-center gap-4">
                             <div className="w-16 h-16 rounded-full bg-[#d4af35]/10 flex items-center justify-center text-[#d4af35] mb-2">
                                 <Waves className="w-8 h-8" />
                             </div>
-                            <h3 className="text-lg font-display font-bold text-slate-900 dark:text-white">Hydrotherapy</h3>
+                            <h3 className="text-lg font-display font-bold text-slate-900 dark:text-white">{t('wellness.hydroTitle')}</h3>
                             <p className="text-slate-500 dark:text-slate-400 text-sm leading-relaxed max-w-xs">
-                                State-of-the-art water circuits designed to invigorate circulation and calm the nervous system.
+                                {t('wellness.hydroDesc')}
                             </p>
                         </div>
                         <div className="flex flex-col items-center gap-4">
                             <div className="w-16 h-16 rounded-full bg-[#d4af35]/10 flex items-center justify-center text-[#d4af35] mb-2">
                                 <Leaf className="w-8 h-8" />
                             </div>
-                            <h3 className="text-lg font-display font-bold text-slate-900 dark:text-white">Organic Products</h3>
+                            <h3 className="text-lg font-display font-bold text-slate-900 dark:text-white">{t('wellness.organicTitle')}</h3>
                             <p className="text-slate-500 dark:text-slate-400 text-sm leading-relaxed max-w-xs">
-                                We use only premium, organic oils and scrubs, sourced sustainably for your wellbeing.
+                                {t('wellness.organicDesc')}
                             </p>
                         </div>
                     </div>
@@ -159,22 +161,21 @@ const Wellness = () => {
             <div className="sticky bottom-0 z-40 w-full bg-white dark:bg-[#1a1814] border-t border-[#d4af35]/20 shadow-[0_-5px_20px_rgba(0,0,0,0.3)] py-4 px-6 md:px-10 lg:px-40">
                 <div className="max-w-[1440px] mx-auto flex flex-col md:flex-row items-center justify-between gap-4">
                     <div className="hidden md:flex flex-col">
-                        <span className="text-sm font-bold text-slate-900 dark:text-white">Ready to relax?</span>
-                        <span className="text-xs text-slate-500 dark:text-slate-400">Book your appointment today and receive a complimentary herbal tea.</span>
+                        <span className="text-sm font-bold text-slate-900 dark:text-white">{t('wellness.readyToRelax')}</span>
+                        <span className="text-xs text-slate-500 dark:text-slate-400">{t('wellness.complimentaryTea')}</span>
                     </div>
                     <div className="flex flex-col sm:flex-row items-center gap-4 w-full md:w-auto">
                         <div className="relative w-full sm:w-64">
                             <select className="w-full bg-[#fdfbf7] dark:bg-[#221f18] border border-slate-300 dark:border-slate-700 text-slate-700 dark:text-slate-300 text-sm rounded-lg py-2.5 px-3 focus:ring-[#d4af35] focus:border-[#d4af35] outline-none cursor-pointer">
-                                <option>Select Treatment</option>
-                                <option>Himalayan Salt Therapy</option>
-                                <option>Ethereal Steam Room</option>
-                                <option>Deep Tissue Massage</option>
-                                <option>The Royal Awakening</option>
+                                <option>{t('wellness.selectTreatment')}</option>
+                                <option>{t('wellness.saltTherapyTitle')}</option>
+                                <option>{t('wellness.steamRoomTitle')}</option>
+                                <option>{t('wellness.royalTitle')}</option>
                             </select>
                         </div>
-                        <button className="w-full sm:w-auto bg-[#d4af35] hover:bg-[#bfa030] text-[#1a1814] font-bold text-sm px-6 py-2.5 rounded-lg shadow-md shadow-[#d4af35]/20 whitespace-nowrap transition-colors flex items-center justify-center gap-2">
+                        <button className="w-full sm:w-auto bg-[#d4af35] hover:bg-[#bfa030] text-[#1a1814] font-bold text-sm px-6 py-2.5 rounded-lg shadow-md shadow-[#d4af35]/20 whitespace-nowrap transition-colors flex items-center justify-center gap-2 cursor-pointer">
                             <Calendar className="w-4 h-4" />
-                            Schedule a Treatment
+                            {t('wellness.scheduleTreatment')}
                         </button>
                     </div>
                 </div>

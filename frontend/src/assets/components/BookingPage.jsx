@@ -1,4 +1,4 @@
-import React, { useState} from 'react';
+import React, { useState } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
 import axios from 'axios';
 import { message } from 'antd';
@@ -12,10 +12,12 @@ import {
   ChevronLeft,
   AlertCircle
 } from 'lucide-react';
+import { useLanguage } from '../../context/LanguageContext';
 
 const BookingPage = () => {
   const location = useLocation();
   const navigate = useNavigate();
+  const { language, setLanguage, t } = useLanguage();
   
   // Lấy dữ liệu từ trang Sơ đồ phòng truyền sang
   const [room, setRoom] = useState(location.state?.room); 
@@ -42,7 +44,7 @@ const BookingPage = () => {
   const [suggestions, setSuggestions] = useState([]);
   const today = new Date().toISOString().split('T')[0];
 
-  // Tính toán số đêm và tiền trực tiếp (Derived State chuẩn React - tránh render lặp)
+  // Tính toán số đêm và tiền trực tiếp
   const soDem = (() => {
     if (formData.NgayCheckIn && formData.NgayCheckOutDuKien) {
       const start = new Date(formData.NgayCheckIn);
@@ -73,7 +75,7 @@ const BookingPage = () => {
   const handleSubmit = async (e) => {
     e.preventDefault();
     if (soDem <= 0) {
-      message.warning('Ngày trả phòng phải sau ngày nhận phòng ít nhất 1 ngày!');
+      message.warning(language === 'vi' ? 'Ngày trả phòng phải sau ngày nhận phòng ít nhất 1 ngày!' : 'Check-out date must be at least 1 day after check-in!');
       return;
     }
 
@@ -84,13 +86,13 @@ const BookingPage = () => {
       const payload = {
         ...formData,
         PhongID: room.PhongID,
-        TaiKhoanID: storedUser.TaiKhoanID || storedUser.id || null // Gắn ID user nếu có
+        TaiKhoanID: storedUser.TaiKhoanID || storedUser.id || null
       };
 
       const response = await axios.post(`${import.meta.env.VITE_API_URL}/dat-phong`, payload);
 
       if (response.data.status === 'success') {
-        message.success('Đặt phòng thành công! Mã phiếu: ' + response.data.phieu_id);
+        message.success(t('booking.successMessage'));
         navigate('/'); 
       }
     } catch (error) {
@@ -100,7 +102,7 @@ const BookingPage = () => {
       } else {
         const backendError = error.response?.data?.message || 
           (error.response?.data?.errors ? Object.values(error.response.data.errors).flat().join(' ') : error.message);
-        message.error('Lỗi: ' + backendError);
+        message.error(t('booking.errorMessage') + ' ' + backendError);
       }
     }
   };
@@ -108,12 +110,12 @@ const BookingPage = () => {
   if (!room) {
     return (
       <div className="min-h-screen bg-[#201d12] flex flex-col items-center justify-center text-white p-6 text-center">
-        <h2 className="text-2xl font-display mb-4">Vui lòng chọn phòng trên sơ đồ trước!</h2>
+        <h2 className="text-2xl font-display mb-4">{language === 'vi' ? 'Vui lòng chọn phòng trên sơ đồ trước!' : 'Please select a room on the room map first!'}</h2>
         <button 
           onClick={() => navigate('/room-map')} 
-          className="bg-[#d4af35] text-[#201d12] font-bold px-6 py-3 rounded-lg hover:bg-[#b08d2b] transition-all uppercase tracking-wider text-sm"
+          className="bg-[#d4af35] text-[#201d12] font-bold px-6 py-3 rounded-lg hover:bg-[#b08d2b] transition-all uppercase tracking-wider text-sm cursor-pointer"
         >
-          Đến sơ đồ chọn phòng
+          {t('roomMap.title')}
         </button>
       </div>
     );
@@ -126,16 +128,27 @@ const BookingPage = () => {
       {/* Header */}
       <header className="flex items-center justify-between whitespace-nowrap border-b border-white/10 bg-[#201d12]/90 px-6 py-4 sticky top-0 z-50 backdrop-blur-md">
         <div className="flex items-center gap-4 text-white cursor-pointer" onClick={() => navigate('/room-map')}>
-          <button className="bg-transparent border-none shadow-none outline-none p-2 hover:bg-white/10 rounded-full transition-colors text-white flex items-center justify-center">
-  <ChevronLeft className="w-6 h-6" />
-</button>
-          <h2 className="text-xl font-display font-bold tracking-wide text-[#d4af35]">LA MAISON DTN</h2>
+          <button className="bg-transparent border-none shadow-none outline-none p-2 hover:bg-white/10 rounded-full transition-colors text-white flex items-center justify-center cursor-pointer">
+            <ChevronLeft className="w-6 h-6" />
+          </button>
+          <h2 className="text-xl font-display font-bold tracking-wide text-[#d4af35]">{t('navbar.brand')}</h2>
+        </div>
+
+        <div className="flex items-center gap-4">
+          <button
+            onClick={() => setLanguage(language === 'vi' ? 'en' : 'vi')}
+            className="px-3 py-1 text-xs font-bold text-white/90 hover:text-primary rounded-full border border-white/20 bg-white/5 hover:bg-white/10 transition-colors flex items-center gap-1.5 cursor-pointer"
+            title={t('navbar.language')}
+          >
+            <span className="material-icons-outlined text-sm">language</span>
+            <span>{language === 'vi' ? '🇻🇳 Tiếng Việt' : '🇬🇧 English'}</span>
+          </button>
         </div>
       </header>
 
       <main className="flex flex-col lg:flex-row flex-1 relative overflow-hidden h-[calc(100vh-73px)]">
         
-        {/* LETS SIDE: Hình ảnh và Thông tin phòng (Giao diện File 1) */}
+        {/* LEFT SIDE: Hình ảnh và Thông tin phòng */}
         <div className="lg:w-6/12 w-full relative flex flex-col items-center justify-center overflow-hidden group">
           <div 
             className="absolute inset-0 w-full h-full bg-cover bg-center opacity-50 transition-transform duration-700 group-hover:scale-105" 
@@ -156,28 +169,28 @@ const BookingPage = () => {
               <div className="flex items-start gap-3 p-4 rounded-xl bg-black/40 backdrop-blur-md border border-white/10">
                 <Users className="w-5 h-5 text-[#d4af35] shrink-0" />
                 <div className="text-left">
-                  <p className="text-[10px] text-white/50 uppercase tracking-widest">Sức chứa</p>
-                  <p className="text-sm font-semibold text-white">Tối đa {room.SoLuongToiDa || room.SoLuongKhach || 2} khách</p>
+                  <p className="text-[10px] text-white/50 uppercase tracking-widest">{t('roomMap.capacity')}</p>
+                  <p className="text-sm font-semibold text-white">{t('roomMap.capacity')} {room.SoLuongToiDa || room.SoLuongKhach || 2} {t('roomMap.people')}</p>
                 </div>
               </div>
               <div className="flex items-start gap-3 p-4 rounded-xl bg-black/40 backdrop-blur-md border border-white/10">
                 <BedDouble className="w-5 h-5 text-[#d4af35] shrink-0" />
                 <div className="text-left">
-                  <p className="text-[10px] text-white/50 uppercase tracking-widest">Giường</p>
+                  <p className="text-[10px] text-white/50 uppercase tracking-widest">{language === 'vi' ? 'Giường' : 'Bed'}</p>
                   <p className="text-sm font-semibold text-white">King Size</p>
                 </div>
               </div>
               <div className="flex items-start gap-3 p-4 rounded-xl bg-black/40 backdrop-blur-md border border-white/10">
                 <Square className="w-5 h-5 text-[#d4af35] shrink-0" />
                 <div className="text-left">
-                  <p className="text-[10px] text-white/50 uppercase tracking-widest">Diện tích</p>
+                  <p className="text-[10px] text-white/50 uppercase tracking-widest">{language === 'vi' ? 'Diện tích' : 'Area'}</p>
                   <p className="text-sm font-semibold text-white">85 m²</p>
                 </div>
               </div>
               <div className="flex items-start gap-3 p-4 rounded-xl bg-black/40 backdrop-blur-md border border-white/10">
                 <Wifi className="w-5 h-5 text-[#d4af35] shrink-0" />
                 <div className="text-left">
-                  <p className="text-[10px] text-white/50 uppercase tracking-widest">Tiện ích</p>
+                  <p className="text-[10px] text-white/50 uppercase tracking-widest">{t('roomMap.amenities')}</p>
                   <p className="text-sm font-semibold text-white">Free Wifi 5G</p>
                 </div>
               </div>
@@ -193,10 +206,10 @@ const BookingPage = () => {
             <div className="mb-8 pb-6 border-b border-white/10">
               <div className="flex items-center gap-2 text-[#d4af35] text-sm font-bold tracking-wider uppercase mb-2">
                 <Star className="w-5 h-5" fill="currentColor" />
-                Hoàn tất đặt phòng
+                {t('booking.pageTitle')}
               </div>
-              <h2 className="text-3xl font-display text-white mb-2">Thông tin khách hàng</h2>
-              <p className="text-white/50 text-sm">Vui lòng điền đầy đủ thông tin để chúng tôi chuẩn bị đón tiếp.</p>
+              <h2 className="text-3xl font-display text-white mb-2">{t('booking.customerInfo')}</h2>
+              <p className="text-white/50 text-sm">{language === 'vi' ? 'Vui lòng điền đầy đủ thông tin để chúng tôi chuẩn bị đón tiếp.' : 'Please fill in all details for your stay reservation.'}</p>
             </div>
 
             {/* Báo lỗi trùng lịch và Gợi ý */}
@@ -208,7 +221,7 @@ const BookingPage = () => {
                 </div>
                 {suggestions.length > 0 && (
                   <div>
-                    <p className="text-sm text-white/70 mb-3">Gợi ý các phòng tương đương đang trống:</p>
+                    <p className="text-sm text-white/70 mb-3">{language === 'vi' ? 'Gợi ý các phòng tương đương đang trống:' : 'Suggested equivalent available rooms:'}</p>
                     <div className="grid gap-2">
                       {suggestions.map(s => (
                         <div key={s.PhongID} className="flex items-center justify-between bg-black/30 p-3 rounded-lg border border-white/5">
@@ -216,9 +229,9 @@ const BookingPage = () => {
                           <button
                             type="button"
                             onClick={() => handleSelectRoom(s)}
-                            className="text-xs bg-[#d4af35] text-[#201d12] font-bold px-3 py-1.5 rounded uppercase hover:bg-[#b08d2b] transition-colors"
+                            className="text-xs bg-[#d4af35] text-[#201d12] font-bold px-3 py-1.5 rounded uppercase hover:bg-[#b08d2b] transition-colors cursor-pointer"
                           >
-                            Đổi sang phòng này
+                            {language === 'vi' ? 'Đổi sang phòng này' : 'Switch to this room'}
                           </button>
                         </div>
                       ))}
@@ -231,54 +244,54 @@ const BookingPage = () => {
             {/* Lưới Input Form */}
             <div className="grid grid-cols-1 md:grid-cols-2 gap-5 mb-8">
               <div>
-                <label className="block text-xs text-white/50 uppercase tracking-widest mb-2 ml-1">Họ và Tên</label>
+                <label className="block text-xs text-white/50 uppercase tracking-widest mb-2 ml-1">{t('booking.fullName')}</label>
                 <input name="HoTen" value={formData.HoTen} placeholder="Nguyễn Văn A" required onChange={handleChange} className={inputClasses} />
               </div>
               <div>
-                <label className="block text-xs text-white/50 uppercase tracking-widest mb-2 ml-1">Số điện thoại</label>
+                <label className="block text-xs text-white/50 uppercase tracking-widest mb-2 ml-1">{t('booking.phone')}</label>
                 <input name="SoDienThoai" value={formData.SoDienThoai} placeholder="090xxxxxxx" required onChange={handleChange} className={inputClasses} />
               </div>
               <div>
-                <label className="block text-xs text-white/50 uppercase tracking-widest mb-2 ml-1">Email</label>
+                <label className="block text-xs text-white/50 uppercase tracking-widest mb-2 ml-1">{t('booking.email')}</label>
                 <input name="Email" value={formData.Email} type="email" placeholder="email@example.com" required onChange={handleChange} className={inputClasses} />
               </div>
               <div>
-                <label className="block text-xs text-white/50 uppercase tracking-widest mb-2 ml-1">CCCD / Passport</label>
+                <label className="block text-xs text-white/50 uppercase tracking-widest mb-2 ml-1">{t('booking.identityCard')}</label>
                 <input name="CCCD" value={formData.CCCD} placeholder="Nhập số thẻ" required onChange={handleChange} className={inputClasses} />
               </div>
               <div className="md:col-span-2">
-                <label className="block text-xs text-white/50 uppercase tracking-widest mb-2 ml-1">Địa chỉ</label>
+                <label className="block text-xs text-white/50 uppercase tracking-widest mb-2 ml-1">{language === 'vi' ? 'Địa chỉ' : 'Address'}</label>
                 <input name="DiaChi" value={formData.DiaChi} placeholder="Nhập địa chỉ của bạn" required onChange={handleChange} className={inputClasses} />
               </div>
             </div>
 
             {/* Thời gian và Thanh toán */}
-            <h3 className="font-display text-xl text-white mb-4">Chi tiết lưu trú</h3>
+            <h3 className="font-display text-xl text-white mb-4">{t('booking.staySummary')}</h3>
             <div className="bg-white/5 rounded-xl border border-white/10 p-5 shadow-sm mb-8 space-y-5">
               <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
                 <div>
-                  <label className="block text-xs text-white/50 uppercase tracking-widest mb-2 ml-1">Nhận phòng (Check-in)</label>
+                  <label className="block text-xs text-white/50 uppercase tracking-widest mb-2 ml-1">{t('roomMap.checkIn')}</label>
                   <input name="NgayCheckIn" value={formData.NgayCheckIn} type="date" min={today} required onChange={handleChange} style={{ colorScheme: 'dark' }} className={inputClasses} />
                 </div>
                 <div>
-                  <label className="block text-xs text-white/50 uppercase tracking-widest mb-2 ml-1">Trả phòng (Check-out)</label>
+                  <label className="block text-xs text-white/50 uppercase tracking-widest mb-2 ml-1">{t('roomMap.checkOut')}</label>
                   <input name="NgayCheckOutDuKien" value={formData.NgayCheckOutDuKien} min={formData.NgayCheckIn || today} type="date" required onChange={handleChange} style={{ colorScheme: 'dark' }} className={inputClasses} />
                 </div>
               </div>
               
               <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
                 <div>
-                  <label className="block text-xs text-white/50 uppercase tracking-widest mb-2 ml-1">Số lượng khách</label>
+                  <label className="block text-xs text-white/50 uppercase tracking-widest mb-2 ml-1">{t('booking.guestCount')}</label>
                   <div className="w-full bg-white/5 border border-white/10 rounded-lg py-3 px-4 text-white/80 text-sm">
-                    {adults} người lớn {children > 0 ? `, ${children} trẻ em` : ''}
+                    {adults} {t('roomMap.adults')} {children > 0 ? `, ${children} ${t('roomMap.children')}` : ''}
                   </div>
                 </div>
                 <div>
-                  <label className="block text-xs text-white/50 uppercase tracking-widest mb-2 ml-1">Hình thức thanh toán</label>
+                  <label className="block text-xs text-white/50 uppercase tracking-widest mb-2 ml-1">{t('booking.paymentMethod')}</label>
                   <select name="HinhThucThanhToan" value={formData.HinhThucThanhToan} onChange={handleChange} className={`${inputClasses} appearance-none cursor-pointer`}>
-                    <option className="text-black" value="Tại quầy">Tiền mặt tại quầy (Cần cọc trước 30%)</option>
-                    <option className="text-black" value="Chuyển khoản">Chuyển khoản Ngân hàng</option>
-                    <option className="text-black" value="Momo">Ví điện tử Momo</option>
+                    <option className="text-black" value="Tại quầy">{language === 'vi' ? 'Tiền mặt tại quầy (Cần cọc trước 30%)' : 'Cash at Front Desk (30% deposit required)'}</option>
+                    <option className="text-black" value="Chuyển khoản">{language === 'vi' ? 'Chuyển khoản Ngân hàng' : 'Bank Transfer'}</option>
+                    <option className="text-black" value="Momo">{language === 'vi' ? 'Ví điện tử Momo' : 'Momo E-Wallet'}</option>
                   </select>
                 </div>
               </div>
@@ -288,34 +301,48 @@ const BookingPage = () => {
             <div className="mt-auto pt-6 border-t border-white/10">
               <div className="bg-black/20 rounded-xl p-5 mb-6 border border-[#d4af35]/20">
                 <div className="flex justify-between text-sm text-white/70 mb-2">
-                  <span>Giá mỗi đêm</span>
-                  <span>{new Intl.NumberFormat('vi-VN').format(room.GiaPhong)} VNĐ</span>
+                  <span>{t('booking.basePrice')}</span>
+                  <span>
+                    {language === 'vi' 
+                      ? `${new Intl.NumberFormat('vi-VN').format(room.GiaPhong)} VNĐ`
+                      : `$${Math.round(room.GiaPhong / 25000)}`}
+                  </span>
                 </div>
                 <div className="flex justify-between text-sm text-white/70 mb-2">
-                  <span>Thời gian lưu trú</span>
-                  <span>{soDem} đêm</span>
+                  <span>{t('booking.nightCount')}</span>
+                  <span>{soDem} {t('booking.nights')}</span>
                 </div>
                 {formData.HinhThucThanhToan === 'Tại quầy' && (
                   <div className="flex justify-between text-sm text-[#d4af35] mb-2 font-medium">
-                    <span>Yêu cầu đặt cọc (30%)</span>
-                    <span>{new Intl.NumberFormat('vi-VN').format(tienCoc)} VNĐ</span>
+                    <span>{language === 'vi' ? 'Yêu cầu đặt cọc (30%)' : 'Deposit required (30%)'}</span>
+                    <span>
+                      {language === 'vi'
+                        ? `${new Intl.NumberFormat('vi-VN').format(tienCoc)} VNĐ`
+                        : `$${Math.round(tienCoc / 25000)}`}
+                    </span>
                   </div>
                 )}
                 <div className="h-px bg-white/10 my-3"></div>
                 <div className="flex justify-between items-end">
                   <div>
-                    <span className="text-white text-lg font-bold">Tổng tiền</span>
-                    <p className="text-[10px] text-white/40 uppercase tracking-widest mt-1">Đã bao gồm thuế và phí</p>
+                    <span className="text-white text-lg font-bold">{t('booking.totalAmount')}</span>
+                    <p className="text-[10px] text-white/40 uppercase tracking-widest mt-1">{t('booking.serviceFee')}</p>
                   </div>
-                  <span className="text-3xl font-display font-bold text-[#d4af35]">{new Intl.NumberFormat('vi-VN').format(tongTien)}<span className="text-sm ml-1 text-white/50">VNĐ</span></span>
+                  <span className="text-3xl font-display font-bold text-[#d4af35]">
+                    {language === 'vi'
+                      ? `${new Intl.NumberFormat('vi-VN').format(tongTien)} VNĐ`
+                      : `$${Math.round(tongTien / 25000)}`}
+                  </span>
                 </div>
               </div>
 
-              <button type="submit" className="w-full bg-[#d4af35] text-[#201d12] h-14 rounded-lg font-bold text-lg flex items-center justify-center gap-3 hover:bg-[#b08d2b] transition-colors shadow-[0_4px_20px_rgba(212,175,53,0.3)] uppercase tracking-widest">
-                <span>Xác Nhận Đặt Phòng</span>
+              <button type="submit" className="w-full bg-[#d4af35] text-[#201d12] h-14 rounded-lg font-bold text-lg flex items-center justify-center gap-3 hover:bg-[#b08d2b] transition-colors shadow-[0_4px_20px_rgba(212,175,53,0.3)] uppercase tracking-widest cursor-pointer">
+                <span>{t('booking.confirmBooking')}</span>
                 <ArrowRight className="w-5 h-5" />
               </button>
-              <p className="text-center text-xs text-white/30 mt-4">Miễn phí hủy phòng trước 48h nhận phòng.</p>
+              <p className="text-center text-xs text-white/30 mt-4">
+                {language === 'vi' ? 'Miễn phí hủy phòng trước 48h nhận phòng.' : 'Free cancellation up to 48 hours before check-in.'}
+              </p>
             </div>
 
           </form>

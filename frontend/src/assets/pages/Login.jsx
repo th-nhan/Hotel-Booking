@@ -1,10 +1,12 @@
 import React, { useState } from 'react';
-import { message } from 'antd'; // Chỉ giữ lại message để hiện thông báo
+import { message } from 'antd';
 import { useNavigate } from 'react-router-dom';
 import axios from 'axios';
+import { useLanguage } from '../../context/LanguageContext';
 
 const Login = () => {
     const navigate = useNavigate();
+    const { t } = useLanguage();
 
     // State để lưu trữ dữ liệu người dùng nhập
     const [email, setEmail] = useState('');
@@ -22,7 +24,7 @@ const Login = () => {
             });
 
             if (response.data.status === 'success') {
-                message.success('Đăng nhập thành công!');
+                message.success(t('auth.loginSuccess'));
 
                 localStorage.setItem('token', response.data.access_token);
                 localStorage.setItem('user', JSON.stringify(response.data.user));
@@ -34,10 +36,9 @@ const Login = () => {
                 }
             }
         } catch (error) {
-            message.error('Sai tên đăng nhập hoặc mật khẩu!');
+            message.error(t('auth.loginFailed'));
         }
     };
-
 
     const goldGradientStyle = {
         background: 'linear-gradient(135deg, #d4af35 0%, #a68a2e 100%)',
@@ -73,7 +74,6 @@ const Login = () => {
 
                             {/* Logo */}
                             <div className="flex flex-col items-center mb-8">
-
                                 <h1 className="text-3xl font-bold tracking-tight mb-1" style={goldGradientStyle}>DTN</h1>
                                 <p className="text-xs font-medium tracking-[0.2em] text-[#0B1C2D]/60 uppercase">La Maison</p>
                             </div>
@@ -81,30 +81,33 @@ const Login = () => {
                             {/* Tabs */}
                             <div className="w-full mb-8">
                                 <div className="flex w-full">
-                                    <button className=" mr-2 flex-1 dark:bg-primary pb-3 text-sm font-semibold tracking-wide border-b-2 border-[#d4af35] text-[#0B1C2D] transition-colors">
-                                        Login
+                                    <button className="mr-2 flex-1 dark:bg-primary pb-3 text-sm font-semibold tracking-wide border-b-2 border-[#d4af35] text-[#0B1C2D] transition-colors cursor-pointer">
+                                        {t('auth.loginBtn')}
                                     </button>
                                     <button
+                                        type="button"
                                         onClick={() => navigate('/register')}
-                                        className="flex-1 pb-3 dark:bg-primary text-sm font-semibold tracking-wide border-b-2 border-transparent text-[#0B1C2D]/40 hover:text-[#0B1C2D]/70 transition-colors"
+                                        className="flex-1 pb-3 dark:bg-primary text-sm font-semibold tracking-wide border-b-2 border-transparent text-[#0B1C2D]/40 hover:text-[#0B1C2D]/70 transition-colors cursor-pointer"
                                     >
-                                        Register
+                                        {t('auth.registerBtn')}
                                     </button>
                                 </div>
                             </div>
 
                             {/* Form Logic */}
                             <form onSubmit={handleLogin} className="w-full flex flex-col gap-5">
-                                {/* Email */}
+                                {/* Email / Username */}
                                 <div className="flex flex-col gap-1.5">
-                                    <label className="text-xs font-medium uppercase tracking-wider text-[#0B1C2D]/70 ml-1" htmlFor="email">Email Address</label>
+                                    <label className="text-xs font-medium uppercase tracking-wider text-[#0B1C2D]/70 ml-1" htmlFor="email">
+                                        {t('auth.usernameOrEmail')}
+                                    </label>
                                     <div className="relative group">
                                         <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
                                             <span className="material-symbols-outlined text-[#d4af35]/70 text-[20px]">mail</span>
                                         </div>
                                         <input
                                             id="email"
-                                            type="email"
+                                            type="text"
                                             required
                                             value={email}
                                             onChange={(e) => setEmail(e.target.value)}
@@ -116,10 +119,12 @@ const Login = () => {
 
                                 {/* Password */}
                                 <div className="flex flex-col gap-1.5">
-                                    <label className="text-xs font-medium uppercase tracking-wider text-[#0B1C2D]/70 ml-1" htmlFor="password">Password</label>
+                                    <label className="text-xs font-medium uppercase tracking-wider text-[#0B1C2D]/70 ml-1" htmlFor="password">
+                                        {t('auth.password')}
+                                    </label>
                                     <div className="relative group">
                                         <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                                            <span className="material-symbols-outlined  text-[#d4af35]/70 text-[20px]">lock</span>
+                                            <span className="material-symbols-outlined text-[#d4af35]/70 text-[20px]">lock</span>
                                         </div>
                                         <input
                                             id="password"
@@ -133,10 +138,8 @@ const Login = () => {
                                         <button
                                             type="button"
                                             onClick={() => setShowPassword(!showPassword)}
-                                            className="
-                                                absolute inset-y-0 right-0 pr-3 flex items-center transition-colors
-                                                text-[#0B1C2D]/40 hover:text-[#0B1C2D]
-                                               dark:text-gray-500 dark:hover:text-primary dark:bg-transparent">
+                                            className="absolute inset-y-0 right-0 pr-3 flex items-center transition-colors text-[#0B1C2D]/40 hover:text-[#0B1C2D] dark:text-gray-500 dark:hover:text-primary dark:bg-transparent cursor-pointer"
+                                        >
                                             <span className="material-symbols-outlined text-[20px]">
                                                 {showPassword ? 'visibility' : 'visibility_off'}
                                             </span>
@@ -144,7 +147,7 @@ const Login = () => {
                                     </div>
                                     <div className="flex justify-end mt-1">
                                         <a href="#" className="text-xs font-medium text-[#0B1C2D]/60 hover:text-[#d4af35] transition-colors underline decoration-transparent hover:decoration-[#d4af35] underline-offset-4">
-                                            Forgot Password?
+                                            {t('auth.forgotPassword')}
                                         </a>
                                     </div>
                                 </div>
@@ -152,25 +155,21 @@ const Login = () => {
                                 {/* Submit Button */}
                                 <button
                                     type="submit"
-                                    className="mt-4 w-full flex items-center justify-center rounded-lg bg-[#d4af35] py-3.5 px-4 text-sm font-bold text-white shadow-[0_0_15px_rgba(212,175,53,0.3)] hover:bg-[#b08d2b] hover:shadow-lg transition-all transform active:scale-[0.98] tracking-wide uppercase"
+                                    className="mt-4 w-full flex items-center justify-center rounded-lg bg-[#d4af35] py-3.5 px-4 text-sm font-bold text-white shadow-[0_0_15px_rgba(212,175,53,0.3)] hover:bg-[#b08d2b] hover:shadow-lg transition-all transform active:scale-[0.98] tracking-wide uppercase cursor-pointer"
                                 >
-                                    Enter La Maison
+                                    {t('auth.loginBtn')}
                                 </button>
                             </form>
 
                             {/* Concierge Link */}
                             <div className="mt-8 pt-6 border-t border-[#e5e0d2] w-full flex flex-col items-center gap-3">
-                                <p className="text-xs text-[#0B1C2D]/50">Having trouble accessing your account?</p>
-                                <a href="#" className="inline-flex items-center gap-2 text-xs font-semibold text-[#0B1C2D] hover:text-[#d4af35] transition-colors group">
-                                    <span className="material-symbols-outlined text-[18px] group-hover:scale-110 transition-transform">concierge</span>
-                                    Contact Concierge
-                                </a>
+                                <p className="text-xs text-[#0B1C2D]/50">{t('auth.noAccount')} <span onClick={() => navigate('/register')} className="text-primary font-bold hover:underline cursor-pointer">{t('auth.registerNow')}</span></p>
                             </div>
                         </div>
                     </div>
 
                     <div className="mt-8 text-white/60 text-xs tracking-wider font-light">
-                        © 2026 LA MAISON DTN. All Rights Reserved.
+                        {t('footer.copyright')}
                     </div>
                 </div>
             </div>

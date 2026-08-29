@@ -1,5 +1,5 @@
 import { Routes, Route, BrowserRouter } from 'react-router-dom';
-import RoomMap from './assets/components/RoomMap'// Component sơ đồ của bạn
+import RoomMap from './assets/components/RoomMap';
 import BookingPage from './assets/components/BookingPage';
 import Login from './assets/pages/Login';
 import Register from './assets/pages/Register';
@@ -8,29 +8,32 @@ import HotelDashboard from './assets/pages/admin/HotelDashboard';
 import ProfileCustomer from './assets/pages/ProfileCustomer';
 import ReviewPage from './assets/pages/Review';
 import ScrollToTop from "./assets/components/ScrollToTop";
+import { LanguageProvider } from './context/LanguageContext';
 
 function App() {
   return (
-    <BrowserRouter>
-      <ScrollToTop />
-      <Routes>
-        <Route path="/login" element={<Login />} />
-        <Route path="/register" element={<Register />} />
-        <Route path="/" element={<Home />} />
+    <LanguageProvider>
+      <BrowserRouter>
+        <ScrollToTop />
+        <Routes>
+          <Route path="/login" element={<Login />} />
+          <Route path="/register" element={<Register />} />
+          <Route path="/" element={<Home />} />
 
-        <Route path="/room-map" element={<RoomMap />} />
-        <Route path="/booking-page" element={<BookingPage />} />
+          <Route path="/room-map" element={<RoomMap />} />
+          <Route path="/booking-page" element={<BookingPage />} />
 
-        <Route path="/profile" element={<ProfileCustomer />} />
-        <Route path="/reviews" element={<ReviewPage />} />
-        
+          <Route path="/profile" element={<ProfileCustomer />} />
+          <Route path="/reviews" element={<ReviewPage />} />
+          
 
-        {/* ----------------------------ADMIN-------------------------- */}
-        <Route path="/dashboard" element={<HotelDashboard />} />
+          {/* ----------------------------ADMIN-------------------------- */}
+          <Route path="/dashboard" element={<HotelDashboard />} />
 
 
-      </Routes>
-    </BrowserRouter>
+        </Routes>
+      </BrowserRouter>
+    </LanguageProvider>
   );
 }
 export default App;

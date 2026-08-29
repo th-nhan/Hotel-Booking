@@ -1,4 +1,5 @@
 import React from 'react';
+import { useLanguage } from '../../context/LanguageContext';
 
 const ExperienceCard = ({ title, description, imageUrl, cta, offset }) => (
   <div className={`group cursor-pointer ${offset ? 'lg:mt-24' : ''}`}>
@@ -21,25 +22,27 @@ const ExperienceCard = ({ title, description, imageUrl, cta, offset }) => (
 );
 
 const Experiences = () => {
+  const { t } = useLanguage();
+
   const experiences = [
     {
-      title: "Gastronomic Art",
-      description: "Michelin-star inspired cuisine blending French techniques with Vietnamese spices in a breathtaking neoclassical setting.",
+      title: t('experiences.gastronomyTitle'),
+      description: t('experiences.gastronomyDesc'),
       imageUrl: "https://media-cdn-v2.laodong.vn/Storage/NewsPortal/2022/12/30/1132697/321722584_1123230561.jpg",
-      cta: "Explore Dining",
+      cta: t('experiences.gastronomyCta'),
     },
     {
-      title: "Holistic Sanctuary",
-      description: "Rejuvenate your senses with traditional herbal therapies and modern treatments designed for the ultimate relaxation.",
+      title: t('experiences.sanctuaryTitle'),
+      description: t('experiences.sanctuaryDesc'),
       imageUrl: "https://acihome.vn/uploads/19/spa-area-at-mist-hotel.jpg",
-      cta: "Discover Spa",
+      cta: t('experiences.sanctuaryCta'),
       offset: true,
     },
     {
-      title: "Grand Celebrations",
-      description: "Bespoke events hosted in our neoclassical ballroom with 24k gold leaf accents and world-class hospitality.",
+      title: t('experiences.celebrationsTitle'),
+      description: t('experiences.celebrationsDesc'),
       imageUrl: "https://pkphoto.com/wp-content/uploads/2023/06/5O1A4118-scaled-1.jpg",
-      cta: "View Venues",
+      cta: t('experiences.celebrationsCta'),
     }
   ];
 
@@ -47,8 +50,8 @@ const Experiences = () => {
     <section id='experiences' className="pb-40 bg-bg-light">
       <div className="container mx-auto px-8 lg:px-16">
         <div className="text-center mb-24">
-          <h3 className="font-serif text-4xl lg:text-5xl mb-6 italic text-navy-deep">The DTN Experience</h3>
-          <p className="text-navy-deep/50 uppercase tracking-[0.3em] text-[10px] font-bold">Curated moments for the discerning traveler</p>
+          <h3 className="font-serif text-4xl lg:text-5xl mb-6 italic text-navy-deep">{t('experiences.title')}</h3>
+          <p className="text-navy-deep/50 uppercase tracking-[0.3em] text-[10px] font-bold">{t('experiences.subtitle')}</p>
         </div>
         
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-12 lg:gap-16">

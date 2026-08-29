@@ -1,6 +1,9 @@
 import React from 'react';
+import { useLanguage } from '../../context/LanguageContext';
 
 const Introduction = () => {
+  const { t } = useLanguage();
+
   return (
     <section id='accommodations' className="py-24 lg:py-40 bg-bg-light overflow-hidden">
       <div className="container mx-auto px-8 lg:px-16">
@@ -22,25 +25,27 @@ const Introduction = () => {
           <div className="space-y-8">
             <div className="w-16 h-[2px] bg-primary"></div>
             <h2 className="font-serif text-4xl lg:text-6xl leading-[1.15] text-navy-deep">
-              A Legacy of Refinement <br/>and Cultural Grace
+              {t('intro.title')}
             </h2>
             <p className="text-navy-deep/70 leading-loose text-lg font-light">
-              LA MAISON DTN is more than a hotel; it is a curated gallery of living. Every corner tells a story of heritage, from the Italian marble flooring that echoes European palaces to the hand-applied Vietnamese lacquer art that celebrates local soul.
+              {t('intro.description')}
             </p>
             
             <div className="grid grid-cols-2 gap-8 pt-4">
               <div>
                 <h4 className="font-bold text-primary text-3xl mb-1">15m</h4>
-                <p className="text-[10px] uppercase tracking-[0.2em] font-semibold opacity-40">Vaulted Ceilings</p>
+                <p className="text-[10px] uppercase tracking-[0.2em] font-semibold opacity-40">{t('intro.ceilingHeight')}</p>
               </div>
               <div>
                 <h4 className="font-bold text-primary text-3xl mb-1">24/7</h4>
-                <p className="text-[10px] uppercase tracking-[0.2em] font-semibold opacity-40">Private Butler Service</p>
+                <p className="text-[10px] uppercase tracking-[0.2em] font-semibold opacity-40">{t('intro.butlerService')}</p>
               </div>
             </div>
 
             <button className="flex items-center space-x-4 group pt-4">
-              <span className="text-xs font-bold uppercase tracking-[0.2em] border-b border-navy-deep pb-1 group-hover:border-primary group-hover:text-primary transition-all dark:text-white dark:border-white">Learn Our Story</span>
+              <span className="text-xs font-bold uppercase tracking-[0.2em] border-b border-navy-deep pb-1 group-hover:border-primary group-hover:text-primary transition-all dark:text-white dark:border-white">
+                {t('intro.learnStory')}
+              </span>
               <span className="material-icons-outlined text-primary group-hover:translate-x-2 transition-transform dark:text-white group-hover:text-primary ">arrow_forward</span>
             </button>
           </div>
