@@ -1,59 +1,141 @@
-<p align="center"><a href="https://laravel.com" target="_blank"><img src="https://raw.githubusercontent.com/laravel/art/master/logo-lockup/5%20SVG/2%20CMYK/1%20Full%20Color/laravel-logolockup-cmyk-red.svg" width="400" alt="Laravel Logo"></a></p>
+# 🏨 Hotel Booking - Backend API (Laravel)
 
-<p align="center">
-<a href="https://github.com/laravel/framework/actions"><img src="https://github.com/laravel/framework/workflows/tests/badge.svg" alt="Build Status"></a>
-<a href="https://packagist.org/packages/laravel/framework"><img src="https://img.shields.io/packagist/dt/laravel/framework" alt="Total Downloads"></a>
-<a href="https://packagist.org/packages/laravel/framework"><img src="https://img.shields.io/packagist/v/laravel/framework" alt="Latest Stable Version"></a>
-<a href="https://packagist.org/packages/laravel/framework"><img src="https://img.shields.io/packagist/l/laravel/framework" alt="License"></a>
-</p>
+Hệ thống Backend RESTful API phục vụ quản trị và đặt phòng khách sạn, được xây dựng trên nền tảng **Laravel Framework** (PHP 8.2+).
 
-## About Laravel
+---
 
-Laravel is a web application framework with expressive, elegant syntax. We believe development must be an enjoyable and creative experience to be truly fulfilling. Laravel takes the pain out of development by easing common tasks used in many web projects, such as:
+## 📋 Yêu cầu hệ thống (Prerequisites)
 
-- [Simple, fast routing engine](https://laravel.com/docs/routing).
-- [Powerful dependency injection container](https://laravel.com/docs/container).
-- Multiple back-ends for [session](https://laravel.com/docs/session) and [cache](https://laravel.com/docs/cache) storage.
-- Expressive, intuitive [database ORM](https://laravel.com/docs/eloquent).
-- Database agnostic [schema migrations](https://laravel.com/docs/migrations).
-- [Robust background job processing](https://laravel.com/docs/queues).
-- [Real-time event broadcasting](https://laravel.com/docs/broadcasting).
+Trước khi chạy dự án, hãy đảm bảo máy tính của bạn đã cài đặt:
+- **PHP** >= 8.2 (Bật các extension: `pdo_mysql` / `pdo_sqlite`, `mbstring`, `openssl`, `bcmath`, `fileinfo`, `gd`)
+- **Composer** >= 2.0
+- **MySQL** / **MariaDB** (hoặc SQLite)
+- **Node.js** & **npm** (tùy chọn nếu cần build asset)
 
-Laravel is accessible, powerful, and provides tools required for large, robust applications.
+---
 
-## Learning Laravel
+## 🚀 Hướng dẫn cài đặt & Khởi chạy dự án
 
-Laravel has the most extensive and thorough [documentation](https://laravel.com/docs) and video tutorial library of all modern web application frameworks, making it a breeze to get started with the framework. You can also check out [Laravel Learn](https://laravel.com/learn), where you will be guided through building a modern Laravel application.
+### Bước 1: Mở terminal và di chuyển vào thư mục backend
+```bash
+cd backend
+```
 
-If you don't feel like reading, [Laracasts](https://laracasts.com) can help. Laracasts contains thousands of video tutorials on a range of topics including Laravel, modern PHP, unit testing, and JavaScript. Boost your skills by digging into our comprehensive video library.
+### Bước 2: Cài đặt các thư viện phụ thuộc (Composer)
+```bash
+composer install
+```
 
-## Laravel Sponsors
+### Bước 3: Tạo file cấu hình môi trường `.env`
+- Trên **Windows (CMD / PowerShell)**:
+  ```powershell
+  copy .env.example .env
+  ```
+- Hoặc trên **Linux / macOS**:
+  ```bash
+  cp .env.example .env
+  ```
 
-We would like to extend our thanks to the following sponsors for funding Laravel development. If you are interested in becoming a sponsor, please visit the [Laravel Partners program](https://partners.laravel.com).
+### Bước 4: Tạo Application Key
+```bash
+php artisan key:generate
+```
 
-### Premium Partners
+### Bước 5: Cấu hình Cơ sở dữ liệu
+Mở file `.env` và thiết lập thông tin kết nối Database của bạn (ví dụ với MySQL):
+```env
+DB_CONNECTION=mysql
+DB_HOST=127.0.0.1
+DB_PORT=3306
+DB_DATABASE=hotel_booking
+DB_USERNAME=root
+DB_PASSWORD=
+```
+> *Lưu ý: Đảm bảo bạn đã tạo Database `hotel_booking` trong MySQL (qua phpMyAdmin, DBeaver, Navicat hoặc dòng lệnh).*
 
-- **[Vehikl](https://vehikl.com)**
-- **[Tighten Co.](https://tighten.co)**
-- **[Kirschbaum Development Group](https://kirschbaumdevelopment.com)**
-- **[64 Robots](https://64robots.com)**
-- **[Curotec](https://www.curotec.com/services/technologies/laravel)**
-- **[DevSquad](https://devsquad.com/hire-laravel-developers)**
-- **[Redberry](https://redberry.international/laravel-development)**
-- **[Active Logic](https://activelogic.com)**
+### Bước 6: Chạy Migration và Seed dữ liệu mẫu
+Tạo toàn bộ các bảng và nạp dữ liệu mẫu ban đầu:
+```bash
+php artisan migrate --seed
+```
+> *Nếu muốn xóa sạch DB và nạp lại từ đầu:*
+> ```bash
+> php artisan migrate:fresh --seed
+> ```
 
-## Contributing
+### Bước 7: Khởi chạy Server
+Chạy lệnh sau để khởi động Laravel Development Server:
+```bash
+php artisan serve
+```
+> ⚠️ **Lưu ý:** Lệnh chuẩn là `php artisan serve` (không phải `php serve artisan`).
 
-Thank you for considering contributing to the Laravel framework! The contribution guide can be found in the [Laravel documentation](https://laravel.com/docs/contributions).
+Server sẽ mặc định chạy tại: **`http://127.0.0.1:8000`** hoặc **`http://localhost:8000`**.
 
-## Code of Conduct
+---
 
-In order to ensure that the Laravel community is welcoming to all, please review and abide by the [Code of Conduct](https://laravel.com/docs/contributions#code-of-conduct).
+## 👥 Tài khoản thử nghiệm mặc định (Seed Data)
 
-## Security Vulnerabilities
+Sau khi chạy `--seed`, bạn có thể dùng các tài khoản sau để đăng nhập:
 
-If you discover a security vulnerability within Laravel, please send an e-mail to Taylor Otwell via [taylor@laravel.com](mailto:taylor@laravel.com). All security vulnerabilities will be promptly addressed.
+| Vai trò | Email | Mật khẩu | Mô tả |
+| :--- | :--- | :--- | :--- |
+| **Admin** | `admin@hotel.com` | `123456` | Toàn quyền quản trị hệ thống |
+| **Nhân viên / Lễ tân** | `nhanvien@hotel.com` | `123456` | Quản lý nhận/trả phòng, đơn đặt |
+| **Khách hàng** | `khachhang@gmail.com` | `123456` | Tài khoản khách hàng mẫu |
 
-## License
+---
 
-The Laravel framework is open-sourced software licensed under the [MIT license](https://opensource.org/licenses/MIT).
+## 🛠️ Các lệnh hữu ích thường dùng (Artisan & Composer)
+
+- **Khởi động server backend:**
+  ```bash
+  php artisan serve
+  ```
+- **Xóa cache hệ thống (khi sửa config hoặc route không nhận):**
+  ```bash
+  php artisan optimize:clear
+  # hoặc xóa từng loại:
+  php artisan config:clear
+  php artisan route:clear
+  php artisan cache:clear
+  ```
+- **Tạo link lưu trữ hình ảnh/file:**
+  ```bash
+  php artisan storage:link
+  ```
+- **Tạo lại toàn bộ CSDL và nạp dữ liệu:**
+  ```bash
+  php artisan migrate:fresh --seed
+  ```
+
+---
+
+## 📡 Danh sách API Endpoints chính
+
+Base URL: `http://localhost:8000/api`
+
+### 1. Xác thực (Authentication) & Tài khoản
+- `POST /api/register` - Đăng ký tài khoản mới
+- `POST /api/login` - Đăng nhập nhận Sanctum Token
+- `POST /api/logout` - Đăng xuất (Cần Bearer Token)
+- `GET  /api/my-profile` - Lấy thông tin cá nhân (Cần Bearer Token)
+- `POST /api/update-profile` - Cập nhật hồ sơ cá nhân (Cần Bearer Token)
+
+### 2. Quản lý Phòng & Đặt phòng
+- `GET  /api/phongs` - Lấy danh sách phòng và trạng thái
+- `POST /api/dat-phong` - Đặt phòng
+- `POST /api/nhan-phong` - Nhận phòng (Check-in)
+- `POST /api/tra-phong` - Trả phòng & tính tiền (Check-out)
+- `POST /api/hoan-tat-don` - Hoàn tất đơn đặt phòng
+
+### 3. Đánh giá & Phản hồi (Reviews)
+- `GET    /api/review` - Xem danh sách đánh giá
+- `POST   /api/review` - Gửi đánh giá mới
+- `DELETE /api/review/{id}` - Xóa đánh giá
+- `POST   /api/review/{id}/like` - Thả like đánh giá
+- `POST   /api/review/{id}/reply` - Phản hồi đánh giá
+- `POST   /api/reviews/analyze-export` - Phân tích AI & Xuất báo cáo đánh giá
+
+### 4. Thống kê (Dashboard)
+- `GET  /api/dashboard` - Dữ liệu tổng quan doanh thu, số lượng phòng, trạng thái đặt phòng
