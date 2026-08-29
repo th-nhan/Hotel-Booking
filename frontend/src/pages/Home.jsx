@@ -1,12 +1,11 @@
 import React, { useState, useEffect } from 'react';
-import Navbar from '../components/Navbar';
-import Hero from '../components/Hero';
-import Introduction from '../components/Introduction';
-import Experiences from '../components/Experiences';
-import Wellness from '../components/Wellness';
-import Dining from '../components/Dining';
-
-import Footer from '../components/Footer';
+import Navbar from '../components/layout/Navbar';
+import Hero from '../components/home/Hero';
+import Introduction from '../components/home/Introduction';
+import Experiences from '../components/home/Experiences';
+import Wellness from '../components/home/Wellness';
+import Dining from '../components/home/Dining';
+import Footer from '../components/layout/Footer';
 
 const Home = () => {
   const [scrolled, setScrolled] = useState(false);

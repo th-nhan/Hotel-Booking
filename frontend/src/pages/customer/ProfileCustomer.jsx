@@ -99,7 +99,7 @@ function Header() {
           title={t('navbar.language')}
         >
           <span className="material-icons-outlined text-sm">language</span>
-          <span>{language === 'vi' ? '🇻🇳 Tiếng Việt' : '🇬🇧 English'}</span>
+          <span>{language === 'vi' ? 'VI' : 'EN'}</span>
         </button>
 
         <button

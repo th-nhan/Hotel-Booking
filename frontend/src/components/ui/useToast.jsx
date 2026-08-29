@@ -1,5 +1,5 @@
 import { useState, useCallback } from "react";
-import { NotificationToast } from "../components/ui/animated-toast";
+import { NotificationToast } from "./animated-toast";
 
 export function useToast() {
     const [toastConfig, setToastConfig] = useState({

@@ -295,5 +295,73 @@ export const vi = {
     statusCompleted: "Đã hoàn thành",
     statusCancelled: "Đã hủy",
     statusBooked: "Đã đặt",
+  },
+
+  // Heritage / Story Page
+  heritage: {
+    pageTitle: "Di sản của Sự Tinh tế & Vẻ đẹp Văn hóa",
+    pageSubtitle: "Hành trình kết tinh giữa nghệ thuật kiến trúc Tân Cổ Điển Châu Âu và tâm hồn văn hóa Việt Nam.",
+    badge: "Hành trình & Di sản",
+    backHome: "Trang chủ",
+    currentLocation: "Di sản & Câu chuyện",
+    
+    // Chapter 1: The Origin
+    originTag: "Khởi nguồn kiến tạo",
+    originTitle: "Khởi nguồn từ một ước mơ vượt thời gian",
+    originDesc1: "Được khởi công xây dựng với tầm nhìn kiến tạo một biểu tượng lưu trú sang trọng vượt bậc, LA MAISON DTN sinh ra từ niềm đam mê gìn giữ những giá trị nghệ thuật thuần khiết đan xen cùng phong cách sống vương giả đương đại.",
+    originDesc2: "Từng vòm trần cao 15 mét, từng khối đá cẩm thạch Carrara được nhập khẩu trực tiếp từ Ý và các bức tranh sơn mài đắp nổi truyền thống đều được giám tuyển tỉ mỉ bởi các nghệ nhân bậc thầy. Chúng tôi biến không gian nghỉ dưỡng thành một bảo tàng nghệ thuật sống động.",
+    statYears: "Năm kiến tạo",
+    statCraftsmen: "Nghệ nhân thủ công",
+    statArtworks: "Tác phẩm độc bản",
+
+    // Three Pillars
+    pillarsTitle: "Ba Trụ Cột Tinh Hoa",
+    pillarsSubtitle: "Những giá trị cốt lõi làm nên sự độc bản và trường tồn của LA MAISON DTN",
+    pillar1Title: "Kiến Trúc Tân Cổ Điển",
+    pillar1Desc: "Hòa quyện nét uy nghiêm của các cung điện Pháp với những giếng trời đón ánh sáng tự nhiên và khoảng xanh nhiệt đới tràn đầy sức sống.",
+    pillar2Title: "Nghệ Thuật Thủ Công Việt",
+    pillar2Desc: "Nghệ thuật sơn mài đắp nổi dát vàng, gốm sứ truyền thống và đồ gỗ thủ công được chạm khắc tinh tế bởi các nghệ nhân danh tiếng.",
+    pillar3Title: "Dịch Vụ Quản Gia May Đo",
+    pillar3Desc: "Triết lý đón tiếp từ trái tim, nơi mỗi mong muốn của quý khách đều được lắng nghe và phục vụ với sự tinh tế và chu đáo tuyệt đối.",
+
+    // Timeline
+    timelineTag: "Dấu ấn thời gian",
+    timelineTitle: "Hành Trình Kiến Tạo Di Sản",
+    milestone1Year: "2018",
+    milestone1Title: "Khởi Nguồn Ý Tưởng",
+    milestone1Desc: "Bản phác thảo kiến trúc đầu tiên ra đời với khát vọng giao thoa giữa nét vương giả phương Tây và văn hóa phương Đông.",
+    milestone2Year: "2021",
+    milestone2Title: "Chế Tác Thủ Công & Dát Vàng",
+    milestone2Desc: "Hàng trăm nghệ nhân lành nghề hội tụ để hoàn thiện từng bức phù điêu, sơn mài và chi tiết dát vàng 24k.",
+    milestone3Year: "2023",
+    milestone3Title: "Khai Trương Đẳng Cấp",
+    milestone3Desc: "Chính thức mở cửa đón tiếp những vị khách quý đầu tiên, xác lập tiêu chuẩn nghỉ dưỡng siêu sang.",
+    milestone4Year: "Hiện Tại",
+    milestone4Title: "Biểu Tượng Bất Biến",
+    milestone4Desc: "Tiếp tục gìn giữ và lan tỏa vẻ đẹp di sản, trở thành điểm đến biểu tượng cho sự xa hoa và tao nhã.",
+
+    // Philosophy Quote
+    quote: "“Chúng tôi không chỉ xây dựng một khách sạn xa hoa, chúng tôi kiến tạo một thánh đường của nghệ thuật và lòng hiếu khách, nơi mỗi khoảnh khắc đều trở thành một kỷ niệm vô giá.”",
+    quoteAuthor: "Ban Sáng Lập & Hội Đồng Nghệ Thuật",
+    quoteRole: "LA MAISON DTN Luxury Hospitality",
+
+    // Gallery
+    galleryTag: "Bộ sưu tập hình ảnh",
+    galleryTitle: "Tuyệt Tác Không Gian & Nghệ Thuật",
+    gallerySubtitle: "Khám phá những khoảnh khắc phản chiếu vẻ đẹp vượt thời gian của khách sạn",
+    galleryImg1Title: "Đại Sảnh Vương Giả",
+    galleryImg1Desc: "Trần vòm cao vút và sàn đá cẩm thạch Ý Carrara nguyên khối",
+    galleryImg2Title: "Chi Tiết Nghệ Thuật Sơn Mài",
+    galleryImg2Desc: "Tác phẩm thủ công đắp nổi kết hợp dát vàng lá 24k",
+    galleryImg3Title: "Không Gian Thư Giãn Tinh Tế",
+    galleryImg3Desc: "Hài hòa giữa ánh sáng tự nhiên và nội thất tân cổ điển",
+    galleryImg4Title: "Khu Vực Ẩm Thực Thượng Hạng",
+    galleryImg4Desc: "Nơi phong vị ẩm thực hòa quyện cùng bầu không khí lãng mạn",
+
+    // CTA
+    ctaTitle: "Trải Nghiệm Sự Sang Trọng Đích Thực",
+    ctaSubtitle: "Hãy để LA MAISON DTN là nơi lưu giữ những khoảnh khắc tuyệt vời nhất trong kỳ nghỉ của quý khách.",
+    ctaBook: "Đặt phòng ngay",
+    ctaRooms: "Khám phá phòng nghỉ",
   }
 };

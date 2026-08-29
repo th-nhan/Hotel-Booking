@@ -295,5 +295,73 @@ export const en = {
     statusCompleted: "Completed",
     statusCancelled: "Cancelled",
     statusBooked: "Booked",
+  },
+
+  // Heritage / Story Page
+  heritage: {
+    pageTitle: "A Legacy of Refinement & Cultural Grace",
+    pageSubtitle: "A symphony of Neoclassical European architecture and the soulful artistic essence of Vietnam.",
+    badge: "Heritage & Legacy",
+    backHome: "Home",
+    currentLocation: "Heritage & Our Story",
+    
+    // Chapter 1: The Origin
+    originTag: "The Origin",
+    originTitle: "Born from a Vision of Timeless Grandeur",
+    originDesc1: "Conceived with the aspiration of establishing an unparalleled icon of hospitality, LA MAISON DTN was born from an unyielding passion to preserve authentic cultural artistry intertwined with the finest contemporary living.",
+    originDesc2: "From the majestic 15-meter vaulted ceilings to the rare Carrara Italian marble and handcrafted lacquer panels, every detail has been curated by master craftsmen. We have transformed a luxury stay into a vibrant, living museum.",
+    statYears: "Years of Crafting",
+    statCraftsmen: "Master Artisans",
+    statArtworks: "Bespoke Artworks",
+
+    // Three Pillars
+    pillarsTitle: "Three Pillars of Excellence",
+    pillarsSubtitle: "The foundational philosophies that define the singular legacy of LA MAISON DTN",
+    pillar1Title: "Neoclassical Architecture",
+    pillar1Desc: "Harmonizing the grandeur of French neoclassical palazzos with luminous open atriums and lush tropical flora.",
+    pillar2Title: "Vietnamese Artisanal Art",
+    pillar2Desc: "Exquisite hand-carved woodwork, delicate ceramics, and 24k gold leaf lacquerware crafted by heritage village masters.",
+    pillar3Title: "Bespoke Butler Service",
+    pillar3Desc: "A genuine philosophy of hospitality from the heart, where every wish is seamlessly anticipated with supreme elegance.",
+
+    // Timeline
+    timelineTag: "Historical Milestones",
+    timelineTitle: "The Journey of Creating a Legacy",
+    milestone1Year: "2018",
+    milestone1Title: "The Architectural Conception",
+    milestone1Desc: "The initial blueprints were drawn with the bold ambition to bridge European royal grandeur with Asian soul.",
+    milestone2Year: "2021",
+    milestone2Title: "Artisanal Crafting & Gilding",
+    milestone2Desc: "Hundreds of skilled artisans congregated to hand-finish intricate moldings, lacquer panels, and 24k gold accents.",
+    milestone3Year: "2023",
+    milestone3Title: "The Grand Unveiling",
+    milestone3Desc: "Officially opened doors to welcome discerning guests, setting a new benchmark for ultra-luxury hospitality.",
+    milestone4Year: "Present",
+    milestone4Title: "A Timeless Landmark",
+    milestone4Desc: "Continuing to cherish and celebrate our heritage, standing proudly as an enduring symbol of sophistication.",
+
+    // Philosophy Quote
+    quote: "“We did not merely build a luxury hotel; we created a sacred sanctuary of art and heartfelt hospitality, where every moment transforms into a treasured memory.”",
+    quoteAuthor: "Founding Board & Artistic Council",
+    quoteRole: "LA MAISON DTN Luxury Hospitality",
+
+    // Gallery
+    galleryTag: "Visual Collection",
+    galleryTitle: "Architectural & Artistic Masterpieces",
+    gallerySubtitle: "Explore glimpses reflecting the timeless beauty and craftsmanship of the hotel",
+    galleryImg1Title: "The Grand Regal Foyer",
+    galleryImg1Desc: "Soaring vaulted ceilings and monolithic Italian Carrara marble flooring",
+    galleryImg2Title: "Traditional Lacquer Art",
+    galleryImg2Desc: "High-relief handcrafted artwork embellished with genuine 24k gold leaf",
+    galleryImg3Title: "Serene Living Sanctuaries",
+    galleryImg3Desc: "Harmonious balance of soft daylight and neoclassical luxury furnishings",
+    galleryImg4Title: "Fine Gastronomic Salons",
+    galleryImg4Desc: "Where world-class culinary artistry meets an intimate romantic atmosphere",
+
+    // CTA
+    ctaTitle: "Experience Genuine Refinement",
+    ctaSubtitle: "Let LA MAISON DTN be the backdrop to your most unforgettable memories.",
+    ctaBook: "Book Your Stay",
+    ctaRooms: "Explore Accommodations",
   }
 };

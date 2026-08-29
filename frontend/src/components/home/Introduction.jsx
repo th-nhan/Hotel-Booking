@@ -1,8 +1,10 @@
 import React from 'react';
+import { useNavigate } from 'react-router-dom';
 import { useLanguage } from '../../context/LanguageContext';
 
 const Introduction = () => {
   const { t } = useLanguage();
+  const navigate = useNavigate();
 
   return (
     <section id='accommodations' className="py-24 lg:py-40 bg-bg-light overflow-hidden">
@@ -42,7 +44,10 @@ const Introduction = () => {
               </div>
             </div>
 
-            <button className="flex items-center space-x-4 group pt-4">
+            <button 
+              onClick={() => navigate('/heritage')}
+              className="flex items-center space-x-4 group pt-4 cursor-pointer"
+            >
               <span className="text-xs font-bold uppercase tracking-[0.2em] border-b border-navy-deep pb-1 group-hover:border-primary group-hover:text-primary transition-all dark:text-white dark:border-white">
                 {t('intro.learnStory')}
               </span>

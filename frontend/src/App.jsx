@@ -1,13 +1,14 @@
 import { Routes, Route, BrowserRouter } from 'react-router-dom';
-import RoomMap from './assets/components/RoomMap';
-import BookingPage from './assets/components/BookingPage';
-import Login from './assets/pages/Login';
-import Register from './assets/pages/Register';
-import Home from './assets/pages/Home';
-import HotelDashboard from './assets/pages/admin/HotelDashboard';
-import ProfileCustomer from './assets/pages/ProfileCustomer';
-import ReviewPage from './assets/pages/Review';
-import ScrollToTop from "./assets/components/ScrollToTop";
+import RoomMap from './pages/booking/RoomMap';
+import BookingPage from './pages/booking/BookingPage';
+import Login from './pages/auth/Login';
+import Register from './pages/auth/Register';
+import Home from './pages/Home';
+import HotelDashboard from './pages/admin/HotelDashboard';
+import ProfileCustomer from './pages/customer/ProfileCustomer';
+import ReviewPage from './pages/customer/Review';
+import Heritage from './pages/Heritage';
+import ScrollToTop from './components/layout/ScrollToTop';
 import { LanguageProvider } from './context/LanguageContext';
 
 function App() {
@@ -25,6 +26,8 @@ function App() {
 
           <Route path="/profile" element={<ProfileCustomer />} />
           <Route path="/reviews" element={<ReviewPage />} />
+          <Route path="/heritage" element={<Heritage />} />
+          <Route path="/our-story" element={<Heritage />} />
           
 
           {/* ----------------------------ADMIN-------------------------- */}
