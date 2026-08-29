@@ -2,7 +2,12 @@ import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 
 const Navbar = ({ scrolled }) => {
-  const navItems = ['Accommodations', 'Dining',  'Experiences', 'Wellness'];
+  const navItems = [
+    { name: 'Accommodations', href: '#accommodations' },
+    { name: 'Dining', href: '#dining' },
+    { name: 'Experiences', href: '#experiences' },
+    { name: 'Wellness', href: '#wellness' },
+  ];
   const navigate = useNavigate();
 
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
@@ -24,168 +29,183 @@ const Navbar = ({ scrolled }) => {
   const handleBooking = () => {
     if (isLoggedIn) {
       navigate('/room-map');
-
     } else {
       navigate('/login');
     }
-  }
+  };
 
   return (
     <header
-      className={`fixed top-0 left-0 w-full z-50 transition-all duration-300 border-b ${scrolled || isMobileMenuOpen
-        ? 'bg-navy-deep py-3 border-white/5 shadow-xl'
-        : 'bg-transparent py-6 border-white/10'
-        }`}
+      className={`fixed top-0 left-0 w-full z-50 transition-all duration-300 ${
+        scrolled || isMobileMenuOpen
+          ? 'bg-navy-deep/95 backdrop-blur-md py-3.5 border-b border-white/10 shadow-xl'
+          : 'bg-gradient-to-b from-navy-deep/80 via-navy-deep/40 to-transparent py-5 border-b border-white/5'
+      }`}
     >
-      <div className="flex items-center justify-between px-6 lg:px-16 w-full">
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+        <div className="flex items-center justify-between h-12">
+          {/* --- TRÁI: LOGO --- */}
+          <div className="flex items-center shrink-0">
+            <a
+              href="/"
+              className="text-lg sm:text-xl lg:text-2xl font-serif tracking-[0.2em] text-white uppercase font-bold hover:text-primary transition-colors flex items-center gap-2"
+            >
+              <span>LA MAISON DTN</span>
+            </a>
+          </div>
 
-        {/* --- TRÁI: LOGO & MENU DESKTOP --- */}
-        <div className="flex items-center space-x-12">
-          <a className="text-lg lg:text-2xl font-serif tracking-widest text-white uppercase font-bold" href="#">
-            LA MAISON DTN
-          </a>
-
-          <nav className="hidden lg:flex items-center space-x-8">
-            {navItems.map((item) => {
-              const sectionId = item.toLowerCase();
-              return (
-                <a
-                  key={item}
-                  className="nav-link relative text-[11px] uppercase tracking-widest text-white/90 font-medium hover:text-primary transition-colors"
-                  href={`#${sectionId}`}
-                >
-                  {item}
-                </a>
-              );
-            })}
-          </nav>
-        </div>
-
-        {/* --- PHẢI: ACTIONS DESKTOP --- */}
-        <div className="hidden lg:flex items-center space-x-4 lg:space-x-6">
-          <button className="bg-transparent border-none outline-none shadow-none text-white/90 hover:text-primary transition-colors flex items-center justify-center cursor-pointer">
-            <span className="material-icons-outlined">search</span>
-          </button>
-          <button className="bg-transparent border-none outline-none shadow-none text-white/90 hover:text-primary transition-colors flex items-center justify-center cursor-pointer">
-            <span className="material-icons-outlined">language</span>
-          </button>
-          <button
-            onClick={handleBooking}
-            className="bg-primary hover:bg-white border-none outline-none text-navy-deep px-5 py-2 rounded-sm font-bold text-[10px] lg:text-xs uppercase tracking-[0.2em] transition-all shadow-lg active:scale-95 cursor-pointer">
-            Book Now
-          </button>
-          {isLoggedIn ? (
-            <div className="flex items-center space-x-4 lg:space-x-6">
-
-              {/* NÚT TÊN NGƯỜI DÙNG: Bấm vào để qua trang Profile */}
-              <button
-                onClick={() => {
-                  if (typeof closeMobileMenu === 'function') closeMobileMenu();
-                  navigate('/profile');
-                }}
-                className="flex items-center gap-2 px-4 py-2 bg-transparent border border-white text-white hover:border-primary hover:text-primary rounded-md transition-all duration-300 focus:outline-none text-sm tracking-wide"
+          {/* --- GIỮA: MENU DESKTOP (CÁCH ĐỀU & RÕ RÀNG) --- */}
+          <nav className="hidden lg:flex items-center justify-center gap-6 xl:gap-8 mx-4">
+            {navItems.map((item) => (
+              <a
+                key={item.name}
+                className="nav-link relative text-xs uppercase tracking-[0.15em] text-white/90 hover:text-primary font-medium transition-colors py-1 whitespace-nowrap"
+                href={item.href}
               >
-                Xin chào, <span className="font-bold">{tai_khoan?.name || "Khách"}</span>
-              </button>
+                {item.name}
+              </a>
+            ))}
+          </nav>
 
-              <div className="w-px h-4 bg-white/20 hidden md:block"></div> {/* Vạch kẻ phân cách */}
-
-              {/* NÚT ĐĂNG XUẤT */}
-              <button
-                onClick={handleLogout}
-                className="flex items-center space-x-1.5 px-4 py-2 bg-transparent border border-white text-white hover:border-primary hover:text-primary rounded-md transition-all duration-300 text-xs font-bold uppercase tracking-widest"       >
-                <span className="material-icons-outlined text-base">logout</span>
-                <span className="hidden md:inline">Thoát</span>
-              </button>
-
-            </div>
-          ) : (
+          {/* --- PHẢI: ACTIONS DESKTOP --- */}
+          <div className="hidden lg:flex items-center gap-3 xl:gap-4 shrink-0">
             <button
-              onClick={() => {
-                if (typeof closeMobileMenu === 'function') closeMobileMenu();
-                navigate('/login');
-              }}
-              className="flex items-center space-x-1.5 px-4 py-2 bg-transparent border border-white text-white hover:border-primary hover:text-primary rounded-md transition-all duration-300 text-xs font-bold uppercase tracking-widest"            >
-              <span className="material-icons-outlined">login</span>
-              <span>Đăng nhập</span>
+              title="Language"
+              className="p-2 text-white/80 hover:text-primary transition-colors flex items-center justify-center rounded-full hover:bg-white/5 cursor-pointer"
+            >
+              <span className="material-icons-outlined text-xl">language</span>
             </button>
-          )}
-        </div>
 
-        {/* --- PHẢI: MENU MOBILE --- */}
-        <div className="flex lg:hidden items-center space-x-4">
-          <button onClick={handleBooking} className="bg-primary hover:bg-white border-none outline-none text-navy-deep px-3 py-2 rounded-sm font-bold text-[10px] uppercase tracking-[0.1em] transition-all cursor-pointer">
-            Book
-          </button>
+            <button
+              onClick={handleBooking}
+              className="bg-primary hover:bg-white text-navy-deep px-4 py-2 rounded-md font-bold text-xs uppercase tracking-wider transition-all duration-300 shadow-md hover:shadow-primary/30 active:scale-95 cursor-pointer whitespace-nowrap"
+            >
+              Book Now
+            </button>
 
-          {/* ĐÃ FIX: Thêm bg-transparent border-none shadow-none */}
-          <button
-            onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
-            className="bg-transparent border-none outline-none shadow-none text-white flex items-center cursor-pointer p-0"
-          >
-            <span className="material-icons-outlined text-3xl">
-              {isMobileMenuOpen ? 'close' : 'menu'}
-            </span>
-          </button>
+            {isLoggedIn ? (
+              <div className="flex items-center gap-2 pl-2 border-l border-white/15">
+                {/* NÚT PROFILE NGƯỜI DÙNG */}
+                <button
+                  onClick={() => navigate('/profile')}
+                  title={`Tài khoản: ${tai_khoan?.name || 'Khách'}`}
+                  className="flex items-center gap-2 px-3 py-1.5 bg-white/10 hover:bg-white/20 border border-white/20 hover:border-primary/50 text-white rounded-md transition-all duration-300 text-xs tracking-wide cursor-pointer max-w-[160px]"
+                >
+                  <span className="material-icons-outlined text-base text-primary shrink-0">account_circle</span>
+                  <span className="truncate font-medium">{tai_khoan?.name || 'Khách'}</span>
+                </button>
+
+                {/* NÚT ĐĂNG XUẤT */}
+                <button
+                  onClick={handleLogout}
+                  title="Đăng xuất"
+                  className="p-2 text-white/80 hover:text-red-400 hover:bg-red-500/10 rounded-md transition-all duration-300 flex items-center justify-center cursor-pointer border border-transparent hover:border-red-400/30"
+                >
+                  <span className="material-icons-outlined text-lg">logout</span>
+                </button>
+              </div>
+            ) : (
+              <button
+                onClick={() => navigate('/login')}
+                className="flex items-center gap-1.5 px-3.5 py-2 bg-transparent border border-white/40 hover:border-primary text-white hover:text-primary rounded-md transition-all duration-300 text-xs font-semibold uppercase tracking-wider cursor-pointer whitespace-nowrap"
+              >
+                <span className="material-icons-outlined text-base">login</span>
+                <span>Đăng nhập</span>
+              </button>
+            )}
+          </div>
+
+          {/* --- PHẢI: MOBILE ACTIONS & HAMBURGER --- */}
+          <div className="flex lg:hidden items-center gap-2.5 shrink-0">
+            <button
+              onClick={handleBooking}
+              className="bg-primary hover:bg-white text-navy-deep px-3 py-1.5 rounded-md font-bold text-[11px] uppercase tracking-wider transition-all shadow cursor-pointer whitespace-nowrap"
+            >
+              Book
+            </button>
+
+            <button
+              onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
+              className="p-1.5 text-white hover:text-primary rounded-md transition-colors flex items-center justify-center cursor-pointer focus:outline-none"
+              aria-label="Toggle Menu"
+            >
+              <span className="material-icons-outlined text-2xl">
+                {isMobileMenuOpen ? 'close' : 'menu'}
+              </span>
+            </button>
+          </div>
         </div>
       </div>
 
       {/* --- DROPDOWN MOBILE MENU --- */}
       <div
-        className={`lg:hidden absolute top-full left-0 w-full bg-navy-deep border-t border-white/10 transition-all duration-300 ease-in-out overflow-hidden ${isMobileMenuOpen ? 'max-h-[400px] opacity-100 py-4' : 'max-h-0 opacity-0 py-0'
-          }`}
+        className={`lg:hidden transition-all duration-300 ease-in-out overflow-hidden bg-navy-deep/95 backdrop-blur-lg border-t border-white/10 ${
+          isMobileMenuOpen ? 'max-h-[500px] opacity-100 py-5 shadow-2xl' : 'max-h-0 opacity-0 py-0'
+        }`}
       >
-        <div className="flex flex-col px-6 space-y-5">
-          {navItems.map((item) => {
-            const sectionId = item.toLowerCase();
-            return (
+        <div className="max-w-7xl mx-auto px-6 flex flex-col space-y-4">
+          {/* Thông tin user trên mobile */}
+          {isLoggedIn && (
+            <div
+              onClick={() => {
+                closeMobileMenu();
+                navigate('/profile');
+              }}
+              className="flex items-center gap-3 p-3 bg-white/5 hover:bg-white/10 rounded-lg border border-white/10 cursor-pointer transition-colors"
+            >
+              <span className="material-icons-outlined text-2xl text-primary">account_circle</span>
+              <div className="flex flex-col min-w-0">
+                <span className="text-[11px] text-white/60">Tài khoản</span>
+                <span className="text-sm font-semibold text-white truncate">{tai_khoan?.name || 'Khách'}</span>
+              </div>
+            </div>
+          )}
+
+          <div className="flex flex-col space-y-3 pt-1">
+            {navItems.map((item) => (
               <a
-                key={item}
+                key={item.name}
                 onClick={closeMobileMenu}
-                className="text-sm uppercase tracking-widest text-white/90 font-medium hover:text-primary transition-colors"
-                href={`#${sectionId}`}
+                className="text-sm uppercase tracking-widest text-white/90 hover:text-primary font-medium transition-colors py-1"
+                href={item.href}
               >
-                {item}
+                {item.name}
               </a>
-            );
-          })}
+            ))}
+          </div>
 
-          <hr className="border-white/10" />
+          <hr className="border-white/10 my-1" />
 
-          {/* ĐÃ FIX: Thêm bg-transparent border-none shadow-none cho tất cả nút dưới này */}
-          <div className="flex flex-col space-y-4">
-            <button className="bg-transparent border-none outline-none shadow-none flex items-center space-x-3 text-white/90 hover:text-primary transition-colors text-left w-fit p-0">
-              <span className="material-icons-outlined">search</span>
-              <span className="text-sm uppercase tracking-widest">Search</span>
-            </button>
-
-            <button className="bg-transparent border-none outline-none shadow-none flex items-center space-x-3 text-white/90 hover:text-primary transition-colors text-left w-fit p-0">
-              <span className="material-icons-outlined">language</span>
-              <span className="text-sm uppercase tracking-widest">Language</span>
+          <div className="flex flex-col space-y-3">
+            <button className="flex items-center gap-3 text-white/80 hover:text-primary transition-colors text-left py-1 text-sm uppercase tracking-wider bg-transparent border-none">
+              <span className="material-icons-outlined text-lg">language</span>
+              <span>Language</span>
             </button>
 
             {isLoggedIn ? (
               <button
                 onClick={handleLogout}
-                className="bg-transparent border-none outline-none shadow-none flex items-center space-x-3 text-white/90 hover:text-primary transition-colors text-left w-fit p-0"
+                className="flex items-center gap-3 text-red-400 hover:text-red-300 transition-colors text-left py-1 text-sm font-semibold uppercase tracking-wider bg-transparent border-none"
               >
-                <span className="material-icons-outlined">logout</span>
-                <span className="text-sm font-bold uppercase tracking-widest">Logout</span>
+                <span className="material-icons-outlined text-lg">logout</span>
+                <span>Logout</span>
               </button>
-
             ) : (
               <button
-                onClick={() => { closeMobileMenu(); navigate('/login'); }}
-                className="bg-transparent border-none outline-none shadow-none flex items-center space-x-3 text-white/90 hover:text-primary transition-colors text-left w-fit p-0"
+                onClick={() => {
+                  closeMobileMenu();
+                  navigate('/login');
+                }}
+                className="flex items-center gap-3 text-primary hover:text-white transition-colors text-left py-1 text-sm font-semibold uppercase tracking-wider bg-transparent border-none"
               >
-                <span className="material-icons-outlined">login</span>
-                <span className="text-sm font-bold uppercase tracking-widest">Login</span>
+                <span className="material-icons-outlined text-lg">login</span>
+                <span>Đăng nhập</span>
               </button>
             )}
           </div>
         </div>
       </div>
-    </header >
+    </header>
   );
 };
 
