@@ -1,10 +1,14 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useLocation } from 'react-router-dom';
 import { useLanguage } from '../../context/LanguageContext';
 
-const Navbar = ({ scrolled }) => {
+const Navbar = ({ scrolled, hideNavItems = false }) => {
   const { language, setLanguage, t } = useLanguage();
   const navigate = useNavigate();
+  const location = useLocation();
+
+  // Xác định có ẩn navItems hay không: ẩn khi có prop hideNavItems hoặc không phải trang chủ ('/')
+  const shouldHideNav = hideNavItems || location.pathname !== '/';
 
   const navItems = [
     { name: t('navbar.accommodations'), href: '#accommodations' },
@@ -20,7 +24,7 @@ const Navbar = ({ scrolled }) => {
   const isLoggedIn = !!localStorage.getItem('token');
   const tai_khoan = JSON.parse(localStorage.getItem('user')) || {};
 
-  // Close dropdown on click outside
+  // Đóng dropdown ngôn ngữ khi click bên ngoài
   useEffect(() => {
     const handleClickOutside = (event) => {
       if (langDropdownRef.current && !langDropdownRef.current.contains(event.target)) {
@@ -52,11 +56,10 @@ const Navbar = ({ scrolled }) => {
 
   return (
     <header
-      className={`fixed top-0 left-0 w-full z-50 transition-all duration-300 ${
-        scrolled || isMobileMenuOpen
+      className={`fixed top-0 left-0 w-full z-50 transition-all duration-300 ${scrolled || isMobileMenuOpen
           ? 'bg-navy-deep/95 backdrop-blur-md py-3.5 border-b border-white/10 shadow-xl'
           : 'bg-gradient-to-b from-navy-deep/80 via-navy-deep/40 to-transparent py-5 border-b border-white/5'
-      }`}
+        }`}
     >
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="flex items-center justify-between h-12">
@@ -64,27 +67,42 @@ const Navbar = ({ scrolled }) => {
           <div className="flex items-center shrink-0">
             <a
               href="/"
-              className="text-lg sm:text-xl lg:text-2xl font-serif tracking-[0.2em] text-white uppercase font-bold hover:text-primary transition-colors flex items-center gap-2"
+              onClick={(e) => {
+                e.preventDefault();
+                navigate('/');
+              }}
+              className="group flex items-center gap-2.5 text-white transition-transform duration-300 hover:scale-[1.01]"
             >
-              <span>{t('navbar.brand')}</span>
+              <div className="flex flex-col">
+                <span className="text-base sm:text-xl lg:text-2xl font-serif tracking-[0.2em] text-white uppercase font-bold group-hover:text-primary transition-colors leading-tight">
+                  {t('navbar.brand')}
+                </span>
+                {shouldHideNav && (
+                  <span className="text-[8px] sm:text-[9px] uppercase tracking-[0.25em] text-primary/80 font-medium hidden sm:block">
+                    Luxury Hotel & Suites
+                  </span>
+                )}
+              </div>
             </a>
           </div>
 
-          {/* --- GIỮA: MENU DESKTOP --- */}
-          <nav className="hidden lg:flex items-center justify-center gap-6 xl:gap-8 mx-4">
-            {navItems.map((item) => (
-              <a
-                key={item.href}
-                className="nav-link relative text-xs uppercase tracking-[0.15em] text-white/90 hover:text-primary font-medium transition-colors py-1 whitespace-nowrap"
-                href={item.href}
-              >
-                {item.name}
-              </a>
-            ))}
-          </nav>
+          {/* --- GIỮA: MENU DESKTOP (Chỉ hiển thị khi không ẩn navItems, tức trang chủ) --- */}
+          {!shouldHideNav && (
+            <nav className="hidden lg:flex items-center justify-center gap-6 xl:gap-8 mx-4">
+              {navItems.map((item) => (
+                <a
+                  key={item.href}
+                  className="nav-link relative text-xs uppercase tracking-[0.15em] text-white/90 hover:text-primary font-medium transition-colors py-1 whitespace-nowrap"
+                  href={item.href}
+                >
+                  {item.name}
+                </a>
+              ))}
+            </nav>
+          )}
 
           {/* --- PHẢI: ACTIONS DESKTOP --- */}
-          <div className="hidden lg:flex items-center gap-3 xl:gap-4 shrink-0">
+          <div className="hidden sm:flex items-center gap-3 xl:gap-4 shrink-0">
             {/* BỘ CHỌN NGÔN NGỮ DESKTOP */}
             <div className="relative" ref={langDropdownRef}>
               <button
@@ -95,7 +113,9 @@ const Navbar = ({ scrolled }) => {
               >
                 <span className="material-icons-outlined text-lg">language</span>
                 <span>{language === 'vi' ? 'VI' : 'EN'}</span>
-                <span className="material-icons-outlined text-sm">{isLangDropdownOpen ? 'expand_less' : 'expand_more'}</span>
+                <span className="material-icons-outlined text-sm">
+                  {isLangDropdownOpen ? 'expand_less' : 'expand_more'}
+                </span>
               </button>
 
               {isLangDropdownOpen && (
@@ -106,11 +126,10 @@ const Navbar = ({ scrolled }) => {
                       setLanguage('vi');
                       setIsLangDropdownOpen(false);
                     }}
-                    className={`w-full flex items-center justify-between px-3.5 py-2 text-xs text-left cursor-pointer transition-colors ${
-                      language === 'vi'
+                    className={`w-full flex items-center justify-between px-3.5 py-2 text-xs text-left cursor-pointer transition-colors ${language === 'vi'
                         ? 'bg-primary/20 text-primary font-bold'
                         : 'text-white/80 hover:bg-white/10 hover:text-white'
-                    }`}
+                      }`}
                   >
                     <span className="flex items-center gap-2">
                       <span className="text-sm">🇻🇳</span>
@@ -125,11 +144,10 @@ const Navbar = ({ scrolled }) => {
                       setLanguage('en');
                       setIsLangDropdownOpen(false);
                     }}
-                    className={`w-full flex items-center justify-between px-3.5 py-2 text-xs text-left cursor-pointer transition-colors ${
-                      language === 'en'
+                    className={`w-full flex items-center justify-between px-3.5 py-2 text-xs text-left cursor-pointer transition-colors ${language === 'en'
                         ? 'bg-primary/20 text-primary font-bold'
                         : 'text-white/80 hover:bg-white/10 hover:text-white'
-                    }`}
+                      }`}
                   >
                     <span className="flex items-center gap-2">
                       <span className="text-sm">🇬🇧</span>
@@ -141,6 +159,7 @@ const Navbar = ({ scrolled }) => {
               )}
             </div>
 
+            {/* NÚT ĐẶT PHÒNG */}
             <button
               onClick={handleBooking}
               className="bg-primary hover:bg-white text-navy-deep px-4 py-2 rounded-md font-bold text-xs uppercase tracking-wider transition-all duration-300 shadow-md hover:shadow-primary/30 active:scale-95 cursor-pointer whitespace-nowrap"
@@ -148,6 +167,7 @@ const Navbar = ({ scrolled }) => {
               {t('navbar.bookNow')}
             </button>
 
+            {/* KHU VỰC ĐĂNG NHẬP / TÀI KHOẢN */}
             {isLoggedIn ? (
               <div className="flex items-center gap-2 pl-2 border-l border-white/15">
                 {/* NÚT PROFILE NGƯỜI DÙNG */}
@@ -181,8 +201,7 @@ const Navbar = ({ scrolled }) => {
           </div>
 
           {/* --- PHẢI: MOBILE ACTIONS & HAMBURGER --- */}
-          <div className="flex lg:hidden items-center gap-2.5 shrink-0">
-
+          <div className="flex sm:hidden items-center gap-2.5 shrink-0">
             <button
               onClick={handleBooking}
               className="bg-primary hover:bg-white text-navy-deep px-3 py-1.5 rounded-md font-bold text-[11px] uppercase tracking-wider transition-all shadow cursor-pointer whitespace-nowrap"
@@ -205,9 +224,8 @@ const Navbar = ({ scrolled }) => {
 
       {/* --- DROPDOWN MOBILE MENU --- */}
       <div
-        className={`lg:hidden transition-all duration-300 ease-in-out overflow-hidden bg-navy-deep/95 backdrop-blur-lg border-t border-white/10 ${
-          isMobileMenuOpen ? 'max-h-[500px] opacity-100 py-5 shadow-2xl' : 'max-h-0 opacity-0 py-0'
-        }`}
+        className={`sm:hidden transition-all duration-300 ease-in-out overflow-hidden bg-navy-deep/95 backdrop-blur-lg border-t border-white/10 ${isMobileMenuOpen ? 'max-h-[500px] opacity-100 py-5 shadow-2xl' : 'max-h-0 opacity-0 py-0'
+          }`}
       >
         <div className="max-w-7xl mx-auto px-6 flex flex-col space-y-4">
           {/* Thông tin user trên mobile */}
@@ -227,20 +245,40 @@ const Navbar = ({ scrolled }) => {
             </div>
           )}
 
-          <div className="flex flex-col space-y-3 pt-1">
-            {navItems.map((item) => (
-              <a
-                key={item.href}
-                onClick={closeMobileMenu}
-                className="text-sm uppercase tracking-widest text-white/90 hover:text-primary font-medium transition-colors py-1"
-                href={item.href}
-              >
-                {item.name}
-              </a>
-            ))}
-          </div>
-
-          <hr className="border-white/10 my-1" />
+          {/* navItems trên mobile (chỉ hiện ở trang chủ) */}
+          {!shouldHideNav ? (
+            <>
+              <div className="flex flex-col space-y-3 pt-1">
+                {navItems.map((item) => (
+                  <a
+                    key={item.href}
+                    onClick={closeMobileMenu}
+                    className="text-sm uppercase tracking-widest text-white/90 hover:text-primary font-medium transition-colors py-1"
+                    href={item.href}
+                  >
+                    {item.name}
+                  </a>
+                ))}
+              </div>
+              <hr className="border-white/10 my-1" />
+            </>
+          ) : (
+            <>
+              <div className="flex flex-col space-y-2 pt-1">
+                <button
+                  onClick={() => {
+                    closeMobileMenu();
+                    navigate('/');
+                  }}
+                  className="flex items-center gap-2 text-sm uppercase tracking-widest text-white/90 hover:text-primary font-medium transition-colors py-1 bg-transparent border-none cursor-pointer text-left"
+                >
+                  <span className="material-icons-outlined text-base text-primary">home</span>
+                  <span>{t('navbar.home') || 'Trang chủ'}</span>
+                </button>
+              </div>
+              <hr className="border-white/10 my-1" />
+            </>
+          )}
 
           {/* Chọn ngôn ngữ trong menu mobile */}
           <div className="flex items-center justify-between py-2 text-white/80">
@@ -252,18 +290,16 @@ const Navbar = ({ scrolled }) => {
               <button
                 type="button"
                 onClick={() => setLanguage('vi')}
-                className={`px-2.5 py-1 text-xs rounded transition-colors ${
-                  language === 'vi' ? 'bg-primary text-navy-deep font-bold' : 'text-white/70 hover:text-white'
-                }`}
+                className={`px-2.5 py-1 text-xs rounded transition-colors ${language === 'vi' ? 'bg-primary text-navy-deep font-bold' : 'text-white/70 hover:text-white'
+                  }`}
               >
                 VI
               </button>
               <button
                 type="button"
                 onClick={() => setLanguage('en')}
-                className={`px-2.5 py-1 text-xs rounded transition-colors ${
-                  language === 'en' ? 'bg-primary text-navy-deep font-bold' : 'text-white/70 hover:text-white'
-                }`}
+                className={`px-2.5 py-1 text-xs rounded transition-colors ${language === 'en' ? 'bg-primary text-navy-deep font-bold' : 'text-white/70 hover:text-white'
+                  }`}
               >
                 EN
               </button>

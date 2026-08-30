@@ -1,8 +1,8 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import Navbar from '../components/layout/Navbar';
-import Footer from '../components/layout/Footer';
-import { useLanguage } from '../context/LanguageContext';
+import Navbar from '../../components/layout/Navbar';
+import Footer from '../../components/layout/Footer';
+import { useLanguage } from '../../context/LanguageContext';
 
 const Heritage = () => {
   const { t } = useLanguage();
@@ -88,7 +88,7 @@ const Heritage = () => {
   return (
     <div className="min-h-screen w-full overflow-x-hidden bg-bg-light text-navy-deep font-display">
       {/* Navigation */}
-      <Navbar scrolled={scrolled} />
+      <Navbar scrolled={scrolled} hideNavItems={true} />
 
       {/* Hero Header */}
       <section className="relative pt-36 pb-24 lg:pt-48 lg:pb-32 bg-navy-deep text-white overflow-hidden">

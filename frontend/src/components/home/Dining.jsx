@@ -1,9 +1,11 @@
 import React from 'react';
-import { Utensils, GlassWater, ArrowUpRight, Calendar } from 'lucide-react';
+import { useNavigate } from 'react-router-dom';
+import { Utensils, GlassWater, ArrowUpRight, Calendar, Sparkles } from 'lucide-react';
 import { useLanguage } from '../../context/LanguageContext';
 
 const Dining = () => {
     const { t } = useLanguage();
+    const navigate = useNavigate();
 
     return (
         <div id='dining' className="mb-10 relative flex min-h-screen w-full flex-col bg-background-light dark:bg-background-dark text-slate-900 dark:text-slate-100 font-body overflow-x-hidden antialiased">
@@ -41,7 +43,10 @@ const Dining = () => {
                                         {t('dining.degustationDesc')}
                                     </p>
                                     <div className="flex items-center gap-4">
-                                        <button className="rounded-lg border border-background-dark/20 px-6 py-2.5 text-sm font-bold text-background-dark transition-colors hover:bg-background-dark hover:text-dark">
+                                        <button 
+                                            onClick={() => navigate('/our-menu?tab=degustation')}
+                                            className="rounded-lg border border-background-dark/20 px-6 py-2.5 text-sm font-bold text-background-dark transition-all hover:bg-background-dark hover:text-primary cursor-pointer hover:shadow-lg hover:border-primary active:scale-95"
+                                        >
                                             {t('dining.viewDetails')}
                                         </button>
                                     </div>
@@ -49,8 +54,8 @@ const Dining = () => {
                             </div>
 
                             {/* Menu Item 2 (Smaller cards row) */}
-                            <div className="grid gap-8 md:grid-cols-2">
-                                <div className="flex flex-col rounded-xl border border-primary/20 bg-[#2a261a] p-6 hover:border-primary/40 transition-colors">
+                            <div className="flex md:grid md:grid-cols-2 gap-6 md:gap-8 overflow-x-auto md:overflow-visible no-scrollbar snap-x snap-mandatory pb-4 md:pb-0 [touch-action:pan-x] [-webkit-overflow-scrolling:touch]">
+                                <div className="w-[85vw] max-w-[340px] shrink-0 snap-center md:w-auto md:max-w-none md:shrink flex flex-col rounded-xl border border-primary/20 bg-[#2a261a] p-6 hover:border-primary/40 transition-colors">
                                     <div className="mb-4 flex items-start justify-between">
                                         <div className="flex items-center gap-2">
                                             <div className="flex h-10 w-10 items-center justify-center rounded-full bg-primary/10 text-primary">
@@ -58,15 +63,20 @@ const Dining = () => {
                                             </div>
                                             <h4 className="font-display text-xl font-bold text-white">{t('dining.aLaCarteTitle')}</h4>
                                         </div>
-                                        <ArrowUpRight size={20} className="text-slate-500" />
                                     </div>
-                                    <p className="text-slate-400 font-light mb-6 flex-grow">
+                                    <p className="text-slate-400 font-light mb-6 flex-grow text-sm sm:text-base">
                                         {t('dining.aLaCarteDesc')}
                                     </p>
-                                    <a className="text-primary text-sm font-bold hover:underline" href="#">{t('dining.downloadPdf')}</a>
+                                    <button 
+                                        onClick={() => navigate('/our-menu?tab=alacarte')}
+                                        className="text-primary text-sm font-bold hover:underline text-left cursor-pointer flex items-center gap-1 group/btn"
+                                    >
+                                        <span>{t('dining.downloadPdf')}</span>
+                                        <ArrowUpRight size={16} className="transition-transform group-hover/btn:translate-x-0.5 group-hover/btn:-translate-y-0.5" />
+                                    </button>
                                 </div>
 
-                                <div className="flex flex-col rounded-xl border border-primary/20 bg-[#2a261a] p-6 hover:border-primary/40 transition-colors">
+                                <div className="w-[85vw] max-w-[340px] shrink-0 snap-center md:w-auto md:max-w-none md:shrink flex flex-col rounded-xl border border-primary/20 bg-[#2a261a] p-6 hover:border-primary/40 transition-colors">
                                     <div className="mb-4 flex items-start justify-between">
                                         <div className="flex items-center gap-2">
                                             <div className="flex h-10 w-10 items-center justify-center rounded-full bg-primary/10 text-primary">
@@ -74,18 +84,26 @@ const Dining = () => {
                                             </div>
                                             <h4 className="font-display text-xl font-bold text-white">{t('dining.wineTitle')}</h4>
                                         </div>
-                                        <ArrowUpRight size={20} className="text-slate-500" />
                                     </div>
-                                    <p className="text-slate-400 font-light mb-6 flex-grow">
+                                    <p className="text-slate-400 font-light mb-6 flex-grow text-sm sm:text-base">
                                         {t('dining.wineDesc')}
                                     </p>
-                                    <a className="text-primary text-sm font-bold hover:underline" href="#">{t('dining.viewWineList')}</a>
+                                    <button 
+                                        onClick={() => navigate('/our-menu?tab=wine')}
+                                        className="text-primary text-sm font-bold hover:underline text-left cursor-pointer flex items-center gap-1 group/btn"
+                                    >
+                                        <span>{t('dining.viewWineList')}</span>
+                                        <ArrowUpRight size={16} className="transition-transform group-hover/btn:translate-x-0.5 group-hover/btn:-translate-y-0.5" />
+                                    </button>
                                 </div>
                             </div>
                         </div>
 
                         <div className="mt-12 text-center">
-                            <button className="inline-flex items-center justify-center gap-2 rounded-xl bg-primary px-8 py-3 text-background-dark font-bold transition-transform hover:scale-105">
+                            <button 
+                                onClick={() => navigate('/our-menu?reserve=true')}
+                                className="inline-flex items-center justify-center gap-2 rounded-xl bg-primary px-8 py-3 text-background-dark font-bold transition-transform hover:scale-105 shadow-lg shadow-primary/20 cursor-pointer"
+                            >
                                 <Calendar size={20} />
                                 <span className="ml-2">{t('dining.reserveExp')}</span>
                             </button>
@@ -96,5 +114,6 @@ const Dining = () => {
         </div>
     );
 };
+
 
 export default Dining;

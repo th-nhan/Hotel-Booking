@@ -7,7 +7,9 @@ import Home from './pages/Home';
 import HotelDashboard from './pages/admin/HotelDashboard';
 import ProfileCustomer from './pages/customer/ProfileCustomer';
 import ReviewPage from './pages/customer/Review';
-import Heritage from './pages/Heritage';
+import Heritage from './pages/about/Heritage';
+import MenuPreview from './pages/about/MenuPreview';
+import ExperienceDetail from './pages/about/ExperienceDetail';
 import ScrollToTop from './components/layout/ScrollToTop';
 import { LanguageProvider } from './context/LanguageContext';
 
@@ -28,7 +30,17 @@ function App() {
           <Route path="/reviews" element={<ReviewPage />} />
           <Route path="/heritage" element={<Heritage />} />
           <Route path="/our-story" element={<Heritage />} />
-          
+          <Route path="/our-menu" element={<MenuPreview />} />
+          <Route path="/menu" element={<MenuPreview />} />
+          <Route path="/dining-menu" element={<MenuPreview />} />
+
+          {/* Experiences Detail Routes */}
+          <Route path="/wellness" element={<ExperienceDetail />} />
+          <Route path="/spa" element={<ExperienceDetail />} />
+          <Route path="/experiences" element={<ExperienceDetail />} />
+          <Route path="/experiences/:slug" element={<ExperienceDetail />} />
+          <Route path="/experience/:slug" element={<ExperienceDetail />} />
+
 
           {/* ----------------------------ADMIN-------------------------- */}
           <Route path="/dashboard" element={<HotelDashboard />} />
