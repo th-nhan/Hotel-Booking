@@ -7,6 +7,7 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Schema;
+use Illuminate\Support\Facades\Http;
 use Carbon\Carbon;
 use Exception;
 
@@ -186,7 +187,7 @@ class ProfileController extends Controller
                 'anhdaidien' => 'nullable|string',
             ]);
 
-            // Thử tự động nâng cấp cột AnhDaiDien sang longText
+            // Thử tự động nâng cấp cột AnhDaiDien sang longText nếu DB chưa kịp migrate
             try {
                 Schema::table('khach_hang', function ($table) {
                     $table->longText('AnhDaiDien')->nullable()->change();
@@ -200,9 +201,8 @@ class ProfileController extends Controller
             if ($request->hasFile('avatar')) {
                 $file = $request->file('avatar');
                 $extension = strtolower($file->getClientOriginalExtension() ?: 'jpg');
-                $mimeType = $file->getClientMimeType() ?: 'image/jpeg';
                 
-                // Thử lưu file vào public_path nếu server cho phép ghi
+                // 1. Thử lưu file vào public_path nếu server cho phép ghi (Local / VPS)
                 $savedToFile = false;
                 try {
                     $destinationPath = public_path('uploads/avatars');
@@ -219,14 +219,45 @@ class ProfileController extends Controller
                     $savedToFile = false;
                 }
 
-                // Nếu không lưu được vào file (do Vercel / Read-only filesystem), chuyển sang Data URL Base64
+                // 2. Nếu không lưu được vào file (Vercel Serverless), đẩy lên ImgBB để lấy URL ngắn dạng VARCHAR
                 if (!$savedToFile) {
-                    $imageData = file_get_contents($file->getRealPath());
-                    $base64 = base64_encode($imageData);
-                    $avatarUrl = 'data:' . $mimeType . ';base64,' . $base64;
+                    try {
+                        $response = Http::asMultipart()->post('https://api.imgbb.com/1/upload?key=6d207e02198a847aa5a0a0a33ea96ffc', [
+                            [
+                                'name' => 'image',
+                                'contents' => fopen($file->getRealPath(), 'r'),
+                                'filename' => 'avatar.' . $extension
+                            ]
+                        ]);
+                        if ($response->successful() && isset($response->json()['data']['url'])) {
+                            $avatarUrl = $response->json()['data']['url'];
+                        }
+                    } catch (\Throwable $e) {
+                        // ignore
+                    }
+
+                    if (!$avatarUrl) {
+                        $mimeType = $file->getClientMimeType() ?: 'image/jpeg';
+                        $imageData = file_get_contents($file->getRealPath());
+                        $avatarUrl = 'data:' . $mimeType . ';base64,' . base64_encode($imageData);
+                    }
                 }
             } elseif ($request->filled('avatar_base64')) {
-                $avatarUrl = $request->avatar_base64;
+                $base64 = $request->avatar_base64;
+                try {
+                    $cleanBase64 = preg_replace('/^data:image\/[a-z]+;base64,/', '', $base64);
+                    $response = Http::asForm()->post('https://api.imgbb.com/1/upload?key=6d207e02198a847aa5a0a0a33ea96ffc', [
+                        'image' => $cleanBase64
+                    ]);
+                    if ($response->successful() && isset($response->json()['data']['url'])) {
+                        $avatarUrl = $response->json()['data']['url'];
+                    }
+                } catch (\Throwable $e) {
+                    // ignore
+                }
+                if (!$avatarUrl) {
+                    $avatarUrl = $base64;
+                }
             } elseif ($request->filled('anhdaidien')) {
                 $avatarUrl = $request->anhdaidien;
             }

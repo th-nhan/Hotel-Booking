@@ -172,17 +172,30 @@ function Sidebar({ profile, activeTab, setActiveTab, onUpdateProfile }) {
     });
   };
 
-  const uploadToCloud = async (base64Image) => {
+  const uploadToCloud = async (file, base64Image) => {
     try {
-      const cleanBase64 = base64Image.replace(/^data:image\/[a-z]+;base64,/, '');
-      const body = new FormData();
-      body.append('image', cleanBase64);
-      const res = await axios.post('https://api.imgbb.com/1/upload?key=6d207e02198a847aa5a0a0a33ea96ffc', body);
-      if (res.data?.data?.url) {
-        return res.data.data.url;
+      const formData = new FormData();
+      if (file) {
+        formData.append('image', file);
+      } else if (base64Image) {
+        const cleanBase64 = base64Image.replace(/^data:image\/[a-z]+;base64,/, '');
+        formData.append('image', cleanBase64);
+      }
+
+      // Sử dụng fetch trực tiếp để không bị dính Authorization header của axios làm chặn CORS
+      const response = await fetch('https://api.imgbb.com/1/upload?key=6d207e02198a847aa5a0a0a33ea96ffc', {
+        method: 'POST',
+        body: formData
+      });
+
+      if (response.ok) {
+        const data = await response.json();
+        if (data?.data?.url) {
+          return data.data.url;
+        }
       }
     } catch (e) {
-      console.warn("Cloud CDN upload fallback to direct backend:", e);
+      console.warn("Cloud CDN upload fallback:", e);
     }
     return null;
   };
@@ -207,11 +220,8 @@ function Sidebar({ profile, activeTab, setActiveTab, onUpdateProfile }) {
       // 1. Nén ảnh siêu nhẹ trên client
       const base64Image = await compressImage(file, 300, 300, 0.85);
 
-      // 2. Thử upload lên Cloud CDN để lấy URL vĩnh viễn siêu ngắn (< 50 ký tự)
-      let finalAvatarUrl = null;
-      if (base64Image) {
-        finalAvatarUrl = await uploadToCloud(base64Image);
-      }
+      // 2. Upload lên Cloud CDN để lấy URL vĩnh viễn dạng VARCHAR ngắn (< 40 ký tự)
+      let finalAvatarUrl = await uploadToCloud(file, base64Image);
 
       let res;
       // 3. Nếu có URL từ Cloud, lưu trực tiếp qua update-profile
