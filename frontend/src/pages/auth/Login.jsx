@@ -35,7 +35,7 @@ const Login = () => {
                     navigate('/');
                 }
             }
-        } catch (error) {
+        } catch {
             message.error(t('auth.loginFailed'));
         }
     };

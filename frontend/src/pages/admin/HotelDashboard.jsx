@@ -4,7 +4,8 @@ import {
   LayoutDashboard, Map as MapIcon, CalendarDays, Users, FileText, Settings,
   Search, Download, Bell, UserCircle, LogOut, X,
   Sparkles, BedDouble, CheckCircle2, RefreshCw, Printer, LogIn, PaintBucket,
-  MessageSquare, Star, Calendar, Bot, PlusCircle, CreditCard, Phone, Mail, User, ShieldCheck
+  MessageSquare, Star, Calendar, Bot, PlusCircle, CreditCard, Phone, Mail, User, ShieldCheck,
+  Loader2
 } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 
@@ -19,6 +20,7 @@ export default function HotelDashboard() {
   });
   const [loading, setLoading] = useState(true);
   const [selectedRoom, setSelectedRoom] = useState(null);
+  const [roomActionLoading, setRoomActionLoading] = useState(false);
 
   // --- STATE MODAL ĐẶT PHÒNG NHANH ---
   const [isBookingModalOpen, setIsBookingModalOpen] = useState(false);
@@ -170,37 +172,61 @@ export default function HotelDashboard() {
 
   const handleCheckIn = async () => {
     if (!selectedRoom || !window.confirm(`Xác nhận khách đã nhận phòng ${selectedRoom.number}?`)) return;
+    setRoomActionLoading(true);
     try {
       await axios.post(`${import.meta.env.VITE_API_URL}/nhan-phong`, { PhongID: selectedRoom.id });
-      alert(`Khách đã nhận phòng ${selectedRoom.number} thành công!`);
+      // Cập nhật trạng thái ngay lập tức trên UI (Optimistic Update)
+      setRooms(prev => prev.map(r => r.id === selectedRoom.id ? { ...r, status: 'Đang ở' } : r));
+      setSelectedRoom(null);
       await fetchDashboardData();
-      setSelectedRoom({ ...selectedRoom, status: 'Đang ở' });
     } catch (error) {
       alert("Lỗi Check-in: " + (error.response?.data?.message || error.message));
+    } finally {
+      setRoomActionLoading(false);
     }
   };
 
   const handleCheckout = async () => {
     if (!selectedRoom || !window.confirm(`Xác nhận trả phòng ${selectedRoom.number}?`)) return;
+    setRoomActionLoading(true);
     try {
-      const res = await axios.post(`${import.meta.env.VITE_API_URL}/tra-phong`, { PhongID: selectedRoom.id });
-      alert(res.data?.message || `Trả phòng ${selectedRoom.number} thành công! Phòng chuyển sang trạng thái Đang dọn.`);
+      await axios.post(`${import.meta.env.VITE_API_URL}/tra-phong`, { PhongID: selectedRoom.id });
+      // 1. Cập nhật state danh sách phòng ngay lập tức sang "Đang dọn"
+      setRooms(prev => prev.map(r => r.id === selectedRoom.id ? { ...r, status: 'Đang dọn', guestName: null, checkIn: null, checkOut: null } : r));
+      setStats(prev => ({
+        ...prev,
+        occupied: Math.max(0, prev.occupied - 1),
+        cleaning: prev.cleaning + 1
+      }));
+      // 2. Đóng ngay tab/drawer chi tiết phòng
+      setSelectedRoom(null);
+      // 3. Đồng bộ lại dữ liệu mới nhất từ server
       await fetchDashboardData();
-      setSelectedRoom({ ...selectedRoom, status: 'Đang dọn', guestName: null, checkIn: null, checkOut: null });
     } catch (error) {
       alert("Lỗi khi trả phòng: " + (error.response?.data?.message || error.message));
+    } finally {
+      setRoomActionLoading(false);
     }
   };
 
   const handleCleaned = async () => {
     if (!selectedRoom) return;
+    setRoomActionLoading(true);
     try {
       await axios.post(`${import.meta.env.VITE_API_URL}/hoan-tat-don`, { PhongID: selectedRoom.id });
-      alert(`Phòng ${selectedRoom.number} đã hoàn tất dọn dẹp và sẵn sàng đón khách!`);
+      // Cập nhật state ngay lập tức sang "Trống"
+      setRooms(prev => prev.map(r => r.id === selectedRoom.id ? { ...r, status: 'Trống', guestName: null, checkIn: null, checkOut: null } : r));
+      setStats(prev => ({
+        ...prev,
+        cleaning: Math.max(0, prev.cleaning - 1),
+        available: prev.available + 1
+      }));
+      setSelectedRoom(null);
       await fetchDashboardData();
-      setSelectedRoom({ ...selectedRoom, status: 'Trống', guestName: null });
     } catch (error) {
       alert("Lỗi cập nhật: " + (error.response?.data?.message || error.message));
+    } finally {
+      setRoomActionLoading(false);
     }
   };
 
@@ -724,31 +750,51 @@ export default function HotelDashboard() {
             <div className="p-6 border-t border-[#0B1C2D]/10 bg-[#F8F5F0] space-y-3">
               {selectedRoom.status === 'Trống' && (
                 <button
+                  disabled={roomActionLoading}
                   onClick={() => openBookingModal(selectedRoom)}
-                  className="w-full h-12 bg-[#D4AF37] hover:bg-[#b5952f] text-[#0B1C2D] font-bold uppercase tracking-widest text-sm rounded-lg transition-colors flex items-center justify-center gap-2 shadow-lg shadow-[#D4AF37]/20 cursor-pointer"
+                  className="w-full h-12 bg-[#D4AF37] hover:bg-[#b5952f] text-[#0B1C2D] font-bold uppercase tracking-widest text-sm rounded-lg transition-colors flex items-center justify-center gap-2 shadow-lg shadow-[#D4AF37]/20 cursor-pointer disabled:opacity-50"
                 >
                   <PlusCircle className="w-5 h-5" /> Đặt phòng / Nhận khách
                 </button>
               )}
               {selectedRoom.status === 'Đã đặt' && (
                 <button
+                  disabled={roomActionLoading}
                   onClick={handleCheckIn}
-                  className="w-full h-12 bg-[#0B1C2D] hover:bg-[#1a365d] text-[#D4AF37] font-bold uppercase tracking-widest text-sm rounded-lg transition-colors flex items-center justify-center gap-2 shadow-lg cursor-pointer"
+                  className="w-full h-12 bg-[#0B1C2D] hover:bg-[#1a365d] text-[#D4AF37] font-bold uppercase tracking-widest text-sm rounded-lg transition-colors flex items-center justify-center gap-2 shadow-lg cursor-pointer disabled:opacity-50"
                 >
-                  <LogIn className="w-4 h-4" /> Khách nhận phòng (Check-in)
+                  {roomActionLoading ? (
+                    <>
+                      <Loader2 className="w-4 h-4 animate-spin" /> Đang nhận phòng...
+                    </>
+                  ) : (
+                    <>
+                      <LogIn className="w-4 h-4" /> Khách nhận phòng (Check-in)
+                    </>
+                  )}
                 </button>
               )}
               {selectedRoom.status === 'Đang ở' && (
                 <div className="space-y-2">
                   <button
+                    disabled={roomActionLoading}
                     onClick={handleCheckout}
-                    className="w-full h-12 bg-red-600 hover:bg-red-700 text-white font-bold uppercase tracking-widest text-sm rounded-lg transition-colors flex items-center justify-center gap-2 shadow-lg shadow-red-600/20 cursor-pointer"
+                    className="w-full h-12 bg-red-600 hover:bg-red-700 text-white font-bold uppercase tracking-widest text-sm rounded-lg transition-colors flex items-center justify-center gap-2 shadow-lg shadow-red-600/20 cursor-pointer disabled:opacity-50"
                   >
-                    <LogOut className="w-4 h-4" /> Trả phòng (Check-Out)
+                    {roomActionLoading ? (
+                      <>
+                        <Loader2 className="w-4 h-4 animate-spin" /> Đang xử lý trả phòng...
+                      </>
+                    ) : (
+                      <>
+                        <LogOut className="w-4 h-4" /> Trả phòng (Check-Out)
+                      </>
+                    )}
                   </button>
                   <button
+                    disabled={roomActionLoading}
                     onClick={() => exportInvoice(selectedRoom)}
-                    className="w-full h-10 bg-white hover:bg-gray-100 text-[#0B1C2D] font-semibold text-xs rounded-lg transition-colors flex items-center justify-center gap-2 border border-[#0B1C2D]/20 cursor-pointer"
+                    className="w-full h-10 bg-white hover:bg-gray-100 text-[#0B1C2D] font-semibold text-xs rounded-lg transition-colors flex items-center justify-center gap-2 border border-[#0B1C2D]/20 cursor-pointer disabled:opacity-50"
                   >
                     <Printer className="w-4 h-4 text-[#D4AF37]" /> In hóa đơn thanh toán
                   </button>
@@ -756,10 +802,19 @@ export default function HotelDashboard() {
               )}
               {selectedRoom.status === 'Đang dọn' && (
                 <button
+                  disabled={roomActionLoading}
                   onClick={handleCleaned}
-                  className="w-full h-12 border-2 border-[#D4AF37] text-[#D4AF37] hover:bg-[#D4AF37] hover:text-[#0B1C2D] font-bold uppercase tracking-widest text-sm rounded-lg transition-colors flex items-center justify-center gap-2 cursor-pointer"
+                  className="w-full h-12 border-2 border-[#D4AF37] text-[#D4AF37] hover:bg-[#D4AF37] hover:text-[#0B1C2D] font-bold uppercase tracking-widest text-sm rounded-lg transition-colors flex items-center justify-center gap-2 cursor-pointer disabled:opacity-50"
                 >
-                  <PaintBucket className="w-4 h-4" /> Hoàn tất dọn dẹp
+                  {roomActionLoading ? (
+                    <>
+                      <Loader2 className="w-4 h-4 animate-spin" /> Đang cập nhật...
+                    </>
+                  ) : (
+                    <>
+                      <PaintBucket className="w-4 h-4" /> Hoàn tất dọn dẹp
+                    </>
+                  )}
                 </button>
               )}
             </div>
