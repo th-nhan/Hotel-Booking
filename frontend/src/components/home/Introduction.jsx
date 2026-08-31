@@ -7,7 +7,7 @@ const Introduction = () => {
   const navigate = useNavigate();
 
   return (
-    <section id='accommodations' className="py-24 lg:py-40 bg-bg-light overflow-hidden">
+    <section id='about' className="py-24 lg:py-40 bg-bg-light overflow-hidden">
       <div className="container mx-auto px-8 lg:px-16">
         <div className="grid lg:grid-cols-2 gap-16 lg:gap-24 items-center">
           

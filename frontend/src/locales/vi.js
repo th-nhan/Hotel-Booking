@@ -3,7 +3,7 @@ export const vi = {
   navbar: {
     brand: "LA MAISON DTN",
     home: "Trang chủ",
-    accommodations: "Phòng nghỉ",
+    about: "Giới thiệu",
     dining: "Ẩm thực",
     experiences: "Trải nghiệm",
     wellness: "Sức khỏe & Spa",

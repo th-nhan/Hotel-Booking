@@ -3,7 +3,7 @@ export const en = {
   navbar: {
     brand: "LA MAISON DTN",
     home: "Home",
-    accommodations: "Accommodations",
+    about: "About",
     dining: "Dining",
     experiences: "Experiences",
     wellness: "Wellness & Spa",

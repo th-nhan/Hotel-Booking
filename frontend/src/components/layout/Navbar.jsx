@@ -11,7 +11,7 @@ const Navbar = ({ scrolled, hideNavItems = false }) => {
   const shouldHideNav = hideNavItems || location.pathname !== '/';
 
   const navItems = [
-    { name: t('navbar.accommodations'), href: '#accommodations' },
+    { name: t('navbar.about'), href: '#about' },
     { name: t('navbar.dining'), href: '#dining' },
     { name: t('navbar.experiences'), href: '#experiences' },
     { name: t('navbar.wellness'), href: '#wellness' },
@@ -173,7 +173,7 @@ const Navbar = ({ scrolled, hideNavItems = false }) => {
                 {/* NÚT PROFILE NGƯỜI DÙNG */}
                 <button
                   onClick={() => navigate('/profile')}
-                  title={`${t('navbar.account')}: ${tai_khoan?.name || t('navbar.guest')}`}
+                  title={`${t('navbar.about')}: ${tai_khoan?.name || t('navbar.guest')}`}
                   className="flex items-center gap-2 px-3 py-1.5 bg-white/10 hover:bg-white/20 border border-white/20 hover:border-primary/50 text-white rounded-md transition-all duration-300 text-xs tracking-wide cursor-pointer max-w-[160px]"
                 >
                   <span className="material-icons-outlined text-base text-primary shrink-0">account_circle</span>
