@@ -103,9 +103,10 @@ const RoomMap = () => {
     switch (status) {
       case 'Trống':
         return 'bg-[#d4af35]/20 border-[#d4af35]/40 text-[#d4af35] shadow-[0_0_15px_rgba(212,175,53,0.2)] hover:bg-[#d4af35]/30 cursor-pointer';
+      case 'Đang dọn':
+        return 'bg-gray-600/30 border-gray-500/50 text-gray-300 hover:bg-gray-600/40 cursor-pointer';
       case 'Đã đặt':
       case 'Đang ở':
-      case 'Đang dọn':
       case 'Không đủ chỗ':
         return 'bg-white/5 border-white/10 text-white/30 opacity-70 hover:bg-white/10 cursor-pointer'; 
       default:
@@ -115,7 +116,8 @@ const RoomMap = () => {
 
   const getStatusText = (status) => {
     if (status === 'Trống') return t('roomMap.statusBadge.available');
-    if (status === 'Đã đặt' || status === 'Đang dọn') return t('roomMap.statusBadge.booked');
+    if (status === 'Đang dọn') return t('roomMap.statusBadge.cleaning');
+    if (status === 'Đã đặt') return t('roomMap.statusBadge.booked');
     if (status === 'Đang ở') return t('roomMap.statusBadge.occupied');
     if (status === 'Không đủ chỗ') return t('roomMap.statusBadge.notEnoughSpace');
     return status;
@@ -243,6 +245,10 @@ const RoomMap = () => {
               <div className="size-3 rounded-full bg-white/10 border border-white/20"></div>
               <span className="text-xs text-white/50 uppercase tracking-wider">{t('roomMap.statusBooked')}</span>
             </div>
+            <div className="flex items-center gap-2">
+              <div className="size-3 rounded-full bg-gray-500 border border-gray-400"></div>
+              <span className="text-xs text-gray-300 uppercase tracking-wider">{t('roomMap.statusBadge.cleaning')}</span>
+            </div>
           </div>
 
           <div className="w-full max-w-4xl flex flex-col gap-3 relative">
@@ -324,7 +330,11 @@ const RoomMap = () => {
                   src={selectedRoom.AnhDienDien} 
                   onError={(e) => { e.target.src = 'https://images.unsplash.com/photo-1590490360182-c33d57733427?q=80&w=800&auto=format&fit=crop' }} 
                 />
-                <div className="absolute top-4 right-4 bg-[#d4af35] text-[#201d12] font-bold text-xs px-3 py-1 rounded-full uppercase tracking-wider">
+                <div className={`absolute top-4 right-4 font-bold text-xs px-3 py-1 rounded-full uppercase tracking-wider ${
+                  selectedRoom.TinhTrang === 'Trống' ? 'bg-[#d4af35] text-[#201d12]' :
+                  selectedRoom.TinhTrang === 'Đang dọn' ? 'bg-gray-500 text-white' :
+                  'bg-white/20 text-white'
+                }`}>
                   {getStatusText(selectedRoom.TinhTrang)}
                 </div>
                 <div className="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-[#201d12] to-transparent h-24"></div>

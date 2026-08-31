@@ -165,7 +165,7 @@ export default function HotelDashboard() {
       case 'Trống': return 'border border-[#D4AF37] text-[#D4AF37] bg-transparent hover:bg-[#D4AF37]/10';
       case 'Đã đặt': return 'bg-[#0B1C2D] text-white border border-[#0B1C2D]';
       case 'Đang ở': return 'bg-[#D4AF37] text-[#0B1C2D] border border-[#D4AF37] shadow-[0_0_15px_rgba(212,175,55,0.4)] font-bold';
-      case 'Đang dọn': return 'bg-gray-200 text-gray-500 border border-gray-300';
+      case 'Đang dọn': return 'bg-gray-200 text-gray-700 border border-gray-400 font-semibold';
       default: return 'bg-gray-100 text-gray-400';
     }
   };
@@ -712,7 +712,8 @@ export default function HotelDashboard() {
                 </div>
                 <span className={`px-3 py-1 text-xs font-bold uppercase tracking-wider rounded ${selectedRoom.status === 'Trống' ? 'bg-[#D4AF37]/20 text-[#D4AF37]' :
                   selectedRoom.status === 'Đã đặt' ? 'bg-white/20 text-white' :
-                    selectedRoom.status === 'Đang ở' ? 'bg-[#D4AF37] text-[#0B1C2D]' : 'bg-gray-400 text-white'
+                    selectedRoom.status === 'Đang ở' ? 'bg-[#D4AF37] text-[#0B1C2D]' :
+                      selectedRoom.status === 'Đang dọn' ? 'bg-gray-500 text-white font-semibold' : 'bg-gray-400 text-white'
                   }`}>
                   {selectedRoom.status}
                 </span>
