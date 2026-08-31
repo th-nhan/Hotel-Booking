@@ -37,6 +37,7 @@ Route::middleware('auth:sanctum')->group(function () {
 Route::get('/dashboard', [\App\Http\Controllers\Api\DashboardController::class, 'index']);
 Route::middleware('auth:sanctum')->get('/my-profile', [\App\Http\Controllers\Api\ProfileController::class, 'getProfile']);
 Route::middleware('auth:sanctum')->post('/update-profile', [\App\Http\Controllers\Api\ProfileController::class, 'updateProfile']);
+Route::middleware('auth:sanctum')->post('/upload-avatar', [\App\Http\Controllers\Api\ProfileController::class, 'uploadAvatar']);
 
 Route::get('/test', function () {
     return response()->json([

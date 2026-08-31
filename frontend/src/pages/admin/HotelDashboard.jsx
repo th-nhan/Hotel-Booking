@@ -4,7 +4,7 @@ import {
   LayoutDashboard, Map as MapIcon, CalendarDays, Users, FileText, Settings,
   Search, Download, Bell, UserCircle, LogOut, X,
   Sparkles, BedDouble, CheckCircle2, RefreshCw, Printer, LogIn, PaintBucket,
-  MessageSquare, Star, Calendar, Bot // Đã thêm icon Bot cho nút AI
+  MessageSquare, Star, Calendar, Bot, PlusCircle, CreditCard, Phone, Mail, User, ShieldCheck
 } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 
@@ -20,6 +20,34 @@ export default function HotelDashboard() {
   const [loading, setLoading] = useState(true);
   const [selectedRoom, setSelectedRoom] = useState(null);
 
+  // --- STATE MODAL ĐẶT PHÒNG NHANH ---
+  const [isBookingModalOpen, setIsBookingModalOpen] = useState(false);
+  const [bookingLoading, setBookingLoading] = useState(false);
+  const [bookingError, setBookingError] = useState('');
+  
+  const getTodayStr = () => {
+    const d = new Date();
+    return d.toISOString().split('T')[0];
+  };
+
+  const getTomorrowStr = () => {
+    const d = new Date();
+    d.setDate(d.getDate() + 1);
+    return d.toISOString().split('T')[0];
+  };
+
+  const [bookingForm, setBookingForm] = useState({
+    HoTen: '',
+    SoDienThoai: '',
+    Email: '',
+    CCCD: '',
+    DiaChi: 'Tại khách sạn',
+    NgayCheckIn: getTodayStr(),
+    NgayCheckOutDuKien: getTomorrowStr(),
+    HinhThucThanhToan: 'Tại quầy',
+    directCheckIn: true
+  });
+
   // --- THÊM STATE CHO REVIEWS ---
   const [reviews, setReviews] = useState([]);
   const [loadingReviews, setLoadingReviews] = useState(false);
@@ -30,39 +58,8 @@ export default function HotelDashboard() {
 
   // --- API GỌI DỮ LIỆU PHÒNG CHUNG ---
   const processRoomStatuses = (fetchedRooms) => {
-    const today = new Date();
-    today.setHours(0, 0, 0, 0);
-
-    return fetchedRooms.map(room => {
-      let checkInDate = null;
-      let checkOutDate = null;
-
-      if (room.checkIn) {
-        let inStr = room.checkIn;
-        if (inStr.includes('/')) inStr = inStr.split('/').reverse().join('-'); 
-        checkInDate = new Date(inStr);
-        checkInDate.setHours(0, 0, 0, 0);
-      }
-
-      if (room.checkOut) {
-        let outStr = room.checkOut;
-        if (outStr.includes('/')) outStr = outStr.split('/').reverse().join('-');
-        checkOutDate = new Date(outStr);
-        checkOutDate.setHours(0, 0, 0, 0);
-      }
-      
-      if (checkOutDate && today.getTime() > checkOutDate.getTime()) {
-        return { ...room, status: 'Trống', guestName: null };
-      }
-      
-      if (room.status === 'Đã đặt' && checkInDate && today.getTime() >= checkInDate.getTime()) {
-        if (!checkOutDate || today.getTime() <= checkOutDate.getTime()) {
-          return { ...room, status: 'Đang ở' };
-        }
-      }
-
-      return room; 
-    });
+    if (!Array.isArray(fetchedRooms)) return [];
+    return fetchedRooms;
   };
 
   const fetchDashboardData = async () => {
@@ -106,7 +103,7 @@ export default function HotelDashboard() {
     }
   };
 
-  // --- HÀM XUẤT BÁO CÁO AI (Đã được chuyển từ AIAnalyzer sang đây) ---
+  // --- HÀM XUẤT BÁO CÁO AI ---
   const handleAnalyzeAndDownload = async () => {
     setIsAnalyzing(true);
     try {
@@ -175,21 +172,23 @@ export default function HotelDashboard() {
     if (!selectedRoom || !window.confirm(`Xác nhận khách đã nhận phòng ${selectedRoom.number}?`)) return;
     try {
       await axios.post(`${import.meta.env.VITE_API_URL}/nhan-phong`, { PhongID: selectedRoom.id });
-      fetchDashboardData();
+      alert(`Khách đã nhận phòng ${selectedRoom.number} thành công!`);
+      await fetchDashboardData();
       setSelectedRoom({ ...selectedRoom, status: 'Đang ở' });
     } catch (error) {
-      alert("Lỗi Check-in: " + error.message);
+      alert("Lỗi Check-in: " + (error.response?.data?.message || error.message));
     }
   };
 
   const handleCheckout = async () => {
     if (!selectedRoom || !window.confirm(`Xác nhận trả phòng ${selectedRoom.number}?`)) return;
     try {
-      await axios.post(`${import.meta.env.VITE_API_URL}/tra-phong`, { PhongID: selectedRoom.id });
-      fetchDashboardData();
-      setSelectedRoom({ ...selectedRoom, status: 'Đang dọn', guestName: null });
+      const res = await axios.post(`${import.meta.env.VITE_API_URL}/tra-phong`, { PhongID: selectedRoom.id });
+      alert(res.data?.message || `Trả phòng ${selectedRoom.number} thành công! Phòng chuyển sang trạng thái Đang dọn.`);
+      await fetchDashboardData();
+      setSelectedRoom({ ...selectedRoom, status: 'Đang dọn', guestName: null, checkIn: null, checkOut: null });
     } catch (error) {
-      alert("Lỗi khi trả phòng: " + error.message);
+      alert("Lỗi khi trả phòng: " + (error.response?.data?.message || error.message));
     }
   };
 
@@ -197,10 +196,94 @@ export default function HotelDashboard() {
     if (!selectedRoom) return;
     try {
       await axios.post(`${import.meta.env.VITE_API_URL}/hoan-tat-don`, { PhongID: selectedRoom.id });
-      fetchDashboardData();
-      setSelectedRoom({ ...selectedRoom, status: 'Trống' });
+      alert(`Phòng ${selectedRoom.number} đã hoàn tất dọn dẹp và sẵn sàng đón khách!`);
+      await fetchDashboardData();
+      setSelectedRoom({ ...selectedRoom, status: 'Trống', guestName: null });
     } catch (error) {
-      alert("Lỗi cập nhật: " + error.message);
+      alert("Lỗi cập nhật: " + (error.response?.data?.message || error.message));
+    }
+  };
+
+  const openBookingModal = (room) => {
+    setSelectedRoom(room);
+    setBookingError('');
+    setBookingForm({
+      HoTen: '',
+      SoDienThoai: '',
+      Email: '',
+      CCCD: '',
+      DiaChi: 'Tại khách sạn',
+      NgayCheckIn: getTodayStr(),
+      NgayCheckOutDuKien: getTomorrowStr(),
+      HinhThucThanhToan: 'Tại quầy',
+      directCheckIn: true
+    });
+    setIsBookingModalOpen(true);
+  };
+
+  const handleBookingSubmit = async (e) => {
+    e.preventDefault();
+    if (!selectedRoom) return;
+
+    if (!bookingForm.HoTen.trim() || !bookingForm.SoDienThoai.trim() || !bookingForm.CCCD.trim()) {
+      setBookingError('Vui lòng điền đầy đủ Họ tên, Số điện thoại và CCCD/CMND!');
+      return;
+    }
+
+    const start = new Date(bookingForm.NgayCheckIn);
+    const end = new Date(bookingForm.NgayCheckOutDuKien);
+    if (end <= start) {
+      setBookingError('Ngày trả phòng phải sau ngày nhận phòng ít nhất 1 ngày!');
+      return;
+    }
+
+    setBookingLoading(true);
+    setBookingError('');
+
+    try {
+      const email = bookingForm.Email.trim() || `guest_${bookingForm.SoDienThoai.trim()}@lamaison.hotel`;
+      const payload = {
+        HoTen: bookingForm.HoTen,
+        SoDienThoai: bookingForm.SoDienThoai,
+        Email: email,
+        CCCD: bookingForm.CCCD,
+        DiaChi: bookingForm.DiaChi || 'Tại khách sạn',
+        PhongID: selectedRoom.id,
+        NgayCheckIn: bookingForm.NgayCheckIn,
+        NgayCheckOutDuKien: bookingForm.NgayCheckOutDuKien,
+        HinhThucThanhToan: bookingForm.HinhThucThanhToan
+      };
+
+      const res = await axios.post(`${import.meta.env.VITE_API_URL}/dat-phong`, payload);
+
+      if (res.data.status === 'success') {
+        // Nếu chọn nhận phòng ngay hôm nay
+        if (bookingForm.directCheckIn && bookingForm.NgayCheckIn === getTodayStr()) {
+          try {
+            await axios.post(`${import.meta.env.VITE_API_URL}/nhan-phong`, { PhongID: selectedRoom.id });
+          } catch (ciErr) {
+            console.warn("Checkin auto error:", ciErr);
+          }
+        }
+
+        alert(`Đặt phòng ${selectedRoom.number} thành công cho khách ${bookingForm.HoTen}!`);
+        setIsBookingModalOpen(false);
+        await fetchDashboardData();
+        setSelectedRoom({
+          ...selectedRoom,
+          status: bookingForm.directCheckIn && bookingForm.NgayCheckIn === getTodayStr() ? 'Đang ở' : 'Đã đặt',
+          guestName: bookingForm.HoTen,
+          checkIn: bookingForm.NgayCheckIn,
+          checkOut: bookingForm.NgayCheckOutDuKien
+        });
+      }
+    } catch (err) {
+      console.error("Booking error:", err);
+      const msg = err.response?.data?.message || 
+        (err.response?.data?.errors ? Object.values(err.response.data.errors).flat().join(' ') : err.message);
+      setBookingError(msg || 'Lỗi đặt phòng, vui lòng thử lại.');
+    } finally {
+      setBookingLoading(false);
     }
   };
 
@@ -639,18 +722,43 @@ export default function HotelDashboard() {
             </div>
 
             <div className="p-6 border-t border-[#0B1C2D]/10 bg-[#F8F5F0] space-y-3">
+              {selectedRoom.status === 'Trống' && (
+                <button
+                  onClick={() => openBookingModal(selectedRoom)}
+                  className="w-full h-12 bg-[#D4AF37] hover:bg-[#b5952f] text-[#0B1C2D] font-bold uppercase tracking-widest text-sm rounded-lg transition-colors flex items-center justify-center gap-2 shadow-lg shadow-[#D4AF37]/20 cursor-pointer"
+                >
+                  <PlusCircle className="w-5 h-5" /> Đặt phòng / Nhận khách
+                </button>
+              )}
               {selectedRoom.status === 'Đã đặt' && (
-                <button onClick={handleCheckIn} className="w-full h-12 bg-[#0B1C2D] hover:bg-[#1a365d] text-[#D4AF37] font-bold uppercase tracking-widest text-sm rounded-lg transition-colors flex items-center justify-center gap-2 shadow-lg">
+                <button
+                  onClick={handleCheckIn}
+                  className="w-full h-12 bg-[#0B1C2D] hover:bg-[#1a365d] text-[#D4AF37] font-bold uppercase tracking-widest text-sm rounded-lg transition-colors flex items-center justify-center gap-2 shadow-lg cursor-pointer"
+                >
                   <LogIn className="w-4 h-4" /> Khách nhận phòng (Check-in)
                 </button>
               )}
               {selectedRoom.status === 'Đang ở' && (
-                <button onClick={handleCheckout} className="w-full h-12 bg-red-600 hover:bg-red-700 text-white font-bold uppercase tracking-widest text-sm rounded-lg transition-colors flex items-center justify-center gap-2 shadow-lg shadow-red-600/20">
-                  <LogOut className="w-4 h-4" /> Trả phòng (Check-Out)
-                </button>
+                <div className="space-y-2">
+                  <button
+                    onClick={handleCheckout}
+                    className="w-full h-12 bg-red-600 hover:bg-red-700 text-white font-bold uppercase tracking-widest text-sm rounded-lg transition-colors flex items-center justify-center gap-2 shadow-lg shadow-red-600/20 cursor-pointer"
+                  >
+                    <LogOut className="w-4 h-4" /> Trả phòng (Check-Out)
+                  </button>
+                  <button
+                    onClick={() => exportInvoice(selectedRoom)}
+                    className="w-full h-10 bg-white hover:bg-gray-100 text-[#0B1C2D] font-semibold text-xs rounded-lg transition-colors flex items-center justify-center gap-2 border border-[#0B1C2D]/20 cursor-pointer"
+                  >
+                    <Printer className="w-4 h-4 text-[#D4AF37]" /> In hóa đơn thanh toán
+                  </button>
+                </div>
               )}
               {selectedRoom.status === 'Đang dọn' && (
-                <button onClick={handleCleaned} className="w-full h-12 border-2 border-[#D4AF37] text-[#D4AF37] hover:bg-[#D4AF37] hover:text-[#0B1C2D] font-bold uppercase tracking-widest text-sm rounded-lg transition-colors flex items-center justify-center gap-2">
+                <button
+                  onClick={handleCleaned}
+                  className="w-full h-12 border-2 border-[#D4AF37] text-[#D4AF37] hover:bg-[#D4AF37] hover:text-[#0B1C2D] font-bold uppercase tracking-widest text-sm rounded-lg transition-colors flex items-center justify-center gap-2 cursor-pointer"
+                >
                   <PaintBucket className="w-4 h-4" /> Hoàn tất dọn dẹp
                 </button>
               )}
@@ -659,7 +767,217 @@ export default function HotelDashboard() {
         )}
       </div>
 
-      {selectedRoom && (
+      {/* --- MODAL ĐẶT PHÒNG NHANH CHO ADMIN --- */}
+      {isBookingModalOpen && selectedRoom && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-[#0B1C2D]/70 backdrop-blur-sm animate-fade-in">
+          <div className="bg-white rounded-2xl shadow-2xl max-w-2xl w-full border border-[#0B1C2D]/10 overflow-hidden flex flex-col max-h-[90vh]">
+            {/* Modal Header */}
+            <div className="bg-[#0B1C2D] text-white p-6 flex justify-between items-center relative">
+              <div>
+                <span className="text-[#D4AF37] text-xs font-bold uppercase tracking-widest">{selectedRoom.type}</span>
+                <h3 className="text-2xl font-serif font-bold text-white mt-0.5">Đặt phòng {selectedRoom.number}</h3>
+                <p className="text-xs text-white/60 mt-1">Đơn giá: {new Intl.NumberFormat('vi-VN').format(selectedRoom.price)} VNĐ / đêm</p>
+              </div>
+              <button
+                onClick={() => setIsBookingModalOpen(false)}
+                className="p-2 bg-white/10 hover:bg-white/20 rounded-full transition-colors text-white cursor-pointer"
+              >
+                <X className="w-5 h-5" />
+              </button>
+            </div>
+
+            {/* Modal Body */}
+            <form onSubmit={handleBookingSubmit} className="p-6 overflow-y-auto space-y-4 custom-scrollbar">
+              {bookingError && (
+                <div className="p-3 bg-red-50 border border-red-200 text-red-700 text-sm rounded-lg font-medium">
+                  ⚠️ {bookingError}
+                </div>
+              )}
+
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div>
+                  <label className="block text-xs font-bold text-[#0B1C2D]/70 uppercase tracking-wider mb-1">
+                    Họ và tên khách hàng <span className="text-red-500">*</span>
+                  </label>
+                  <input
+                    type="text"
+                    required
+                    placeholder="VD: Nguyễn Văn A"
+                    value={bookingForm.HoTen}
+                    onChange={(e) => setBookingForm({ ...bookingForm, HoTen: e.target.value })}
+                    className="w-full px-3.5 py-2.5 rounded-lg border border-[#0B1C2D]/20 focus:border-[#D4AF37] focus:ring-1 focus:ring-[#D4AF37] outline-none text-sm"
+                  />
+                </div>
+
+                <div>
+                  <label className="block text-xs font-bold text-[#0B1C2D]/70 uppercase tracking-wider mb-1">
+                    Số điện thoại <span className="text-red-500">*</span>
+                  </label>
+                  <input
+                    type="tel"
+                    required
+                    placeholder="VD: 0901234567"
+                    value={bookingForm.SoDienThoai}
+                    onChange={(e) => setBookingForm({ ...bookingForm, SoDienThoai: e.target.value })}
+                    className="w-full px-3.5 py-2.5 rounded-lg border border-[#0B1C2D]/20 focus:border-[#D4AF37] focus:ring-1 focus:ring-[#D4AF37] outline-none text-sm"
+                  />
+                </div>
+
+                <div>
+                  <label className="block text-xs font-bold text-[#0B1C2D]/70 uppercase tracking-wider mb-1">
+                    CCCD / CMND / Hộ chiếu <span className="text-red-500">*</span>
+                  </label>
+                  <input
+                    type="text"
+                    required
+                    placeholder="VD: 07920300xxxx"
+                    value={bookingForm.CCCD}
+                    onChange={(e) => setBookingForm({ ...bookingForm, CCCD: e.target.value })}
+                    className="w-full px-3.5 py-2.5 rounded-lg border border-[#0B1C2D]/20 focus:border-[#D4AF37] focus:ring-1 focus:ring-[#D4AF37] outline-none text-sm"
+                  />
+                </div>
+
+                <div>
+                  <label className="block text-xs font-bold text-[#0B1C2D]/70 uppercase tracking-wider mb-1">
+                    Email khách hàng
+                  </label>
+                  <input
+                    type="email"
+                    placeholder="VD: guest@email.com (tùy chọn)"
+                    value={bookingForm.Email}
+                    onChange={(e) => setBookingForm({ ...bookingForm, Email: e.target.value })}
+                    className="w-full px-3.5 py-2.5 rounded-lg border border-[#0B1C2D]/20 focus:border-[#D4AF37] focus:ring-1 focus:ring-[#D4AF37] outline-none text-sm"
+                  />
+                </div>
+
+                <div className="md:col-span-2">
+                  <label className="block text-xs font-bold text-[#0B1C2D]/70 uppercase tracking-wider mb-1">
+                    Địa chỉ
+                  </label>
+                  <input
+                    type="text"
+                    placeholder="VD: TP. Hồ Chí Minh"
+                    value={bookingForm.DiaChi}
+                    onChange={(e) => setBookingForm({ ...bookingForm, DiaChi: e.target.value })}
+                    className="w-full px-3.5 py-2.5 rounded-lg border border-[#0B1C2D]/20 focus:border-[#D4AF37] focus:ring-1 focus:ring-[#D4AF37] outline-none text-sm"
+                  />
+                </div>
+
+                <div>
+                  <label className="block text-xs font-bold text-[#0B1C2D]/70 uppercase tracking-wider mb-1">
+                    Ngày nhận phòng (Check-in) <span className="text-red-500">*</span>
+                  </label>
+                  <input
+                    type="date"
+                    required
+                    min={getTodayStr()}
+                    value={bookingForm.NgayCheckIn}
+                    onChange={(e) => setBookingForm({ ...bookingForm, NgayCheckIn: e.target.value })}
+                    className="w-full px-3.5 py-2.5 rounded-lg border border-[#0B1C2D]/20 focus:border-[#D4AF37] focus:ring-1 focus:ring-[#D4AF37] outline-none text-sm"
+                  />
+                </div>
+
+                <div>
+                  <label className="block text-xs font-bold text-[#0B1C2D]/70 uppercase tracking-wider mb-1">
+                    Ngày trả phòng (Check-out) <span className="text-red-500">*</span>
+                  </label>
+                  <input
+                    type="date"
+                    required
+                    min={bookingForm.NgayCheckIn || getTodayStr()}
+                    value={bookingForm.NgayCheckOutDuKien}
+                    onChange={(e) => setBookingForm({ ...bookingForm, NgayCheckOutDuKien: e.target.value })}
+                    className="w-full px-3.5 py-2.5 rounded-lg border border-[#0B1C2D]/20 focus:border-[#D4AF37] focus:ring-1 focus:ring-[#D4AF37] outline-none text-sm"
+                  />
+                </div>
+
+                <div>
+                  <label className="block text-xs font-bold text-[#0B1C2D]/70 uppercase tracking-wider mb-1">
+                    Hình thức thanh toán
+                  </label>
+                  <select
+                    value={bookingForm.HinhThucThanhToan}
+                    onChange={(e) => setBookingForm({ ...bookingForm, HinhThucThanhToan: e.target.value })}
+                    className="w-full px-3.5 py-2.5 rounded-lg border border-[#0B1C2D]/20 focus:border-[#D4AF37] focus:ring-1 focus:ring-[#D4AF37] outline-none text-sm bg-white cursor-pointer"
+                  >
+                    <option value="Tại quầy">Tiền mặt tại quầy (Cọc 30%)</option>
+                    <option value="Chuyển khoản">Chuyển khoản ngân hàng (100%)</option>
+                  </select>
+                </div>
+
+                <div className="flex items-center pt-5">
+                  <label className="flex items-center gap-2.5 cursor-pointer">
+                    <input
+                      type="checkbox"
+                      checked={bookingForm.directCheckIn}
+                      onChange={(e) => setBookingForm({ ...bookingForm, directCheckIn: e.target.checked })}
+                      className="w-4 h-4 text-[#D4AF37] rounded border-gray-300 focus:ring-[#D4AF37]"
+                    />
+                    <span className="text-xs font-bold text-[#0B1C2D]">Khách nhận phòng ngay (Check-in trực tiếp)</span>
+                  </label>
+                </div>
+              </div>
+
+              {/* Box Tính Toán Chi Phí */}
+              {(() => {
+                const s = new Date(bookingForm.NgayCheckIn);
+                const e = new Date(bookingForm.NgayCheckOutDuKien);
+                const nights = Math.max(1, Math.ceil((e - s) / (1000 * 60 * 60 * 24)));
+                const price = Number(selectedRoom.price) || 0;
+                const total = nights * price;
+                const deposit = bookingForm.HinhThucThanhToan === 'Tại quầy' ? total * 0.3 : total;
+
+                return (
+                  <div className="bg-[#F8F5F0] p-4 rounded-xl border border-[#D4AF37]/30 space-y-1.5 text-xs">
+                    <div className="flex justify-between text-gray-600">
+                      <span>Thời gian lưu trú:</span>
+                      <span className="font-bold text-[#0B1C2D]">{nights} đêm ({bookingForm.NgayCheckIn} ➜ {bookingForm.NgayCheckOutDuKien})</span>
+                    </div>
+                    <div className="flex justify-between text-gray-600">
+                      <span>Tổng tiền phòng:</span>
+                      <span className="font-bold text-[#0B1C2D]">{new Intl.NumberFormat('vi-VN').format(total)} VNĐ</span>
+                    </div>
+                    <div className="flex justify-between text-[#D4AF37] font-bold text-sm pt-1 border-t border-[#D4AF37]/20">
+                      <span>{bookingForm.HinhThucThanhToan === 'Tại quầy' ? 'Tiền cọc cần thu (30%):' : 'Tổng thanh toán (100%):'}</span>
+                      <span>{new Intl.NumberFormat('vi-VN').format(deposit)} VNĐ</span>
+                    </div>
+                  </div>
+                );
+              })()}
+
+              {/* Modal Actions */}
+              <div className="flex justify-end gap-3 pt-4 border-t border-gray-100">
+                <button
+                  type="button"
+                  onClick={() => setIsBookingModalOpen(false)}
+                  className="px-5 py-2.5 rounded-lg border border-gray-300 text-gray-700 font-bold text-xs uppercase tracking-wider hover:bg-gray-100 transition-colors cursor-pointer"
+                >
+                  Hủy bỏ
+                </button>
+                <button
+                  type="submit"
+                  disabled={bookingLoading}
+                  className="px-6 py-2.5 rounded-lg bg-[#D4AF37] hover:bg-[#b5952f] text-[#0B1C2D] font-bold text-xs uppercase tracking-wider transition-colors shadow-md flex items-center gap-2 cursor-pointer disabled:opacity-50"
+                >
+                  {bookingLoading ? (
+                    <>
+                      <RefreshCw className="w-4 h-4 animate-spin" />
+                      <span>Đang xử lý...</span>
+                    </>
+                  ) : (
+                    <>
+                      <CheckCircle2 className="w-4 h-4" />
+                      <span>Xác nhận Đặt phòng</span>
+                    </>
+                  )}
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
+
+      {selectedRoom && !isBookingModalOpen && (
         <div className="fixed inset-0 bg-[#0B1C2D]/20 backdrop-blur-sm z-40" onClick={() => setSelectedRoom(null)}></div>
       )}
     </div>

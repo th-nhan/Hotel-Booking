@@ -24,6 +24,8 @@ class ProfileController extends Controller
                 return response()->json(['error' => true, 'message' => 'Không tìm thấy hồ sơ khách hàng'], 404);
             }
 
+            $today = Carbon::today()->toDateString();
+
             // Lấy lịch sử các phiếu đặt phòng của khách hàng này
             $bookings = DB::table('phieu_dat_phong')
                 ->join('chi_tiet_phieu_dat_phong', 'phieu_dat_phong.PhieuDatPhongID', '=', 'chi_tiet_phieu_dat_phong.PhieuDatPhongID')
@@ -33,47 +35,64 @@ class ProfileController extends Controller
                 ->orderBy('phieu_dat_phong.NgayTao', 'desc') // Mới nhất xếp trên
                 ->select(
                     'phieu_dat_phong.MaPhieu as id',
-                    'phieu_dat_phong.TrangThaiThanhToan as status',
+                    'phieu_dat_phong.TrangThaiThanhToan as payment_status',
                     'phieu_dat_phong.NgayCheckIn as checkIn',
                     'phieu_dat_phong.NgayCheckOutDuKien as checkOut',
+                    'phieu_dat_phong.NgayCheckOutThucTe as checkOutActual',
                     'phieu_dat_phong.TongTienPhong as amount',
                     'phieu_dat_phong.TienCoc as deposit',
+                    'phieu_dat_phong.PhiPhuThu as serviceFee',
                     'loai_phong.TenLoai as room',
                     'loai_phong.AnhDienDien as AnhDaiDien',
-                    'phong.TenPhong as room_name'
+                    'phong.TenPhong as room_name',
+                    'phong.TinhTrang as room_status'
                 )
                 ->get();
 
             // Format lại dữ liệu cho đẹp để React dễ in ra màn hình
-            $formattedBookings = $bookings->map(function ($b) {
-                $checkIn = Carbon::parse($b->checkIn)->format('M d');
-                $checkOut = Carbon::parse($b->checkOut)->format('M d, Y');
+            $formattedBookings = $bookings->map(function ($b) use ($today) {
+                $checkInDate = Carbon::parse($b->checkIn)->toDateString();
+                $checkOutDate = Carbon::parse($b->checkOut)->toDateString();
 
-                // Hiển thị tiền cọc hay tổng tiền tùy theo trạng thái
-                $amountLabel = 'Total Amount';
-                $displayAmount = $b->amount;
+                $checkInFmt = Carbon::parse($b->checkIn)->format('d/m/Y');
+                $checkOutFmt = Carbon::parse($b->checkOut)->format('d/m/Y');
 
-                if ($b->status === 'Đã đặt cọc') {
-                    $amountLabel = 'Deposit Paid';
-                    $displayAmount = $b->deposit;
+                // Phân biệt chính xác trạng thái lưu trú
+                $stayStatus = 'Booked'; // Mặc định là Đã đặt
+                if ($b->payment_status === 'Đã hủy') {
+                    $stayStatus = 'Cancelled';
+                } elseif (!empty($b->checkOutActual) || $today > $checkOutDate || $b->payment_status === 'Đã hoàn thành') {
+                    $stayStatus = 'Completed'; // Ở xong rồi / Đã trả phòng
+                } elseif ($today >= $checkInDate && $today <= $checkOutDate) {
+                    $stayStatus = 'Staying'; // Đang ở
+                } else {
+                    $stayStatus = 'Booked'; // Đã đặt (Sắp tới)
                 }
 
-                // Dịch trạng thái sang tiếng Anh cho sang trọng (hoặc bạn có thể giữ nguyên tiếng Việt)
-                $statusEn = 'Processing';
-                if ($b->status === 'Đã hoàn thành') $statusEn = 'Completed';
-                else if ($b->status === 'Đã hủy') $statusEn = 'Cancelled';
-                else if (in_array($b->status, ['Đã thanh toán', 'Đã đặt cọc'])) $statusEn = 'Confirmed';
+                // Hiển thị tiền cọc hay tổng tiền tùy theo trạng thái
+                $amountLabel = 'Tổng thanh toán';
+                $displayAmount = $b->amount;
+
+                if ($b->payment_status === 'Đã đặt cọc') {
+                    $amountLabel = 'Đã đặt cọc (30%)';
+                    $displayAmount = $b->deposit;
+                }
 
                 return [
                     'id' => $b->id,
                     'room' => $b->room,
                     'room_name' => $b->room_name,
-                    'status' => $statusEn,
-                    'duration' => $checkIn . ' - ' . $checkOut,
-                    'amount' => number_format($displayAmount, 0, ',', '.') . 'đ',
-                    'total' => number_format($b->amount, 0, ',', '.') . 'đ',
+                    'status' => $stayStatus, // 'Staying' | 'Booked' | 'Completed' | 'Cancelled'
+                    'payment_status' => $b->payment_status,
+                    'checkIn' => $checkInFmt,
+                    'checkOut' => $checkOutFmt,
+                    'checkOutActual' => $b->checkOutActual ? Carbon::parse($b->checkOutActual)->format('d/m/Y H:i') : null,
+                    'duration' => $checkInFmt . ' - ' . $checkOutFmt,
+                    'amount' => number_format($displayAmount, 0, ',', '.') . ' VNĐ',
+                    'total' => number_format($b->amount, 0, ',', '.') . ' VNĐ',
                     'amountLabel' => $amountLabel,
                     'image' => $b->AnhDaiDien,
+                    'actions' => $stayStatus === 'Completed' || $stayStatus === 'Staying' ? ['download'] : ['manage']
                 ];
             });
 
@@ -142,6 +161,50 @@ class ProfileController extends Controller
             return response()->json([
                 'status' => 'error',
                 'message' => 'Lỗi máy chủ: ' . $e->getMessage()
+            ], 500);
+        }
+    }
+
+    public function uploadAvatar(Request $request)
+    {
+        try {
+            $user = $request->user();
+
+            $request->validate([
+                'avatar' => 'required|image|mimes:jpeg,png,jpg,gif,webp|max:5120', // Tối đa 5MB
+            ]);
+
+            if ($request->hasFile('avatar')) {
+                $file = $request->file('avatar');
+                $extension = $file->getClientOriginalExtension();
+                $filename = 'avatar_' . $user->TaiKhoanID . '_' . time() . '.' . $extension;
+                
+                // Lưu vào public/uploads/avatars
+                $destinationPath = public_path('uploads/avatars');
+                if (!file_exists($destinationPath)) {
+                    mkdir($destinationPath, 0755, true);
+                }
+                
+                $file->move($destinationPath, $filename);
+                $avatarUrl = url('uploads/avatars/' . $filename);
+
+                // Cập nhật vào DB khach_hang
+                DB::table('khach_hang')
+                    ->where('TaiKhoanID', $user->TaiKhoanID)
+                    ->update(['AnhDaiDien' => $avatarUrl]);
+
+                return response()->json([
+                    'status' => 'success',
+                    'message' => 'Cập nhật ảnh đại diện thành công!',
+                    'avatar_url' => $avatarUrl
+                ]);
+            }
+
+            return response()->json(['status' => 'error', 'message' => 'Không tìm thấy file ảnh!'], 400);
+        } catch (\Exception $e) {
+            return response()->json([
+                'status' => 'error',
+                'message' => 'Lỗi tải ảnh lên: ' . $e->getMessage()
             ], 500);
         }
     }

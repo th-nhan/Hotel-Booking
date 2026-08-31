@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import axios from 'axios';
 import { useNavigate } from 'react-router-dom';
-import { User, Bell, LayoutDashboard, History, Settings, LogOut, Download, Star, RefreshCw, Mail, Phone, MapPin, Shield, Edit2, Link, Lock, Camera } from 'lucide-react';
+import { User, Bell, LayoutDashboard, History, Settings, LogOut, Download, Star, RefreshCw, Mail, Phone, MapPin, Shield, Edit2, Link, Lock, Camera, Calendar, CheckCircle2, Sparkles, Printer } from 'lucide-react';
 import { useLanguage } from '../../context/LanguageContext';
 export default function ProfileCustomer() {
   const navigate = useNavigate();
@@ -118,6 +118,8 @@ function Header() {
 function Sidebar({ profile, activeTab, setActiveTab, onUpdateProfile }) {
   const navigate = useNavigate();
   const { t } = useLanguage();
+  const fileInputRef = React.useRef(null);
+  const [uploading, setUploading] = useState(false);
 
   const handleLogout = () => {
     localStorage.removeItem('token');
@@ -125,33 +127,63 @@ function Sidebar({ profile, activeTab, setActiveTab, onUpdateProfile }) {
     navigate('/login');
   };
 
-  const handleChangeAvatar = async () => {
-    const newAvatarUrl = window.prompt(t('profile.avatarPrompt'), profile.anhdaidien || "");
+  const handleAvatarClick = () => {
+    if (uploading) return;
+    if (fileInputRef.current) {
+      fileInputRef.current.click();
+    }
+  };
 
-    if (newAvatarUrl !== null && newAvatarUrl !== profile.anhdaidien) {
-      try {
-        const token = localStorage.getItem('token');
+  const handleFileChange = async (e) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
 
-        await axios.post(`${import.meta.env.VITE_API_URL}/update-profile`,
-          {
-            name: profile.name,
-            phone: profile.phone || '',
-            address: profile.address || '',
-            anhdaidien: newAvatarUrl
-          },
-          { headers: { Authorization: `Bearer ${token}` } }
-        );
+    // Kiểm tra định dạng & dung lượng (tối đa 5MB)
+    if (!file.type.startsWith('image/')) {
+      alert('Vui lòng chọn file hình ảnh hợp lệ (JPG, PNG, WebP, GIF)!');
+      return;
+    }
 
-        if (onUpdateProfile) {
-          onUpdateProfile({ anhdaidien: newAvatarUrl });
+    if (file.size > 5 * 1024 * 1024) {
+      alert('Dung lượng ảnh tối đa cho phép là 5MB!');
+      return;
+    }
+
+    const formData = new FormData();
+    formData.append('avatar', file);
+
+    setUploading(true);
+    try {
+      const token = localStorage.getItem('token');
+      const res = await axios.post(`${import.meta.env.VITE_API_URL}/upload-avatar`, formData, {
+        headers: {
+          'Content-Type': 'multipart/form-data',
+          Authorization: `Bearer ${token}`
         }
-        alert(t('profile.avatarSuccess'));
-        window.location.reload();
-      } catch (error) {
-        const errorMsg = error.response?.data?.message || "Error";
-        alert(t('profile.serverError') + errorMsg);
-        console.error("Chi tiết lỗi:", error.response?.data);
+      });
+
+      if (res.data.status === 'success') {
+        const newUrl = res.data.avatar_url;
+        if (onUpdateProfile) {
+          onUpdateProfile({ anhdaidien: newUrl });
+        }
+        try {
+          const savedUser = JSON.parse(localStorage.getItem('user')) || {};
+          savedUser.anhdaidien = newUrl;
+          localStorage.setItem('user', JSON.stringify(savedUser));
+        } catch (storageErr) {
+          console.error(storageErr);
+        }
+        alert('Cập nhật ảnh đại diện thành công!');
+      } else {
+        alert(res.data.message || 'Lỗi khi cập nhật ảnh đại diện');
       }
+    } catch (err) {
+      console.error('Upload avatar error:', err);
+      alert('Lỗi tải ảnh lên: ' + (err.response?.data?.message || err.message));
+    } finally {
+      setUploading(false);
+      if (fileInputRef.current) fileInputRef.current.value = '';
     }
   };
 
@@ -159,23 +191,40 @@ function Sidebar({ profile, activeTab, setActiveTab, onUpdateProfile }) {
     <aside className="w-full lg:w-1/4 flex flex-col gap-6">
       <div className="bg-[#deb42b]/5 border border-[#deb42b]/20 rounded-xl p-6">
         <div className="flex flex-col items-center text-center gap-4">
-          {/* KHU VỰC AVATAR CÓ NÚT EDIT BÊN TRÊN */}
-          <div className="relative group">
-            <div className="size-24 rounded-full border-2 border-[#deb42b] p-1">
+          {/* KHU VỰC AVATAR CÓ NÚT UPLOAD TỪ MÁY */}
+          <div className="relative group cursor-pointer" onClick={handleAvatarClick} title="Bấm để tải ảnh đại diện từ máy">
+            <input
+              type="file"
+              ref={fileInputRef}
+              accept="image/png, image/jpeg, image/jpg, image/webp, image/gif"
+              className="hidden"
+              onChange={handleFileChange}
+            />
+            <div className="size-24 rounded-full border-2 border-[#deb42b] p-1 relative overflow-hidden">
               <div
                 className="w-full h-full rounded-full bg-cover bg-center transition-all duration-300"
                 style={{ backgroundImage: `url('${profile.anhdaidien || "https://cafefcdn.com/zoom/600_315/203337114487263232/2022/3/3/photo1646280815645-1646280816151764748403.jpg"}')` }}
               ></div>
             </div>
-            {/* Lớp phủ màu đen và icon Camera hiện ra khi trỏ chuột vào */}
-            <button
-              onClick={handleChangeAvatar}
-              className="absolute inset-0 bg-black/50 rounded-full flex flex-col items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity duration-300 cursor-pointer"
+
+            {/* Lớp phủ hover hoặc loading */}
+            <div
+              className={`absolute inset-0 bg-black/60 rounded-full flex flex-col items-center justify-center transition-opacity duration-300 ${uploading ? 'opacity-100' : 'opacity-0 group-hover:opacity-100'}`}
             >
-              <Camera size={24} className="text-[#deb42b] mb-1" />
-              <span className="text-[10px] text-white font-bold uppercase tracking-wider">{t('profile.changeAvatar')}</span>
-            </button>
+              {uploading ? (
+                <>
+                  <RefreshCw size={22} className="text-[#deb42b] animate-spin mb-1" />
+                  <span className="text-[9px] text-white font-bold uppercase tracking-wider">Đang tải...</span>
+                </>
+              ) : (
+                <>
+                  <Camera size={22} className="text-[#deb42b] mb-1" />
+                  <span className="text-[9px] text-white font-bold uppercase tracking-wider text-center px-1">Đổi Avatar</span>
+                </>
+              )}
+            </div>
           </div>
+
           <div>
             <h3 className="serif-font text-xl font-bold text-[#deb42b]">{profile.name}</h3>
             <p className="text-xs uppercase tracking-widest text-[#deb42b]/60">{profile.tier || t('profile.silverMember')}</p>
@@ -216,7 +265,10 @@ function Sidebar({ profile, activeTab, setActiveTab, onUpdateProfile }) {
 
 function ProfileOverview({ profile, bookings, onUpdateProfile }) {
   const { t } = useLanguage();
+  const stayingBookings = bookings.filter(b => b.status === 'Staying').length;
+  const upcomingBookings = bookings.filter(b => b.status === 'Booked').length;
   const completedStays = bookings.filter(b => b.status === 'Completed').length;
+
   // STATE ĐỂ QUẢN LÝ CHẾ ĐỘ EDIT
   const [isEditing, setIsEditing] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
@@ -237,9 +289,9 @@ function ProfileOverview({ profile, bookings, onUpdateProfile }) {
       phone: profile.phone || '',
       address: profile.address || '',
       anhdaidien: profile.anhdaidien || '',
-      current_password: '', // Mật khẩu cũ
-      new_password: '',     // Mật khẩu mới
-      new_password_confirmation: '' // Xác nhận mật khẩu mới
+      current_password: '', 
+      new_password: '',     
+      new_password_confirmation: '' 
     });
   }, [profile]);
 
@@ -288,7 +340,7 @@ function ProfileOverview({ profile, bookings, onUpdateProfile }) {
 
         setIsEditing(false); // Tắt chế độ Edit
 
-        // Cập nhật lại tên người dùng trên LocalStorage luôn để Navbar ở trên góc phải nó đổi theo
+        // Cập nhật lại tên người dùng trên LocalStorage
         try {
           const savedUser = JSON.parse(localStorage.getItem('user')) || {};
           savedUser.name = formData.name;
@@ -301,7 +353,7 @@ function ProfileOverview({ profile, bookings, onUpdateProfile }) {
 
         alert(t('profile.updateSuccess'));
       } else {
-        alert(response.data.message); // Hiển thị lỗi nếu sai mật khẩu cũ
+        alert(response.data.message);
       }
 
     } catch (error) {
@@ -336,7 +388,7 @@ function ProfileOverview({ profile, bookings, onUpdateProfile }) {
             {!isEditing ? (
               <button
                 onClick={() => setIsEditing(true)}
-                className="flex items-center gap-2 text-[#deb42b]/60 hover:text-[#0B1C2D] text-xs font-bold uppercase tracking-widest hover:bg-[#deb42b] bg-[#deb42b]/10 border border-[#deb42b]/20 px-4 py-2 rounded-lg transition-all"
+                className="flex items-center gap-2 text-[#deb42b]/60 hover:text-[#0B1C2D] text-xs font-bold uppercase tracking-widest hover:bg-[#deb42b] bg-[#deb42b]/10 border border-[#deb42b]/20 px-4 py-2 rounded-lg transition-all cursor-pointer"
               >
                 <Edit2 size={16} /> {t('profile.edit')}
               </button>
@@ -345,17 +397,16 @@ function ProfileOverview({ profile, bookings, onUpdateProfile }) {
                 <button
                   onClick={() => {
                     setIsEditing(false);
-                    // Reset lại data nếu hủy
                     setFormData({ name: profile.name, phone: profile.phone, address: profile.address });
                   }}
-                  className="px-4 py-2 text-xs font-bold uppercase tracking-widest text-[#deb42b]/60 hover:text-red-400 transition-colors"
+                  className="px-4 py-2 text-xs font-bold uppercase tracking-widest text-[#deb42b]/60 hover:text-red-400 transition-colors cursor-pointer"
                 >
                   {t('profile.cancel')}
                 </button>
                 <button
                   onClick={handleSave}
                   disabled={isSaving}
-                  className="px-4 py-2 text-xs font-bold uppercase tracking-widest text-[#0B1C2D] bg-[#deb42b] rounded-lg hover:bg-white transition-colors disabled:opacity-50"
+                  className="px-4 py-2 text-xs font-bold uppercase tracking-widest text-[#0B1C2D] bg-[#deb42b] rounded-lg hover:bg-white transition-colors disabled:opacity-50 cursor-pointer"
                 >
                   {isSaving ? t('profile.saving') : t('profile.saveChanges')}
                 </button>
@@ -375,8 +426,6 @@ function ProfileOverview({ profile, bookings, onUpdateProfile }) {
           ) : (
             // CHẾ ĐỘ SỬA (FORM)
             <div className="flex flex-col gap-10 animate-[fadeIn_0.3s_ease-in-out]">
-
-              {/* PHẦN 1: THÔNG TIN CÁ NHÂN (Nằm trong 1 ô riêng) */}
               <div>
                 <h4 className="text-[#deb42b] font-bold text-sm mb-4 uppercase tracking-wider flex items-center gap-2">
                   <User size={16} /> {t('profile.personalInfo')}
@@ -404,7 +453,6 @@ function ProfileOverview({ profile, bookings, onUpdateProfile }) {
                 </div>
               </div>
 
-              {/* PHẦN 2: ĐỔI MẬT KHẨU (Giao diện rộng rãi và sang trọng hơn) */}
               <div>
                 <h4 className="text-[#deb42b] font-bold text-sm mb-4 uppercase tracking-wider flex items-center justify-between">
                   <div className="flex items-center gap-2"><Lock size={16} /> {t('profile.securitySettings')}</div>
@@ -412,17 +460,14 @@ function ProfileOverview({ profile, bookings, onUpdateProfile }) {
                 </h4>
 
                 <div className="bg-black/20 p-6 rounded-xl border border-[#deb42b]/10 relative overflow-hidden">
-                  {/* Trang trí góc thẻ */}
                   <div className="absolute top-0 right-0 w-24 h-24 bg-gradient-to-bl from-[#deb42b]/10 to-transparent rounded-bl-full pointer-events-none"></div>
 
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-x-8 gap-y-6">
-                    {/* DÒNG 1: MẬT KHẨU HIỆN TẠI (RỘNG RÃI) */}
                     <div className="flex flex-col gap-2 md:col-span-2">
                       <label className="text-[10px] uppercase tracking-widest text-[#deb42b]/60">{t('profile.currentPassword')}</label>
                       <input type="password" name="current_password" value={formData.current_password} onChange={handleInputChange} placeholder={t('profile.currentPasswordPlaceholder')} className="w-full md:w-1/2 bg-[#0B1C2D]/50 border border-[#deb42b]/20 rounded-lg px-4 py-2.5 text-slate-200 focus:outline-none focus:border-[#deb42b] focus:ring-1 focus:ring-[#deb42b]/50" />
                     </div>
 
-                    {/* DÒNG 2: MẬT KHẨU MỚI & XÁC NHẬN (NẰM SONG SONG) */}
                     <div className="flex flex-col gap-2">
                       <label className="text-[10px] uppercase tracking-widest text-[#deb42b]/60">{t('profile.newPassword')}</label>
                       <input type="password" name="new_password" value={formData.new_password} onChange={handleInputChange} placeholder={t('profile.newPasswordPlaceholder')} className="w-full bg-[#0B1C2D]/50 border border-[#deb42b]/20 rounded-lg px-4 py-2.5 text-slate-200 focus:outline-none focus:border-[#deb42b] focus:ring-1 focus:ring-[#deb42b]/50" />
@@ -432,16 +477,13 @@ function ProfileOverview({ profile, bookings, onUpdateProfile }) {
                       <input type="password" name="new_password_confirmation" value={formData.new_password_confirmation} onChange={handleInputChange} placeholder={t('profile.confirmNewPasswordPlaceholder')} className="w-full bg-[#0B1C2D]/50 border border-[#deb42b]/20 rounded-lg px-4 py-2.5 text-slate-200 focus:outline-none focus:border-[#deb42b] focus:ring-1 focus:ring-[#deb42b]/50" />
                     </div>
                   </div>
-
                 </div>
               </div>
-
             </div>
-
           )}
         </div>
 
-        {/* THẺ THỐNG KÊ HẠNG THÀNH VIÊN */}
+        {/* THẺ THỐNG KÊ HẠNG THÀNH VIÊN VÀ TRẠNG THÁI LƯU TRÚ */}
         <div className="bg-gradient-to-b from-[#deb42b]/20 to-[#deb42b]/5 border border-[#deb42b]/30 rounded-2xl p-6 md:p-8 flex flex-col justify-between shadow-xl shadow-black/20">
           <div>
             <div className="flex items-center gap-3 mb-2">
@@ -453,14 +495,28 @@ function ProfileOverview({ profile, bookings, onUpdateProfile }) {
             <p className="text-xs text-[#deb42b]/60 uppercase tracking-widest">{t('profile.currentTier')}</p>
           </div>
 
-          <div className="mt-8 pt-6 border-t border-[#deb42b]/20 flex flex-col gap-4">
-            <div className="flex justify-between items-center">
-              <span className="text-sm text-slate-300 font-light">{t('profile.completedStays')}</span>
-              <span className="font-bold text-lg text-[#deb42b]">{completedStays}</span>
+          <div className="mt-8 pt-6 border-t border-[#deb42b]/20 flex flex-col gap-3">
+            <div className="flex justify-between items-center py-1.5 px-3 rounded-lg bg-[#deb42b]/10 border border-[#deb42b]/20">
+              <span className="text-xs text-slate-200 font-bold flex items-center gap-2">
+                <span className="w-2 h-2 rounded-full bg-[#deb42b] animate-pulse"></span>
+                {t('profile.stayingRooms')}
+              </span>
+              <span className="font-bold text-base text-[#deb42b]">{stayingBookings}</span>
             </div>
-            <div className="flex justify-between items-center">
-              <span className="text-sm text-slate-300 font-light">{t('profile.totalBookings')}</span>
-              <span className="font-bold text-lg text-[#deb42b]">{bookings.length}</span>
+
+            <div className="flex justify-between items-center py-1.5 px-3 rounded-lg bg-sky-950/30 border border-sky-500/20">
+              <span className="text-xs text-sky-200 font-medium">{t('profile.upcomingRooms')}</span>
+              <span className="font-bold text-base text-sky-400">{upcomingBookings}</span>
+            </div>
+
+            <div className="flex justify-between items-center py-1.5 px-3 rounded-lg bg-emerald-950/30 border border-emerald-500/20">
+              <span className="text-xs text-emerald-200 font-medium">{t('profile.completedStays')}</span>
+              <span className="font-bold text-base text-emerald-400">{completedStays}</span>
+            </div>
+
+            <div className="flex justify-between items-center py-1 px-3">
+              <span className="text-xs text-slate-400">{t('profile.totalBookings')}</span>
+              <span className="font-bold text-sm text-slate-200">{bookings.length}</span>
             </div>
           </div>
         </div>
@@ -470,7 +526,7 @@ function ProfileOverview({ profile, bookings, onUpdateProfile }) {
   );
 }
 
-// Component phụ để render từng dòng thông tin cho đẹp
+// Component phụ để render từng dòng thông tin
 function InfoItem({ icon, label, value }) {
   return (
     <div className="flex items-start gap-4">
@@ -485,13 +541,90 @@ function InfoItem({ icon, label, value }) {
   );
 }
 
-// Bảng lịch sử nhận dữ liệu mảng bookings từ API
+// Hàm in hóa đơn cho khách hàng
+const printCustomerInvoice = (booking) => {
+  const printWindow = window.open('', '_blank');
+  printWindow.document.write(`
+    <html>
+      <head>
+        <title>Hóa đơn đặt phòng - ${booking.id}</title>
+        <style>
+          body { font-family: 'Times New Roman', serif; padding: 40px; color: #0B1C2D; max-width: 750px; margin: auto; }
+          .header { text-align: center; border-bottom: 2px solid #deb42b; padding-bottom: 20px; margin-bottom: 25px; }
+          h1 { color: #deb42b; letter-spacing: 2px; margin-bottom: 5px; }
+          .info-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 25px; font-size: 14px; }
+          .table { width: 100%; border-collapse: collapse; margin-top: 15px; font-size: 14px; }
+          .table th, .table td { border: 1px solid #ddd; padding: 10px; text-align: right; }
+          .table th { background-color: #f8f5f0; text-align: center; font-weight: bold; }
+          .table td:first-child { text-align: left; }
+          .summary-box { margin-top: 20px; width: 50%; float: right; font-size: 14px; }
+          .summary-row { display: flex; justify-content: space-between; padding: 6px 0; border-bottom: 1px dashed #ccc; }
+          .summary-row.bold { font-weight: bold; border-bottom: none; font-size: 16px; color: #deb42b; border-top: 2px solid #0B1C2D; padding-top: 8px; margin-top: 4px; }
+          .footer { clear: both; text-align: center; margin-top: 60px; font-style: italic; color: #666; font-size: 13px; }
+        </style>
+      </head>
+      <body>
+        <div class="header">
+          <h1>LA MAISON HOTEL</h1>
+          <p style="margin: 0;">123 Nguyễn Văn Cừ, Quận 1, TP.HCM | Hotline: 0123.456.789</p>
+          <h2 style="margin-top: 15px;">PHIẾU XÁC NHẬN ĐẶT PHÒNG / HÓA ĐƠN</h2>
+        </div>
+        <div class="info-grid">
+          <div>
+            <p><strong>Mã phiếu:</strong> ${booking.id}</p>
+            <p><strong>Hạng phòng:</strong> ${booking.room} (Phòng ${booking.room_name})</p>
+            <p><strong>Trạng thái lưu trú:</strong> ${booking.status === 'Staying' ? 'Đang lưu trú' : booking.status === 'Completed' ? 'Đã hoàn thành (Đã trả phòng)' : booking.status === 'Cancelled' ? 'Đã hủy' : 'Đã đặt'}</p>
+          </div>
+          <div style="text-align: right;">
+            <p><strong>Ngày nhận phòng:</strong> ${booking.checkIn || ''}</p>
+            <p><strong>Ngày trả phòng:</strong> ${booking.checkOut || ''}</p>
+            <p><strong>Ngày in:</strong> ${new Date().toLocaleDateString('vi-VN')}</p>
+          </div>
+        </div>
+        <table class="table">
+          <tr><th>Nội dung</th><th>Thời gian</th><th>Thành tiền</th></tr>
+          <tr>
+            <td>Phí phòng lưu trú (${booking.room})</td>
+            <td style="text-align: center;">${booking.duration}</td>
+            <td>${booking.total}</td>
+          </tr>
+        </table>
+        <div class="summary-box">
+          <div class="summary-row"><span>Tổng giá trị phòng:</span><span>${booking.total}</span></div>
+          <div class="summary-row"><span>Hình thức thanh toán:</span><span>${booking.payment_status || 'Đã thanh toán'}</span></div>
+          <div class="summary-row bold"><span>TỔNG THANH TOÁN:</span><span>${booking.total}</span></div>
+        </div>
+        <div class="footer"><p>Kính chúc quý khách có kỳ nghỉ tuyệt vời tại La Maison Hotel!</p></div>
+      </body>
+    </html>
+  `);
+  printWindow.document.close();
+  setTimeout(() => { printWindow.print(); }, 250);
+};
+
+// Bảng lịch sử có Tab lọc theo các trạng thái phòng
 function BookingHistory({ bookings }) {
   const navigate = useNavigate();
   const { t } = useLanguage();
+  const [filter, setFilter] = useState('all');
+
+  const stayingCount = bookings.filter(b => b.status === 'Staying').length;
+  const bookedCount = bookings.filter(b => b.status === 'Booked').length;
+  const completedCount = bookings.filter(b => b.status === 'Completed').length;
+  const cancelledCount = bookings.filter(b => b.status === 'Cancelled').length;
+
+  const filteredBookings = bookings.filter(b => {
+    if (filter === 'all') return true;
+    if (filter === 'staying') return b.status === 'Staying';
+    if (filter === 'booked') return b.status === 'Booked';
+    if (filter === 'completed') return b.status === 'Completed';
+    if (filter === 'cancelled') return b.status === 'Cancelled';
+    return true;
+  });
+
   return (
     <section className="flex-1 flex flex-col">
-      <div className="mb-8">
+      <div className="mb-6">
         <div className="flex flex-wrap gap-2 text-[#deb42b]/60 text-xs uppercase tracking-widest mb-4">
           <span className="hover:text-[#deb42b] cursor-pointer">{t('profile.account')}</span>
           <span>/</span>
@@ -501,9 +634,80 @@ function BookingHistory({ bookings }) {
         <p className="text-[#deb42b]/60 font-light italic">{t('profile.historySubtitle')}</p>
       </div>
 
+      {/* THANH TAB LỌC TRẠNG THÁI PHÒNG */}
+      <div className="flex flex-wrap items-center gap-2 mb-8 p-1.5 bg-[#deb42b]/5 rounded-xl border border-[#deb42b]/20">
+        <button
+          onClick={() => setFilter('all')}
+          className={`px-4 py-2 rounded-lg text-xs uppercase tracking-wider font-bold transition-all flex items-center gap-2 cursor-pointer ${filter === 'all'
+            ? 'bg-[#deb42b] text-[#0B1C2D] shadow-md shadow-[#deb42b]/20'
+            : 'text-slate-300 hover:text-[#deb42b] hover:bg-[#deb42b]/10'
+          }`}
+        >
+          <span>{t('profile.filterAll')}</span>
+          <span className={`px-1.5 py-0.5 rounded-full text-[10px] ${filter === 'all' ? 'bg-[#0B1C2D] text-[#deb42b]' : 'bg-[#deb42b]/20 text-[#deb42b]'}`}>
+            {bookings.length}
+          </span>
+        </button>
+
+        <button
+          onClick={() => setFilter('staying')}
+          className={`px-4 py-2 rounded-lg text-xs uppercase tracking-wider font-bold transition-all flex items-center gap-2 cursor-pointer ${filter === 'staying'
+            ? 'bg-amber-400 text-[#0B1C2D] shadow-md shadow-amber-400/20'
+            : 'text-amber-300 hover:bg-amber-400/10'
+          }`}
+        >
+          <span className="w-2 h-2 rounded-full bg-amber-400 animate-pulse"></span>
+          <span>{t('profile.filterStaying')}</span>
+          <span className={`px-1.5 py-0.5 rounded-full text-[10px] ${filter === 'staying' ? 'bg-[#0B1C2D] text-amber-300' : 'bg-amber-400/20 text-amber-300'}`}>
+            {stayingCount}
+          </span>
+        </button>
+
+        <button
+          onClick={() => setFilter('booked')}
+          className={`px-4 py-2 rounded-lg text-xs uppercase tracking-wider font-bold transition-all flex items-center gap-2 cursor-pointer ${filter === 'booked'
+            ? 'bg-sky-500 text-white shadow-md shadow-sky-500/20'
+            : 'text-sky-300 hover:bg-sky-500/10'
+          }`}
+        >
+          <span>{t('profile.filterBooked')}</span>
+          <span className={`px-1.5 py-0.5 rounded-full text-[10px] ${filter === 'booked' ? 'bg-[#0B1C2D] text-sky-300' : 'bg-sky-500/20 text-sky-300'}`}>
+            {bookedCount}
+          </span>
+        </button>
+
+        <button
+          onClick={() => setFilter('completed')}
+          className={`px-4 py-2 rounded-lg text-xs uppercase tracking-wider font-bold transition-all flex items-center gap-2 cursor-pointer ${filter === 'completed'
+            ? 'bg-emerald-500 text-white shadow-md shadow-emerald-500/20'
+            : 'text-emerald-300 hover:bg-emerald-500/10'
+          }`}
+        >
+          <span>{t('profile.filterCompleted')}</span>
+          <span className={`px-1.5 py-0.5 rounded-full text-[10px] ${filter === 'completed' ? 'bg-[#0B1C2D] text-emerald-300' : 'bg-emerald-500/20 text-emerald-300'}`}>
+            {completedCount}
+          </span>
+        </button>
+
+        {cancelledCount > 0 && (
+          <button
+            onClick={() => setFilter('cancelled')}
+            className={`px-4 py-2 rounded-lg text-xs uppercase tracking-wider font-bold transition-all flex items-center gap-2 cursor-pointer ${filter === 'cancelled'
+              ? 'bg-red-500 text-white shadow-md shadow-red-500/20'
+              : 'text-red-400 hover:bg-red-500/10'
+            }`}
+          >
+            <span>{t('profile.filterCancelled')}</span>
+            <span className={`px-1.5 py-0.5 rounded-full text-[10px] ${filter === 'cancelled' ? 'bg-[#0B1C2D] text-red-300' : 'bg-red-500/20 text-red-300'}`}>
+              {cancelledCount}
+            </span>
+          </button>
+        )}
+      </div>
+
       <div className="grid gap-6">
-        {bookings.length > 0 ? (
-          bookings.map((booking) => (
+        {filteredBookings.length > 0 ? (
+          filteredBookings.map((booking) => (
             <BookingCard key={booking.id} booking={booking} />
           ))
         ) : (
@@ -521,70 +725,133 @@ function BookingHistory({ bookings }) {
 
 function BookingCard({ booking }) {
   const { t } = useLanguage();
+  const isStaying = booking.status === 'Staying';
+  const isBooked = booking.status === 'Booked';
   const isCompleted = booking.status === 'Completed';
   const isCancelled = booking.status === 'Cancelled';
 
-  const getStatusText = (status) => {
-    if (status === 'Completed') return t('profile.statusCompleted');
-    if (status === 'Cancelled') return t('profile.statusCancelled');
-    if (status === 'Booked') return t('profile.statusBooked');
-    return status;
+  // Thiết lập màu sắc và giao diện theo trạng thái
+  const getCardStyle = () => {
+    if (isStaying) {
+      return 'border-[#deb42b] shadow-[0_0_30px_rgba(222,180,43,0.2)] bg-gradient-to-r from-[#deb42b]/15 via-[#deb42b]/5 to-[#0B1C2D]';
+    }
+    if (isBooked) {
+      return 'border-sky-500/30 shadow-lg shadow-sky-950/30 bg-gradient-to-r from-sky-950/20 via-sky-900/5 to-[#0B1C2D] hover:border-sky-500/60';
+    }
+    if (isCompleted) {
+      return 'border-emerald-500/20 bg-gradient-to-r from-emerald-950/15 via-emerald-900/5 to-[#0B1C2D] hover:border-emerald-500/40';
+    }
+    return 'border-red-500/20 bg-red-950/10 opacity-75';
+  };
+
+  const getBadge = () => {
+    if (isStaying) {
+      return (
+        <span className="inline-flex items-center gap-1.5 px-3.5 py-1.5 text-xs font-black uppercase tracking-wider rounded-full bg-[#deb42b] text-[#0B1C2D] shadow-md shadow-[#deb42b]/30">
+          <span className="w-2 h-2 rounded-full bg-[#0B1C2D] animate-ping"></span>
+          {t('profile.statusStaying')} (Đang lưu trú)
+        </span>
+      );
+    }
+    if (isBooked) {
+      return (
+        <span className="inline-flex items-center gap-1.5 px-3.5 py-1 text-xs font-bold uppercase tracking-wider rounded-full bg-sky-500/20 text-sky-300 border border-sky-500/40">
+          <Calendar size={13} />
+          {t('profile.statusBooked')}
+        </span>
+      );
+    }
+    if (isCompleted) {
+      return (
+        <span className="inline-flex items-center gap-1.5 px-3.5 py-1 text-xs font-bold uppercase tracking-wider rounded-full bg-emerald-500/20 text-emerald-300 border border-emerald-500/30">
+          <CheckCircle2 size={13} />
+          {t('profile.statusCompleted')}
+        </span>
+      );
+    }
+    return (
+      <span className="inline-flex items-center gap-1.5 px-3.5 py-1 text-xs font-bold uppercase tracking-wider rounded-full bg-red-500/20 text-red-400 border border-red-500/30">
+        {t('profile.statusCancelled')}
+      </span>
+    );
   };
 
   return (
-    <div className="group flex flex-col md:flex-row items-stretch border border-[#deb42b]/20 bg-[#deb42b]/5 rounded-xl overflow-hidden hover:border-[#deb42b]/50 transition-all duration-300 shadow-xl shadow-black/20">
-      <div className="w-full md:w-1/3 aspect-[4/3] md:aspect-auto">
+    <div className={`group flex flex-col md:flex-row items-stretch border rounded-2xl overflow-hidden transition-all duration-300 ${getCardStyle()}`}>
+      {/* Hình ảnh phòng */}
+      <div className="w-full md:w-1/3 aspect-[4/3] md:aspect-auto relative overflow-hidden">
         <div
-          className={`w-full h-full bg-cover bg-center transition-transform duration-500 group-hover:scale-105 ${isCancelled ? 'grayscale opacity-50' : ''}`}
-          style={{ backgroundImage: `url('${booking.image}')` }}
+          className={`w-full h-full bg-cover bg-center transition-transform duration-700 group-hover:scale-105 ${isCancelled ? 'grayscale opacity-50' : ''}`}
+          style={{ backgroundImage: `url('${booking.image || 'https://images.unsplash.com/photo-1590490360182-c33d57733427?q=80&w=800&auto=format&fit=crop'}')` }}
         ></div>
+        <div className="absolute inset-0 bg-gradient-to-t from-[#0B1C2D] via-transparent to-transparent md:hidden" />
       </div>
-      <div className="flex-1 p-6 md:p-8 flex flex-col justify-between gap-6">
-        <div className="flex justify-between items-start">
-          <div>
-            <span className={`inline-block px-3 py-1 text-[10px] font-bold uppercase tracking-[0.2em] rounded-full mb-3 border ${isCompleted ? 'bg-green-900/40 text-green-400 border-green-500/30' :
-              isCancelled ? 'bg-red-900/40 text-red-400 border-red-500/30' :
-                'bg-[#deb42b]/20 text-[#deb42b] border-[#deb42b]/30'
-              }`}>
-              {getStatusText(booking.status)}
-            </span>
-            <h2 className={`serif-font text-2xl font-bold transition-colors ${isCancelled ? 'text-slate-500' : 'text-slate-100 group-hover:text-[#deb42b]'}`}>
-              {booking.room}
-            </h2>
 
-            <div className="mt-2 grid grid-cols-2 gap-y-2 text-sm">
-              <div className="flex flex-col">
-                <span className="text-[10px] uppercase tracking-widest text-[#deb42b]/40">{t('profile.room')}</span>
-                <span className="text-[#deb42b]/80 font-mono">{booking.room_name}</span>
-              </div>
-              <div className="flex flex-col">
-                <span className="text-[10px] uppercase tracking-widest text-[#deb42b]/40">{t('profile.stayDuration')}</span>
-                <span className="text-[#deb42b]/80">{booking.duration}</span>
-              </div>
-              <div className="flex flex-col">
-                <span className="text-[10px] uppercase tracking-widest text-[#deb42b]/40">{t('profile.total')}</span>
-                <span className="text-[#deb42b]/80">{booking.total}</span>
-              </div>
-            </div>
+      {/* Thông tin phòng & trạng thái */}
+      <div className="flex-1 p-6 md:p-8 flex flex-col justify-between gap-6">
+        <div>
+          <div className="flex flex-wrap justify-between items-start gap-3 mb-3">
+            <div>{getBadge()}</div>
+            <span className="text-[11px] font-mono text-[#deb42b]/70 bg-[#0B1C2D]/60 px-2.5 py-1 rounded border border-[#deb42b]/20">
+              #{booking.id}
+            </span>
           </div>
 
-          <div className="text-right">
-            <span className="text-[10px] uppercase tracking-widest text-[#deb42b]/40 block">{booking.amountLabel}</span>
-            <span className={`text-xl font-bold serif-font ${isCancelled ? 'text-slate-500 line-through' : 'text-[#deb42b]'}`}>{booking.amount}</span>
+          <h2 className={`serif-font text-2xl md:text-3xl font-bold transition-colors ${isCancelled ? 'text-slate-500' : isStaying ? 'text-[#deb42b]' : 'text-slate-100 group-hover:text-[#deb42b]'}`}>
+            {booking.room}
+          </h2>
+
+          {isStaying && (
+            <div className="mt-2 text-xs text-amber-200/90 font-medium flex items-center gap-1.5 bg-amber-400/10 px-3 py-1.5 rounded-lg border border-amber-400/20">
+              <Sparkles size={14} className="text-[#deb42b] shrink-0" />
+              <span>Quý khách đang trong thời gian lưu trú tại khách sạn. Chúc quý khách kỳ nghỉ tuyệt vời!</span>
+            </div>
+          )}
+
+          <div className="mt-4 grid grid-cols-2 sm:grid-cols-3 gap-y-3 gap-x-4 text-sm">
+            <div className="flex flex-col">
+              <span className="text-[10px] uppercase tracking-widest text-[#deb42b]/50">{t('profile.room')}</span>
+              <span className="text-slate-100 font-bold font-mono text-base">Phòng {booking.room_name}</span>
+            </div>
+
+            <div className="flex flex-col">
+              <span className="text-[10px] uppercase tracking-widest text-[#deb42b]/50">{t('profile.stayDuration')}</span>
+              <span className="text-slate-200 font-medium">{booking.duration}</span>
+            </div>
+
+            <div className="flex flex-col">
+              <span className="text-[10px] uppercase tracking-widest text-[#deb42b]/50">{t('profile.paymentStatus')}</span>
+              <span className="text-[#deb42b] font-medium text-xs truncate">{booking.payment_status || 'Đã thanh toán'}</span>
+            </div>
+
+            {booking.checkOutActual && (
+              <div className="flex flex-col col-span-2">
+                <span className="text-[10px] uppercase tracking-widest text-[#deb42b]/50">{t('profile.actualCheckOut')}</span>
+                <span className="text-emerald-300 text-xs">{booking.checkOutActual}</span>
+              </div>
+            )}
           </div>
         </div>
 
-        <div className="flex gap-4">
-          {booking.actions?.includes('download') && !isCancelled && (
-            <button className="flex-1 md:flex-initial flex items-center justify-center gap-2 px-6 py-2.5 bg-[#deb42b] text-[#0B1C2D] text-sm font-bold uppercase tracking-widest rounded-lg hover:bg-white transition-all shadow-lg shadow-[#deb42b]/20 cursor-pointer">
-              <Download size={18} /> {t('profile.downloadInvoice')}
-            </button>
-          )}
-          {booking.actions?.includes('manage') && !isCompleted && !isCancelled && (
-            <button className="flex-1 md:flex-initial flex items-center justify-center gap-2 px-6 py-2.5 bg-[#deb42b]/20 text-[#deb42b] border border-[#deb42b]/40 text-sm font-bold uppercase tracking-widest rounded-lg hover:bg-[#deb42b] hover:text-[#0B1C2D] transition-all cursor-pointer">
-              {t('profile.manageBooking')}
-            </button>
-          )}
+        {/* Footer của Thẻ: Số tiền & Nút thao tác */}
+        <div className="pt-4 border-t border-white/10 flex flex-wrap justify-between items-center gap-4">
+          <div>
+            <span className="text-[10px] uppercase tracking-widest text-[#deb42b]/50 block">{booking.amountLabel}</span>
+            <span className={`text-2xl font-bold serif-font ${isCancelled ? 'text-slate-500 line-through' : isStaying ? 'text-[#deb42b]' : 'text-slate-100'}`}>
+              {booking.total}
+            </span>
+          </div>
+
+          <div className="flex items-center gap-3">
+            {!isCancelled && (
+              <button
+                onClick={() => printCustomerInvoice(booking)}
+                className="flex items-center justify-center gap-2 px-5 py-2.5 bg-[#deb42b] text-[#0B1C2D] text-xs font-bold uppercase tracking-widest rounded-lg hover:bg-white transition-all shadow-md shadow-[#deb42b]/20 cursor-pointer"
+              >
+                <Printer size={16} /> {isCompleted ? 'In hóa đơn' : 'In phiếu đặt'}
+              </button>
+            )}
+          </div>
         </div>
       </div>
     </div>

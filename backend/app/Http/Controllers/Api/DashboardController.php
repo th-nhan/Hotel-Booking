@@ -24,12 +24,13 @@ class DashboardController extends Controller
                 ->select('phong.*', 'loai_phong.TenLoai')
                 ->get();
 
-            // 2. LẤY TẤT CẢ PHIẾU ĐẶT PHÒNG ĐANG CÓ HIỆU LỰC (CheckOut >= Hôm nay)
+            // 2. LẤY TẤT CẢ PHIẾU ĐẶT PHÒNG ĐANG CÓ HIỆU LỰC (CheckOut >= Hôm nay và Chưa trả phòng)
             $activeBookings = DB::table('phieu_dat_phong')
                 ->join('chi_tiet_phieu_dat_phong', 'phieu_dat_phong.PhieuDatPhongID', '=', 'chi_tiet_phieu_dat_phong.PhieuDatPhongID')
                 ->leftJoin('khach_hang', 'phieu_dat_phong.KhachHangID', '=', 'khach_hang.KhachHangID')
                 ->whereDate('phieu_dat_phong.NgayCheckOutDuKien', '>=', $today)
                 ->where('phieu_dat_phong.TrangThaiThanhToan', '!=', 'Đã hủy')
+                ->whereNull('phieu_dat_phong.NgayCheckOutThucTe')
                 ->orderBy('phieu_dat_phong.NgayCheckIn', 'desc') // Sắp xếp lấy phiếu mới nhất nếu có trùng
                 ->select(
                     'chi_tiet_phieu_dat_phong.PhongID',
@@ -81,14 +82,21 @@ class DashboardController extends Controller
                     $deposit = $booking->TienCoc ?? 0;
                     $serviceFee = $booking->PhiPhuThu ?? 0;
 
-                    // AUTO CHECK-IN: Tự động đổi 'Đã đặt' thành 'Đang ở' nếu hôm nay >= ngày Check-in
-                    if ($today >= $checkIn) {
+                    // Nếu phòng đang dọn dẹp thì ưu tiên hiển thị đang dọn
+                    if ($currentStatus === 'Đang dọn') {
+                        $currentStatus = 'Đang dọn';
+                    } elseif ($currentStatus === 'Đang ở') {
                         $currentStatus = 'Đang ở';
                     } else {
-                        $currentStatus = 'Đã đặt';
+                        // AUTO CHECK-IN: Tự động đổi 'Đã đặt' thành 'Đang ở' nếu hôm nay >= ngày Check-in
+                        if ($today >= $checkIn) {
+                            $currentStatus = 'Đang ở';
+                        } else {
+                            $currentStatus = 'Đã đặt';
+                        }
                     }
                 }
-                // AUTO FIX LỖI DB: Trạng thái DB ghi là "Đã đặt/Đang ở" nhưng không có phiếu nào thực tế -> Ép về "Trống"
+                // AUTO FIX LỖI DB: Trạng thái DB ghi là "Đã đặt/Đang ở" nhưng không có phiếu nào thực tế -> Ép về "Trống" (nếu không phải Đang dọn)
                 elseif ($currentStatus === 'Đã đặt' || $currentStatus === 'Đang ở') {
                     $currentStatus = 'Trống';
                 }

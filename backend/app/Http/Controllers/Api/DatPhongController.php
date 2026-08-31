@@ -37,6 +37,7 @@ class DatPhongController extends Controller
             ->where('phieu_dat_phong.NgayCheckOutDuKien', '>', $checkIn)
             // Chỉ tính những phiếu chưa bị hủy hoặc chưa check-out xong
             ->whereNotIn('phieu_dat_phong.TrangThaiThanhToan', ['Đã hủy'])
+            ->whereNull('phieu_dat_phong.NgayCheckOutThucTe')
             ->exists();
 
         // 3. XỬ LÝ NẾU TRÙNG LỊCH -> GỢI Ý PHÒNG KHÁC
@@ -54,7 +55,9 @@ class DatPhongController extends Controller
                         ->join('phieu_dat_phong', 'phieu_dat_phong.PhieuDatPhongID', '=', 'chi_tiet_phieu_dat_phong.PhieuDatPhongID')
                         ->whereColumn('chi_tiet_phieu_dat_phong.PhongID', 'phong.PhongID')
                         ->where('NgayCheckIn', '<', $checkOut)
-                        ->where('NgayCheckOutDuKien', '>', $checkIn);
+                        ->where('NgayCheckOutDuKien', '>', $checkIn)
+                        ->whereNotIn('phieu_dat_phong.TrangThaiThanhToan', ['Đã hủy'])
+                        ->whereNull('phieu_dat_phong.NgayCheckOutThucTe');
                 })
                 ->get();
 

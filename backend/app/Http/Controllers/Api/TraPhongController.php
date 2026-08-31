@@ -25,25 +25,24 @@ class TraPhongController extends Controller
             $phieu = DB::table('phieu_dat_phong')
                 ->join('chi_tiet_phieu_dat_phong', 'phieu_dat_phong.PhieuDatPhongID', '=', 'chi_tiet_phieu_dat_phong.PhieuDatPhongID')
                 ->where('chi_tiet_phieu_dat_phong.PhongID', $phongId)
-                ->whereNull('NgayCheckOutThucTe') // Chưa check-out
+                ->whereNull('phieu_dat_phong.NgayCheckOutThucTe') // Chưa check-out
+                ->where('phieu_dat_phong.TrangThaiThanhToan', '!=', 'Đã hủy')
                 ->select('phieu_dat_phong.*')
+                ->orderBy('phieu_dat_phong.NgayDat', 'desc')
                 ->first();
 
-            if (!$phieu) {
-                return response()->json(['message' => 'Không tìm thấy phiếu đặt phòng đang hoạt động cho phòng này.'], 404);
+            if ($phieu) {
+                // 2. Cập nhật thông tin phiếu đặt phòng (Đóng phiếu)
+                DB::table('phieu_dat_phong')
+                    ->where('PhieuDatPhongID', $phieu->PhieuDatPhongID)
+                    ->update([
+                        'NgayCheckOutThucTe' => $now,
+                        'TrangThaiThanhToan' => 'Đã thanh toán',
+                        'updated_at' => $now
+                    ]);
             }
 
-            // 2. Cập nhật thông tin phiếu đặt phòng (Đóng phiếu)
-            DB::table('phieu_dat_phong')
-                ->where('PhieuDatPhongID', $phieu->PhieuDatPhongID)
-                ->update([
-                    'NgayCheckOutThucTe' => $now,
-                    'TrangThaiThanhToan' => 'Đã thanh toán', // Giả sử trả phòng là thanh toán luôn
-                    'updated_at' => $now
-                ]);
-
             // 3. Cập nhật trạng thái phòng sang "Đang dọn"
-            // Lưu ý: updated_at ở đây rất quan trọng, nó đánh dấu thời điểm bắt đầu dọn
             DB::table('phong')
                 ->where('PhongID', $phongId)
                 ->update([
@@ -52,7 +51,10 @@ class TraPhongController extends Controller
                 ]);
 
             DB::commit();
-            return response()->json(['message' => 'Trả phòng thành công. Phòng đang được dọn dẹp (1 ngày).']);
+            return response()->json([
+                'status' => 'success',
+                'message' => 'Trả phòng thành công. Phòng đã chuyển sang trạng thái Đang dọn.'
+            ]);
 
         } catch (\Exception $e) {
             DB::rollBack();
