@@ -24,11 +24,10 @@ class DashboardController extends Controller
                 ->select('phong.*', 'loai_phong.TenLoai')
                 ->get();
 
-            // 2. LẤY TẤT CẢ PHIẾU ĐẶT PHÒNG ĐANG CÓ HIỆU LỰC (CheckOut >= Hôm nay và Chưa trả phòng)
+            // 2. LẤY TẤT CẢ PHIẾU ĐẶT PHÒNG ĐANG CÓ HIỆU LỰC (Chưa trả phòng thực tế và không bị hủy)
             $activeBookings = DB::table('phieu_dat_phong')
                 ->join('chi_tiet_phieu_dat_phong', 'phieu_dat_phong.PhieuDatPhongID', '=', 'chi_tiet_phieu_dat_phong.PhieuDatPhongID')
                 ->leftJoin('khach_hang', 'phieu_dat_phong.KhachHangID', '=', 'khach_hang.KhachHangID')
-                ->whereDate('phieu_dat_phong.NgayCheckOutDuKien', '>=', $today)
                 ->where('phieu_dat_phong.TrangThaiThanhToan', '!=', 'Đã hủy')
                 ->whereNull('phieu_dat_phong.NgayCheckOutThucTe')
                 ->orderBy('phieu_dat_phong.NgayCheckIn', 'desc') // Sắp xếp lấy phiếu mới nhất nếu có trùng

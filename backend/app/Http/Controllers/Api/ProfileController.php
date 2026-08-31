@@ -19,12 +19,33 @@ class ProfileController extends Controller
             // Lấy user đang đăng nhập từ Token
             $user = $request->user();
 
-            // Lấy thông tin khách hàng tương ứng với Tài Khoản ID
-            $customer = DB::table('khach_hang')->where('TaiKhoanID', $user->TaiKhoanID)->first();
+            // Lấy thông tin khách hàng tương ứng với Tài Khoản ID hoặc Email
+            $customer = DB::table('khach_hang')
+                ->where('TaiKhoanID', $user->TaiKhoanID)
+                ->orWhere('Email', $user->Email)
+                ->first();
 
             if (!$customer) {
-                return response()->json(['error' => true, 'message' => 'Không tìm thấy hồ sơ khách hàng'], 404);
+                $khachHangID = DB::table('khach_hang')->insertGetId([
+                    'TaiKhoanID' => $user->TaiKhoanID,
+                    'HoTen' => $user->HoTen ?? 'Khách hàng',
+                    'Email' => $user->Email,
+                    'DiaChi' => '',
+                    'SoDienThoai' => '',
+                    'CCCD' => '',
+                    'AnhDaiDien' => null,
+                    'NgayTao' => now(),
+                ], 'KhachHangID');
+                $customer = DB::table('khach_hang')->where('KhachHangID', $khachHangID)->first();
+            } elseif (empty($customer->TaiKhoanID)) {
+                DB::table('khach_hang')->where('KhachHangID', $customer->KhachHangID)->update(['TaiKhoanID' => $user->TaiKhoanID]);
             }
+
+            $customerIds = DB::table('khach_hang')
+                ->where('TaiKhoanID', $user->TaiKhoanID)
+                ->orWhere('Email', $user->Email)
+                ->pluck('KhachHangID')
+                ->toArray();
 
             $today = Carbon::today()->toDateString();
 
@@ -33,7 +54,7 @@ class ProfileController extends Controller
                 ->join('chi_tiet_phieu_dat_phong', 'phieu_dat_phong.PhieuDatPhongID', '=', 'chi_tiet_phieu_dat_phong.PhieuDatPhongID')
                 ->join('phong', 'chi_tiet_phieu_dat_phong.PhongID', '=', 'phong.PhongID')
                 ->join('loai_phong', 'phong.LoaiPhongID', '=', 'loai_phong.LoaiPhongID')
-                ->where('phieu_dat_phong.KhachHangID', $customer->KhachHangID)
+                ->whereIn('phieu_dat_phong.KhachHangID', $customerIds)
                 ->orderBy('phieu_dat_phong.NgayTao', 'desc') // Mới nhất xếp trên
                 ->select(
                     'phieu_dat_phong.MaPhieu as id',

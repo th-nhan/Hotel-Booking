@@ -837,7 +837,6 @@ function BookingHistory({ bookings }) {
 function BookingCard({ booking }) {
   const { t } = useLanguage();
   const isStaying = booking.status === 'Staying';
-  const isBooked = booking.status === 'Booked';
   const isCompleted = booking.status === 'Completed';
   const isCancelled = booking.status === 'Cancelled';
 
@@ -846,13 +845,14 @@ function BookingCard({ booking }) {
     if (isStaying) {
       return 'border-[#deb42b] shadow-[0_0_30px_rgba(222,180,43,0.2)] bg-gradient-to-r from-[#deb42b]/15 via-[#deb42b]/5 to-[#0B1C2D]';
     }
-    if (isBooked) {
-      return 'border-sky-500/30 shadow-lg shadow-sky-950/30 bg-gradient-to-r from-sky-950/20 via-sky-900/5 to-[#0B1C2D] hover:border-sky-500/60';
-    }
     if (isCompleted) {
       return 'border-emerald-500/20 bg-gradient-to-r from-emerald-950/15 via-emerald-900/5 to-[#0B1C2D] hover:border-emerald-500/40';
     }
-    return 'border-red-500/20 bg-red-950/10 opacity-75';
+    if (isCancelled) {
+      return 'border-red-500/20 bg-red-950/10 opacity-75';
+    }
+    // Mặc định cho Đã đặt (Booked) và các trạng thái hợp lệ khác
+    return 'border-sky-500/30 shadow-lg shadow-sky-950/30 bg-gradient-to-r from-sky-950/20 via-sky-900/5 to-[#0B1C2D] hover:border-sky-500/60';
   };
 
   const getBadge = () => {
@@ -864,14 +864,6 @@ function BookingCard({ booking }) {
         </span>
       );
     }
-    if (isBooked) {
-      return (
-        <span className="inline-flex items-center gap-1.5 px-3.5 py-1 text-xs font-bold uppercase tracking-wider rounded-full bg-sky-500/20 text-sky-300 border border-sky-500/40">
-          <Calendar size={13} />
-          {t('profile.statusBooked')}
-        </span>
-      );
-    }
     if (isCompleted) {
       return (
         <span className="inline-flex items-center gap-1.5 px-3.5 py-1 text-xs font-bold uppercase tracking-wider rounded-full bg-emerald-500/20 text-emerald-300 border border-emerald-500/30">
@@ -880,9 +872,18 @@ function BookingCard({ booking }) {
         </span>
       );
     }
+    if (isCancelled) {
+      return (
+        <span className="inline-flex items-center gap-1.5 px-3.5 py-1 text-xs font-bold uppercase tracking-wider rounded-full bg-red-500/20 text-red-400 border border-red-500/30">
+          {t('profile.statusCancelled')}
+        </span>
+      );
+    }
+    // Mặc định hiển thị Đã đặt (Booked)
     return (
-      <span className="inline-flex items-center gap-1.5 px-3.5 py-1 text-xs font-bold uppercase tracking-wider rounded-full bg-red-500/20 text-red-400 border border-red-500/30">
-        {t('profile.statusCancelled')}
+      <span className="inline-flex items-center gap-1.5 px-3.5 py-1 text-xs font-bold uppercase tracking-wider rounded-full bg-sky-500/20 text-sky-300 border border-sky-500/40">
+        <Calendar size={13} />
+        {t('profile.statusBooked')}
       </span>
     );
   };

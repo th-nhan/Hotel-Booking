@@ -20,19 +20,17 @@ class TraPhongController extends Controller
 
         DB::beginTransaction();
         try {
-            // 1. Tìm phiếu đặt phòng đang hoạt động của phòng này
-            // (Phiếu chưa thanh toán hoặc chưa có ngày check-out thực tế)
-            $phieu = DB::table('phieu_dat_phong')
+            // 1. Tìm tất cả các phiếu đặt phòng chưa trả phòng thực tế của phòng này
+            $phieuList = DB::table('phieu_dat_phong')
                 ->join('chi_tiet_phieu_dat_phong', 'phieu_dat_phong.PhieuDatPhongID', '=', 'chi_tiet_phieu_dat_phong.PhieuDatPhongID')
                 ->where('chi_tiet_phieu_dat_phong.PhongID', $phongId)
-                ->whereNull('phieu_dat_phong.NgayCheckOutThucTe') // Chưa check-out
+                ->whereNull('phieu_dat_phong.NgayCheckOutThucTe') // Chưa check-out thực tế
                 ->where('phieu_dat_phong.TrangThaiThanhToan', '!=', 'Đã hủy')
-                ->select('phieu_dat_phong.*')
-                ->orderBy('phieu_dat_phong.NgayDat', 'desc')
-                ->first();
+                ->select('phieu_dat_phong.PhieuDatPhongID')
+                ->get();
 
-            if ($phieu) {
-                // 2. Cập nhật thông tin phiếu đặt phòng (Đóng phiếu)
+            // 2. Cập nhật đóng tất cả các phiếu đang mở của phòng này
+            foreach ($phieuList as $phieu) {
                 DB::table('phieu_dat_phong')
                     ->where('PhieuDatPhongID', $phieu->PhieuDatPhongID)
                     ->update([
@@ -58,7 +56,10 @@ class TraPhongController extends Controller
 
         } catch (\Exception $e) {
             DB::rollBack();
-            return response()->json(['message' => 'Lỗi: ' . $e->getMessage()], 500);
+            return response()->json([
+                'status' => 'error',
+                'message' => 'Lỗi khi trả phòng: ' . $e->getMessage()
+            ], 500);
         }
     }
 

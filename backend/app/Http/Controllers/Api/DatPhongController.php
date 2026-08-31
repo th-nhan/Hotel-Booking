@@ -72,20 +72,40 @@ class DatPhongController extends Controller
         DB::beginTransaction();
         try {
             // A. Lưu hoặc Lấy thông tin Khách Hàng
-            // Kiểm tra xem khách đã có trong hệ thống chưa (theo Email hoặc CCCD)
-            $khachHang = DB::table('khach_hang')
-                ->where('Email', $request->Email)
-                ->orWhere('CCCD', $request->CCCD)
-                ->first();
+            // Ưu tiên tìm theo TaiKhoanID nếu có, sau đó tìm theo Email / CCCD
+            $khachHang = null;
+            if ($request->filled('TaiKhoanID')) {
+                $khachHang = DB::table('khach_hang')->where('TaiKhoanID', $request->TaiKhoanID)->first();
+            }
+            if (!$khachHang) {
+                $khachHang = DB::table('khach_hang')
+                    ->where('Email', $request->Email)
+                    ->orWhere('CCCD', $request->CCCD)
+                    ->first();
+            }
 
             $khachHangID = null;
             if ($khachHang) {
                 $khachHangID = $khachHang->KhachHangID;
+                
+                // Đồng bộ cập nhật thông tin khách hàng
+                $updateCustomer = [];
+                if ($request->filled('HoTen')) $updateCustomer['HoTen'] = $request->HoTen;
+                if ($request->filled('SoDienThoai')) $updateCustomer['SoDienThoai'] = $request->SoDienThoai;
+                if ($request->filled('CCCD')) $updateCustomer['CCCD'] = $request->CCCD;
+                if ($request->filled('DiaChi')) $updateCustomer['DiaChi'] = $request->DiaChi;
+                if ($request->filled('TaiKhoanID') && empty($khachHang->TaiKhoanID)) {
+                    $updateCustomer['TaiKhoanID'] = $request->TaiKhoanID;
+                }
+                
+                if (!empty($updateCustomer)) {
+                    DB::table('khach_hang')->where('KhachHangID', $khachHangID)->update($updateCustomer);
+                }
             } else {
                 $khachHangID = DB::table('khach_hang')->insertGetId([
                     'HoTen' => $request->HoTen,
                     'Email' => $request->Email,
-                    'DiaChi' => $request->DiaChi,
+                    'DiaChi' => $request->DiaChi ?? 'Tại khách sạn',
                     'SoDienThoai' => $request->SoDienThoai,
                     'CCCD' => $request->CCCD,
                     'TaiKhoanID' => $request->TaiKhoanID ?? 3, // Mặc định 3 là khách vãng lai
@@ -100,8 +120,16 @@ class DatPhongController extends Controller
             $phong = DB::table('phong')->where('PhongID', $phongId)->first();
             $tongTien = $phong->GiaPhong * $days;
             
-            // Tính tiền cọc (30% nếu thanh toán tại quầy, hoặc full nếu chuyển khoản - tùy logic)
+            // Tính tiền cọc (30% nếu thanh toán tại quầy)
             $tienCoc = ($request->HinhThucThanhToan == 'Tại quầy') ? ($tongTien * 0.3) : 0;
+            
+            // Xác định trạng thái thanh toán ban đầu (Tuyệt đối không để 'Đã hủy')
+            $trangThaiThanhToan = 'Đã đặt cọc';
+            if ($request->HinhThucThanhToan == 'Tại quầy') {
+                $trangThaiThanhToan = ($tienCoc > 0) ? 'Đã đặt cọc' : 'Chưa thanh toán';
+            } else {
+                $trangThaiThanhToan = 'Đã thanh toán';
+            }
 
             // C. Tạo Phiếu Đặt Phòng
             $phieuID = DB::table('phieu_dat_phong')->insertGetId([
@@ -111,11 +139,11 @@ class DatPhongController extends Controller
                 'NgayCheckIn' => $checkIn,
                 'NgayCheckOutDuKien' => $checkOut,
                 'NgayTao' => now(),
-                'NguoiTaoID' => 1, // Tạm thời hardcode nhân viên ID 1
+                'NguoiTaoID' => 1, // Mặc định ID nhân viên hệ thống
                 'TongTienPhong' => $tongTien,
                 'PhiPhuThu' => 0,
                 'TienCoc' => $tienCoc,
-                'TrangThaiThanhToan' => ($tienCoc > 0) ? 'Đã đặt cọc' : 'Đã thanh toán',
+                'TrangThaiThanhToan' => $trangThaiThanhToan,
                 'MaGiaoDich' => null, // Sẽ cập nhật nếu thanh toán online
             ], 'PhieuDatPhongID');
 
