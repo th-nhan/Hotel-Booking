@@ -18,7 +18,7 @@ return new class extends Migration
             $table->string('DiaChi', 100)->nullable();
             $table->string('SoDienThoai', 20)->nullable();
             $table->string('CCCD', 20)->nullable();
-            $table->string('AnhDaiDien')->nullable();
+            $table->longText('AnhDaiDien')->nullable();
 
             $table->text('GhiChu')->nullable();
             $table->dateTime('NgayTao')->nullable();

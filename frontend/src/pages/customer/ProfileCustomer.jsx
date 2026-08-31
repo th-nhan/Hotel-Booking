@@ -134,36 +134,97 @@ function Sidebar({ profile, activeTab, setActiveTab, onUpdateProfile }) {
     }
   };
 
+  const compressImage = (file, maxWidth = 300, maxHeight = 300, quality = 0.85) => {
+    return new Promise((resolve) => {
+      const reader = new FileReader();
+      reader.readAsDataURL(file);
+      reader.onload = (event) => {
+        const img = new Image();
+        img.src = event.target.result;
+        img.onload = () => {
+          const canvas = document.createElement('canvas');
+          let width = img.width;
+          let height = img.height;
+
+          if (width > height) {
+            if (width > maxWidth) {
+              height = Math.round((height * maxWidth) / width);
+              width = maxWidth;
+            }
+          } else {
+            if (height > maxHeight) {
+              width = Math.round((width * maxHeight) / height);
+              height = maxHeight;
+            }
+          }
+
+          canvas.width = width;
+          canvas.height = height;
+          const ctx = canvas.getContext('2d');
+          ctx.drawImage(img, 0, 0, width, height);
+
+          const dataUrl = canvas.toDataURL('image/jpeg', quality);
+          resolve(dataUrl);
+        };
+        img.onerror = () => resolve(event.target.result);
+      };
+      reader.onerror = () => resolve(null);
+    });
+  };
+
   const handleFileChange = async (e) => {
     const file = e.target.files?.[0];
     if (!file) return;
 
-    // Kiểm tra định dạng & dung lượng (tối đa 5MB)
     if (!file.type.startsWith('image/')) {
       alert('Vui lòng chọn file hình ảnh hợp lệ (JPG, PNG, WebP, GIF)!');
       return;
     }
 
-    if (file.size > 5 * 1024 * 1024) {
-      alert('Dung lượng ảnh tối đa cho phép là 5MB!');
+    if (file.size > 10 * 1024 * 1024) {
+      alert('Dung lượng ảnh tối đa cho phép là 10MB!');
       return;
     }
-
-    const formData = new FormData();
-    formData.append('avatar', file);
 
     setUploading(true);
     try {
       const token = localStorage.getItem('token');
-      const res = await axios.post(`${import.meta.env.VITE_API_URL}/upload-avatar`, formData, {
-        headers: {
-          'Content-Type': 'multipart/form-data',
-          Authorization: `Bearer ${token}`
-        }
-      });
+      // Nén ảnh trên client-side để tối ưu tốc độ và tương thích Vercel Serverless
+      const base64Image = await compressImage(file, 300, 300, 0.85);
 
-      if (res.data.status === 'success') {
-        const newUrl = res.data.avatar_url;
+      const formData = new FormData();
+      formData.append('avatar', file);
+      if (base64Image) {
+        formData.append('avatar_base64', base64Image);
+      }
+
+      let res;
+      try {
+        res = await axios.post(`${import.meta.env.VITE_API_URL}/upload-avatar`, formData, {
+          headers: {
+            'Content-Type': 'multipart/form-data',
+            Authorization: `Bearer ${token}`
+          }
+        });
+      } catch (uploadErr) {
+        // Fallback sang update-profile nếu endpoint upload-avatar bị lỗi serverless
+        if (base64Image) {
+          res = await axios.post(`${import.meta.env.VITE_API_URL}/update-profile`, {
+            name: profile.name,
+            phone: profile.phone || '',
+            address: profile.address || '',
+            anhdaidien: base64Image
+          }, {
+            headers: { Authorization: `Bearer ${token}` }
+          });
+          res.data = { status: 'success', avatar_url: base64Image };
+        } else {
+          throw uploadErr;
+        }
+      }
+
+      if (res && res.data && (res.data.status === 'success' || res.data.avatar_url)) {
+        const newUrl = res.data.avatar_url || base64Image;
         if (onUpdateProfile) {
           onUpdateProfile({ anhdaidien: newUrl });
         }
@@ -176,7 +237,7 @@ function Sidebar({ profile, activeTab, setActiveTab, onUpdateProfile }) {
         }
         alert('Cập nhật ảnh đại diện thành công!');
       } else {
-        alert(res.data.message || 'Lỗi khi cập nhật ảnh đại diện');
+        alert(res?.data?.message || 'Lỗi khi cập nhật ảnh đại diện');
       }
     } catch (err) {
       console.error('Upload avatar error:', err);

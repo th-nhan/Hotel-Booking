@@ -171,36 +171,62 @@ class ProfileController extends Controller
             $user = $request->user();
 
             $request->validate([
-                'avatar' => 'required|image|mimes:jpeg,png,jpg,gif,webp|max:5120', // Tối đa 5MB
+                'avatar' => 'nullable|image|mimes:jpeg,png,jpg,gif,webp|max:5120',
+                'avatar_base64' => 'nullable|string',
+                'anhdaidien' => 'nullable|string',
             ]);
+
+            $avatarUrl = null;
 
             if ($request->hasFile('avatar')) {
                 $file = $request->file('avatar');
-                $extension = $file->getClientOriginalExtension();
-                $filename = 'avatar_' . $user->TaiKhoanID . '_' . time() . '.' . $extension;
+                $extension = strtolower($file->getClientOriginalExtension() ?: 'jpg');
+                $mimeType = $file->getClientMimeType() ?: 'image/jpeg';
                 
-                // Lưu vào public/uploads/avatars
-                $destinationPath = public_path('uploads/avatars');
-                if (!file_exists($destinationPath)) {
-                    mkdir($destinationPath, 0755, true);
+                // Thử lưu file vào public_path nếu server cho phép ghi
+                $savedToFile = false;
+                try {
+                    $destinationPath = public_path('uploads/avatars');
+                    if (!file_exists($destinationPath)) {
+                        @mkdir($destinationPath, 0755, true);
+                    }
+                    if (is_writable($destinationPath) || is_writable(public_path())) {
+                        $filename = 'avatar_' . $user->TaiKhoanID . '_' . time() . '.' . $extension;
+                        $file->move($destinationPath, $filename);
+                        $avatarUrl = url('uploads/avatars/' . $filename);
+                        $savedToFile = true;
+                    }
+                } catch (\Throwable $t) {
+                    $savedToFile = false;
                 }
-                
-                $file->move($destinationPath, $filename);
-                $avatarUrl = url('uploads/avatars/' . $filename);
 
-                // Cập nhật vào DB khach_hang
-                DB::table('khach_hang')
-                    ->where('TaiKhoanID', $user->TaiKhoanID)
-                    ->update(['AnhDaiDien' => $avatarUrl]);
-
-                return response()->json([
-                    'status' => 'success',
-                    'message' => 'Cập nhật ảnh đại diện thành công!',
-                    'avatar_url' => $avatarUrl
-                ]);
+                // Nếu không lưu được vào file (do Vercel / Read-only filesystem), chuyển sang Data URL Base64
+                if (!$savedToFile) {
+                    $imageData = file_get_contents($file->getRealPath());
+                    $base64 = base64_encode($imageData);
+                    $avatarUrl = 'data:' . $mimeType . ';base64,' . $base64;
+                }
+            } elseif ($request->filled('avatar_base64')) {
+                $avatarUrl = $request->avatar_base64;
+            } elseif ($request->filled('anhdaidien')) {
+                $avatarUrl = $request->anhdaidien;
             }
 
-            return response()->json(['status' => 'error', 'message' => 'Không tìm thấy file ảnh!'], 400);
+            if (!$avatarUrl) {
+                return response()->json(['status' => 'error', 'message' => 'Không tìm thấy file hoặc dữ liệu ảnh!'], 400);
+            }
+
+            // Cập nhật vào DB khach_hang
+            DB::table('khach_hang')
+                ->where('TaiKhoanID', $user->TaiKhoanID)
+                ->update(['AnhDaiDien' => $avatarUrl]);
+
+            return response()->json([
+                'status' => 'success',
+                'message' => 'Cập nhật ảnh đại diện thành công!',
+                'avatar_url' => $avatarUrl
+            ]);
+
         } catch (\Exception $e) {
             return response()->json([
                 'status' => 'error',
