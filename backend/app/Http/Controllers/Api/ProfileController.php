@@ -6,6 +6,7 @@ use App\Http\Controllers\Controller;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Hash;
+use Illuminate\Support\Facades\Schema;
 use Carbon\Carbon;
 use Exception;
 
@@ -124,6 +125,15 @@ class ProfileController extends Controller
                 'anhdaidien' => 'nullable|string',
             ]);
 
+            // Thử tự động nâng cấp cột AnhDaiDien sang longText nếu DB chưa kịp chạy migration
+            try {
+                Schema::table('khach_hang', function ($table) {
+                    $table->longText('AnhDaiDien')->nullable()->change();
+                });
+            } catch (\Throwable $e) {
+                // Bỏ qua nếu DB đã là longText hoặc không hỗ trợ change()
+            }
+
             DB::table('khach_hang')
                 ->where('TaiKhoanID', $user->TaiKhoanID)
                 ->update([
@@ -145,7 +155,7 @@ class ProfileController extends Controller
                     return response()->json([
                         'status' => 'error',
                         'message' => 'Mật khẩu hiện tại không chính xác!'
-                    ], 200); // Trả về 200 kèm thông báo lỗi để React in ra alert
+                    ], 200);
                 }
             }
             DB::table('tai_khoan')
@@ -171,10 +181,19 @@ class ProfileController extends Controller
             $user = $request->user();
 
             $request->validate([
-                'avatar' => 'nullable|image|mimes:jpeg,png,jpg,gif,webp|max:5120',
+                'avatar' => 'nullable|image|mimes:jpeg,png,jpg,gif,webp|max:10240',
                 'avatar_base64' => 'nullable|string',
                 'anhdaidien' => 'nullable|string',
             ]);
+
+            // Thử tự động nâng cấp cột AnhDaiDien sang longText
+            try {
+                Schema::table('khach_hang', function ($table) {
+                    $table->longText('AnhDaiDien')->nullable()->change();
+                });
+            } catch (\Throwable $e) {
+                // Bỏ qua nếu DB đã là longText hoặc không hỗ trợ change()
+            }
 
             $avatarUrl = null;
 

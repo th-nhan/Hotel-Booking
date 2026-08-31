@@ -172,6 +172,21 @@ function Sidebar({ profile, activeTab, setActiveTab, onUpdateProfile }) {
     });
   };
 
+  const uploadToCloud = async (base64Image) => {
+    try {
+      const cleanBase64 = base64Image.replace(/^data:image\/[a-z]+;base64,/, '');
+      const body = new FormData();
+      body.append('image', cleanBase64);
+      const res = await axios.post('https://api.imgbb.com/1/upload?key=6d207e02198a847aa5a0a0a33ea96ffc', body);
+      if (res.data?.data?.url) {
+        return res.data.data.url;
+      }
+    } catch (e) {
+      console.warn("Cloud CDN upload fallback to direct backend:", e);
+    }
+    return null;
+  };
+
   const handleFileChange = async (e) => {
     const file = e.target.files?.[0];
     if (!file) return;
@@ -189,48 +204,73 @@ function Sidebar({ profile, activeTab, setActiveTab, onUpdateProfile }) {
     setUploading(true);
     try {
       const token = localStorage.getItem('token');
-      // Nén ảnh trên client-side để tối ưu tốc độ và tương thích Vercel Serverless
+      // 1. Nén ảnh siêu nhẹ trên client
       const base64Image = await compressImage(file, 300, 300, 0.85);
 
-      const formData = new FormData();
-      formData.append('avatar', file);
+      // 2. Thử upload lên Cloud CDN để lấy URL vĩnh viễn siêu ngắn (< 50 ký tự)
+      let finalAvatarUrl = null;
       if (base64Image) {
-        formData.append('avatar_base64', base64Image);
+        finalAvatarUrl = await uploadToCloud(base64Image);
       }
 
       let res;
-      try {
-        res = await axios.post(`${import.meta.env.VITE_API_URL}/upload-avatar`, formData, {
-          headers: {
-            'Content-Type': 'multipart/form-data',
-            Authorization: `Bearer ${token}`
-          }
+      // 3. Nếu có URL từ Cloud, lưu trực tiếp qua update-profile
+      if (finalAvatarUrl) {
+        res = await axios.post(`${import.meta.env.VITE_API_URL}/update-profile`, {
+          name: profile.name,
+          phone: profile.phone || '',
+          address: profile.address || '',
+          anhdaidien: finalAvatarUrl
+        }, {
+          headers: { Authorization: `Bearer ${token}` }
         });
-      } catch (uploadErr) {
-        // Fallback sang update-profile nếu endpoint upload-avatar bị lỗi serverless
-        if (base64Image) {
-          res = await axios.post(`${import.meta.env.VITE_API_URL}/update-profile`, {
-            name: profile.name,
-            phone: profile.phone || '',
-            address: profile.address || '',
-            anhdaidien: base64Image
-          }, {
-            headers: { Authorization: `Bearer ${token}` }
-          });
-          res.data = { status: 'success', avatar_url: base64Image };
-        } else {
-          throw uploadErr;
+        if (res.data?.status === 'success') {
+          res.data.avatar_url = finalAvatarUrl;
         }
       }
 
-      if (res && res.data && (res.data.status === 'success' || res.data.avatar_url)) {
-        const newUrl = res.data.avatar_url || base64Image;
+      // 4. Nếu không có URL cloud hoặc cloud lỗi, gửi qua backend /upload-avatar
+      if (!finalAvatarUrl || !res || res.data?.status !== 'success') {
+        const formData = new FormData();
+        formData.append('avatar', file);
+        if (base64Image) {
+          formData.append('avatar_base64', base64Image);
+        }
+
+        try {
+          res = await axios.post(`${import.meta.env.VITE_API_URL}/upload-avatar`, formData, {
+            headers: {
+              'Content-Type': 'multipart/form-data',
+              Authorization: `Bearer ${token}`
+            }
+          });
+          finalAvatarUrl = res.data?.avatar_url || base64Image;
+        } catch (uploadErr) {
+          // Fallback cuối cùng
+          if (base64Image) {
+            res = await axios.post(`${import.meta.env.VITE_API_URL}/update-profile`, {
+              name: profile.name,
+              phone: profile.phone || '',
+              address: profile.address || '',
+              anhdaidien: base64Image
+            }, {
+              headers: { Authorization: `Bearer ${token}` }
+            });
+            finalAvatarUrl = base64Image;
+          } else {
+            throw uploadErr;
+          }
+        }
+      }
+
+      const activeUrl = res?.data?.avatar_url || finalAvatarUrl || base64Image;
+      if (activeUrl) {
         if (onUpdateProfile) {
-          onUpdateProfile({ anhdaidien: newUrl });
+          onUpdateProfile({ anhdaidien: activeUrl });
         }
         try {
           const savedUser = JSON.parse(localStorage.getItem('user')) || {};
-          savedUser.anhdaidien = newUrl;
+          savedUser.anhdaidien = activeUrl;
           localStorage.setItem('user', JSON.stringify(savedUser));
         } catch (storageErr) {
           console.error(storageErr);
