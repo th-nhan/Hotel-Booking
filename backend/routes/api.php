@@ -9,8 +9,18 @@ use App\Http\Controllers\Api\AuthController;
 use App\Http\Controllers\Api\DashboardController;
 use App\Http\Controllers\Api\ProfileController;
 use App\Http\Controllers\Api\ReviewController;
-
 use App\Http\Controllers\Api\ReviewAIController;
+use App\Http\Controllers\Api\AccountController;
+use App\Http\Controllers\Api\ReceptionistController;
+
+Route::get('/accounts', [AccountController::class, 'index']);
+Route::post('/accounts', [AccountController::class, 'store']);
+Route::put('/accounts/{id}', [AccountController::class, 'update']);
+Route::patch('/accounts/{id}/toggle-status', [AccountController::class, 'toggleStatus']);
+Route::delete('/accounts/{id}', [AccountController::class, 'destroy']);
+
+Route::get('/receptionist/bookings', [ReceptionistController::class, 'getBookings']);
+Route::post('/receptionist/bookings/{id}/cancel', [ReceptionistController::class, 'cancelBooking']);
 
 Route::post('/reviews/analyze-export', [ReviewAIController::class, 'analyzeAndExport']);
 

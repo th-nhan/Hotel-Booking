@@ -5,7 +5,7 @@ import {
   Search, Download, Bell, UserCircle, LogOut, X,
   Sparkles, BedDouble, CheckCircle2, RefreshCw, Printer, LogIn, PaintBucket,
   MessageSquare, Star, Calendar, Bot, PlusCircle, CreditCard, Phone, Mail, User, ShieldCheck,
-  Loader2
+  Loader2, UserCheck, UserX, Lock, Unlock, Edit3, Trash2, Shield, Eye, EyeOff, Check, UserPlus
 } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 
@@ -57,6 +57,33 @@ export default function HotelDashboard() {
   
   // Thêm state loading riêng cho nút AI
   const [isAnalyzing, setIsAnalyzing] = useState(false);
+
+  // --- STATE QUẢN LÝ TÀI KHOẢN ---
+  const [accounts, setAccounts] = useState([]);
+  const [accountStats, setAccountStats] = useState({
+    total: 0, admins: 0, staff: 0, customers: 0, active: 0, locked: 0
+  });
+  const [loadingAccounts, setLoadingAccounts] = useState(false);
+  const [accountSearch, setAccountSearch] = useState('');
+  const [accountRoleFilter, setAccountRoleFilter] = useState('all');
+  const [accountStatusFilter, setAccountStatusFilter] = useState('all');
+
+  const [isAccountModalOpen, setIsAccountModalOpen] = useState(false);
+  const [editingAccount, setEditingAccount] = useState(null);
+  const [accountFormLoading, setAccountFormLoading] = useState(false);
+  const [accountFormError, setAccountFormError] = useState('');
+  const [accountActionLoadingId, setAccountActionLoadingId] = useState(null);
+
+  const [accountForm, setAccountForm] = useState({
+    HoTen: '',
+    Email: '',
+    MatKhau: '',
+    VaiTroID: 3,
+    SoDienThoai: '',
+    CCCD: '',
+    DiaChi: '',
+    TrangThai: 1
+  });
 
   // --- API GỌI DỮ LIỆU PHÒNG CHUNG ---
   const processRoomStatuses = (fetchedRooms) => {
@@ -138,6 +165,146 @@ export default function HotelDashboard() {
     }
   };
 
+  // --- API GỌI DỮ LIỆU TÀI KHOẢN ---
+  const fetchAccounts = async (customSearch = null) => {
+    setLoadingAccounts(true);
+    try {
+      const qSearch = customSearch !== null ? customSearch : accountSearch;
+      const response = await axios.get(`${import.meta.env.VITE_API_URL}/accounts`, {
+        params: {
+          search: qSearch,
+          role: accountRoleFilter,
+          status: accountStatusFilter
+        }
+      });
+      if (response.data.status === 'success') {
+        setAccounts(response.data.data || []);
+        if (response.data.stats) {
+          setAccountStats(response.data.stats);
+        }
+      }
+    } catch (error) {
+      console.error("Lỗi khi tải danh sách tài khoản:", error);
+    } finally {
+      setLoadingAccounts(false);
+    }
+  };
+
+  const handleToggleAccountStatus = async (account) => {
+    const actionText = account.TrangThai ? 'khóa' : 'mở khóa';
+    if (!window.confirm(`Bạn có chắc chắn muốn ${actionText} tài khoản "${account.HoTen}" (${account.Email})?`)) return;
+
+    setAccountActionLoadingId(account.TaiKhoanID);
+    try {
+      const response = await axios.patch(`${import.meta.env.VITE_API_URL}/accounts/${account.TaiKhoanID}/toggle-status`);
+      if (response.data.status === 'success') {
+        const newStatus = response.data.newStatus;
+        setAccounts(prev => prev.map(acc => acc.TaiKhoanID === account.TaiKhoanID ? { ...acc, TrangThai: newStatus } : acc));
+        setAccountStats(prev => ({
+          ...prev,
+          active: newStatus ? prev.active + 1 : Math.max(0, prev.active - 1),
+          locked: newStatus ? Math.max(0, prev.locked - 1) : prev.locked + 1
+        }));
+      }
+    } catch (error) {
+      alert("Lỗi khi cập nhật trạng thái: " + (error.response?.data?.message || error.message));
+    } finally {
+      setAccountActionLoadingId(null);
+    }
+  };
+
+  const handleDeleteAccount = async (account) => {
+    if (!window.confirm(`Xác nhận xóa vĩnh viễn tài khoản "${account.HoTen}" (${account.Email})? Hành động này không thể hoàn tác!`)) return;
+
+    setAccountActionLoadingId(account.TaiKhoanID);
+    try {
+      const response = await axios.delete(`${import.meta.env.VITE_API_URL}/accounts/${account.TaiKhoanID}`);
+      if (response.data.status === 'success') {
+        alert("Đã xóa tài khoản thành công!");
+        fetchAccounts();
+      }
+    } catch (error) {
+      alert("Lỗi khi xóa tài khoản: " + (error.response?.data?.message || error.message));
+    } finally {
+      setAccountActionLoadingId(null);
+    }
+  };
+
+  const openCreateAccountModal = () => {
+    setEditingAccount(null);
+    setAccountFormError('');
+    setAccountForm({
+      HoTen: '',
+      Email: '',
+      MatKhau: '',
+      VaiTroID: 3,
+      SoDienThoai: '',
+      CCCD: '',
+      DiaChi: '',
+      TrangThai: 1
+    });
+    setIsAccountModalOpen(true);
+  };
+
+  const openEditAccountModal = (account) => {
+    setEditingAccount(account);
+    setAccountFormError('');
+    setAccountForm({
+      HoTen: account.HoTen || '',
+      Email: account.Email || '',
+      MatKhau: '',
+      VaiTroID: Number(account.VaiTroID) || 3,
+      SoDienThoai: account.SoDienThoai || '',
+      CCCD: account.CCCD || '',
+      DiaChi: account.DiaChi || '',
+      TrangThai: account.TrangThai !== undefined ? account.TrangThai : 1
+    });
+    setIsAccountModalOpen(true);
+  };
+
+  const handleAccountFormSubmit = async (e) => {
+    e.preventDefault();
+    if (!accountForm.HoTen.trim() || !accountForm.Email.trim()) {
+      setAccountFormError('Vui lòng điền đầy đủ họ tên và email!');
+      return;
+    }
+    if (!editingAccount && (!accountForm.MatKhau || accountForm.MatKhau.length < 6)) {
+      setAccountFormError('Mật khẩu bắt buộc và phải có ít nhất 6 ký tự!');
+      return;
+    }
+    if (editingAccount && accountForm.MatKhau && accountForm.MatKhau.length < 6) {
+      setAccountFormError('Mật khẩu mới phải có ít nhất 6 ký tự!');
+      return;
+    }
+
+    setAccountFormLoading(true);
+    setAccountFormError('');
+
+    try {
+      if (editingAccount) {
+        const response = await axios.put(`${import.meta.env.VITE_API_URL}/accounts/${editingAccount.TaiKhoanID}`, accountForm);
+        if (response.data.status === 'success') {
+          alert("Cập nhật thông tin tài khoản thành công!");
+          setIsAccountModalOpen(false);
+          fetchAccounts();
+        }
+      } else {
+        const response = await axios.post(`${import.meta.env.VITE_API_URL}/accounts`, accountForm);
+        if (response.data.status === 'success') {
+          alert("Tạo tài khoản mới thành công!");
+          setIsAccountModalOpen(false);
+          fetchAccounts();
+        }
+      }
+    } catch (error) {
+      const msg = error.response?.data?.message || 
+        (error.response?.data?.errors ? Object.values(error.response.data.errors).flat().join(' ') : error.message);
+      setAccountFormError(msg || 'Đã có lỗi xảy ra.');
+    } finally {
+      setAccountFormLoading(false);
+    }
+  };
+
   // --- EFFECTS ---
   useEffect(() => {
     if (selectedRoom) {
@@ -159,6 +326,15 @@ export default function HotelDashboard() {
       fetchReviews();
     }
   }, [activeTab, timeRange]);
+
+  useEffect(() => {
+    if (activeTab === 'accounts') {
+      const timer = setTimeout(() => {
+        fetchAccounts(accountSearch);
+      }, 300);
+      return () => clearTimeout(timer);
+    }
+  }, [activeTab, accountSearch, accountRoleFilter, accountStatusFilter]);
 
   const getRoomStyle = (status) => {
     switch (status) {
@@ -634,6 +810,319 @@ export default function HotelDashboard() {
     </div>
   );
 
+  // --- RENDER TAB TÀI KHOẢN ---
+  const renderAccounts = () => {
+    const getRoleBadge = (roleId) => {
+      const id = Number(roleId);
+      if (id === 1) {
+        return (
+          <span className="inline-block px-3 py-1 rounded-md text-xs font-bold bg-[#0B1C2D] text-[#D4AF37] border border-[#D4AF37]/40 shadow-sm">
+            Quản trị viên
+          </span>
+        );
+      }
+      if (id === 2) {
+        return (
+          <span className="inline-block px-3 py-1 rounded-md text-xs font-bold bg-blue-50 text-blue-800 border border-blue-200">
+            Lễ tân / Nhân viên
+          </span>
+        );
+      }
+      return (
+        <span className="inline-block px-3 py-1 rounded-md text-xs font-bold bg-gray-100 text-gray-700 border border-gray-200">
+          Khách hàng
+        </span>
+      );
+    };
+
+    return (
+      <div className="space-y-8 animate-fade-in">
+        {/* KPI Thống kê tài khoản */}
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
+          <KPICard 
+            title="Tổng tài khoản" 
+            value={accountStats.total} 
+            subtitle={`${accountStats.active} hoạt động • ${accountStats.locked} bị khóa`} 
+            icon={<Users />} 
+            color="navy" 
+          />
+          <KPICard 
+            title="Quản trị viên" 
+            value={accountStats.admins} 
+            subtitle="Toàn quyền hệ thống" 
+            icon={<ShieldCheck />} 
+            color="gold" 
+          />
+          <KPICard 
+            title="Nhân viên / Lễ tân" 
+            value={accountStats.staff} 
+            subtitle="Vận hành & Đặt phòng" 
+            icon={<UserCheck />} 
+            color="white" 
+          />
+          <KPICard 
+            title="Khách hàng đăng ký" 
+            value={accountStats.customers} 
+            subtitle="Tài khoản thành viên" 
+            icon={<UserCircle />} 
+            color="white" 
+          />
+        </div>
+
+        {/* Bảng Danh sách & Bộ lọc */}
+        <div className="bg-white rounded-2xl border border-[#0B1C2D]/10 shadow-xl shadow-[#0B1C2D]/5 overflow-hidden flex flex-col">
+          {/* Header Bảng và Toolbar */}
+          <div className="p-6 border-b border-[#0B1C2D]/10 bg-gradient-to-r from-[#0B1C2D] via-[#102a43] to-[#0B1C2D] text-white flex flex-col md:flex-row gap-4 justify-between items-start md:items-center">
+            <div>
+              <div className="flex items-center gap-3">
+                <h3 className="text-xl font-serif font-bold tracking-wide text-white">Danh sách Tài Khoản</h3>
+                <span className="bg-[#D4AF37]/20 border border-[#D4AF37]/40 text-[#D4AF37] text-xs px-2.5 py-0.5 rounded-full font-bold">
+                  {accounts.length} người dùng
+                </span>
+              </div>
+              <p className="text-xs text-white/60 mt-0.5">Quản lý phân quyền, theo dõi hoạt động và phân nhóm tài khoản</p>
+            </div>
+
+            <button
+              onClick={openCreateAccountModal}
+              className="px-5 py-2.5 bg-gradient-to-r from-[#D4AF37] to-[#b5952f] text-[#0B1C2D] font-bold text-xs uppercase tracking-wider rounded-xl hover:brightness-110 transition-all shadow-lg shadow-[#D4AF37]/20 cursor-pointer shrink-0"
+            >
+              Thêm tài khoản mới
+            </button>
+          </div>
+
+          {/* Thanh Tìm kiếm & Bộ Lọc Nâng Cao */}
+          <div className="p-5 bg-[#F8F5F0] border-b border-[#0B1C2D]/10 flex flex-col lg:flex-row gap-3 items-stretch lg:items-center justify-between">
+            {/* Ô tìm kiếm chính */}
+            <div className="relative flex-1 min-w-[280px]">
+              <input
+                type="text"
+                placeholder="Tìm kiếm theo Tên, Email, Số điện thoại, CCCD..."
+                value={accountSearch}
+                onChange={(e) => setAccountSearch(e.target.value)}
+                className="w-full px-4 py-2.5 bg-white border border-[#0B1C2D]/15 rounded-xl text-sm text-[#0B1C2D] placeholder-[#0B1C2D]/40 outline-none focus:border-[#D4AF37] focus:ring-2 focus:ring-[#D4AF37]/20 shadow-sm transition-all"
+              />
+              {accountSearch && (
+                <button
+                  onClick={() => setAccountSearch('')}
+                  className="absolute inset-y-0 right-0 pr-3.5 flex items-center text-gray-400 hover:text-gray-600 text-xs font-bold cursor-pointer"
+                  title="Xóa tìm kiếm"
+                >
+                  Xóa
+                </button>
+              )}
+            </div>
+
+            {/* Bộ lọc dropdown & action */}
+            <div className="flex flex-wrap items-center gap-2.5">
+              {/* Lọc Vai trò */}
+              <div className="bg-white border border-[#0B1C2D]/15 hover:border-[#D4AF37] rounded-xl px-3 py-2 shadow-sm transition-all focus-within:border-[#D4AF37] focus-within:ring-2 focus-within:ring-[#D4AF37]/20">
+                <select
+                  value={accountRoleFilter}
+                  onChange={(e) => setAccountRoleFilter(e.target.value)}
+                  className="bg-transparent text-xs font-bold text-[#0B1C2D] outline-none cursor-pointer pr-2"
+                >
+                  <option value="all">Tất cả vai trò</option>
+                  <option value="1">Quản trị viên (Admin)</option>
+                  <option value="2">Nhân viên / Lễ tân</option>
+                  <option value="3">Khách hàng</option>
+                </select>
+              </div>
+
+              {/* Lọc Trạng thái */}
+              <div className="bg-white border border-[#0B1C2D]/15 hover:border-[#D4AF37] rounded-xl px-3 py-2 shadow-sm transition-all focus-within:border-[#D4AF37] focus-within:ring-2 focus-within:ring-[#D4AF37]/20">
+                <select
+                  value={accountStatusFilter}
+                  onChange={(e) => setAccountStatusFilter(e.target.value)}
+                  className="bg-transparent text-xs font-bold text-[#0B1C2D] outline-none cursor-pointer pr-2"
+                >
+                  <option value="all">Tất cả trạng thái</option>
+                  <option value="1">Đang hoạt động</option>
+                  <option value="0">Đã bị khóa</option>
+                </select>
+              </div>
+
+              {/* Nút Xóa nhanh bộ lọc nếu có lọc */}
+              {(accountSearch || accountRoleFilter !== 'all' || accountStatusFilter !== 'all') && (
+                <button
+                  onClick={() => {
+                    setAccountSearch('');
+                    setAccountRoleFilter('all');
+                    setAccountStatusFilter('all');
+                  }}
+                  className="px-3.5 py-2 rounded-xl bg-gray-200/80 hover:bg-gray-300 text-[#0B1C2D] text-xs font-bold transition-colors cursor-pointer"
+                  title="Đặt lại bộ lọc"
+                >
+                  Xóa lọc
+                </button>
+              )}
+
+              {/* Nút Làm mới */}
+              <button
+                onClick={() => fetchAccounts()}
+                disabled={loadingAccounts}
+                title="Làm mới danh sách"
+                className="px-4 py-2 bg-white border border-[#0B1C2D]/15 hover:border-[#D4AF37] rounded-xl shadow-sm text-xs font-bold text-[#0B1C2D] hover:text-[#D4AF37] transition-all cursor-pointer disabled:opacity-50"
+              >
+                {loadingAccounts ? 'Đang tải...' : 'Làm mới'}
+              </button>
+            </div>
+          </div>
+
+          {/* Table Container */}
+          <div className="overflow-x-auto">
+            {loadingAccounts ? (
+              <div className="py-16 flex flex-col items-center justify-center text-gray-500 gap-3">
+                <p className="font-bold text-sm">Đang tải danh sách tài khoản...</p>
+              </div>
+            ) : accounts.length === 0 ? (
+              <div className="py-16 flex flex-col items-center justify-center text-gray-500 gap-2">
+                <p className="font-bold text-base text-[#0B1C2D]/70">Không tìm thấy tài khoản nào</p>
+                <p className="text-xs text-gray-400">Thử thay đổi từ khóa tìm kiếm hoặc điều kiện lọc</p>
+              </div>
+            ) : (
+              <table className="w-full text-left text-sm">
+                <thead className="bg-white text-[#0B1C2D]/60 uppercase tracking-widest text-[10px] border-b border-[#0B1C2D]/10">
+                  <tr>
+                    <th className="px-6 py-4 font-bold">Người dùng</th>
+                    <th className="px-6 py-4 font-bold">Vai trò</th>
+                    <th className="px-6 py-4 font-bold">Thông tin liên hệ</th>
+                    <th className="px-6 py-4 font-bold">Ngày tạo</th>
+                    <th className="px-6 py-4 font-bold text-center">Trạng thái</th>
+                    <th className="px-6 py-4 font-bold text-right">Thao tác</th>
+                  </tr>
+                </thead>
+                <tbody className="divide-y divide-[#0B1C2D]/5">
+                  {accounts.map((account) => {
+                    const initials = account.HoTen
+                      ? account.HoTen.split(' ').map(n => n[0]).slice(-2).join('').toUpperCase()
+                      : 'U';
+                    const isLocked = !account.TrangThai;
+
+                    return (
+                      <tr key={account.TaiKhoanID} className={`hover:bg-[#F8F5F0]/60 transition-colors ${isLocked ? 'bg-gray-50/70' : ''}`}>
+                        {/* Người dùng */}
+                        <td className="px-6 py-4">
+                          <div className="flex items-center gap-3">
+                            {account.AnhDaiDien ? (
+                              <img
+                                src={account.AnhDaiDien}
+                                alt={account.HoTen}
+                                className="w-10 h-10 rounded-full object-cover border-2 border-[#D4AF37]/40 shadow-sm shrink-0"
+                              />
+                            ) : (
+                              <div className={`w-10 h-10 rounded-full flex items-center justify-center font-serif font-bold text-xs shrink-0 shadow-sm ${
+                                account.VaiTroID == 1 
+                                  ? 'bg-[#0B1C2D] text-[#D4AF37] border-2 border-[#D4AF37]' 
+                                  : account.VaiTroID == 2
+                                    ? 'bg-blue-900 text-white'
+                                    : 'bg-[#F8F5F0] text-[#0B1C2D] border border-[#0B1C2D]/20'
+                              }`}>
+                                {initials}
+                              </div>
+                            )}
+                            <div>
+                              <div className="font-bold text-[#0B1C2D] flex items-center gap-2">
+                                <span>{account.HoTen}</span>
+                                <span className="text-[10px] text-gray-400 font-mono">#{account.TaiKhoanID}</span>
+                              </div>
+                              <div className="text-xs text-gray-500 mt-0.5">
+                                {account.Email}
+                              </div>
+                            </div>
+                          </div>
+                        </td>
+
+                        {/* Vai trò */}
+                        <td className="px-6 py-4">
+                          {getRoleBadge(account.VaiTroID)}
+                        </td>
+
+                        {/* Thông tin liên hệ */}
+                        <td className="px-6 py-4 text-xs space-y-1">
+                          <div className="text-gray-700 font-medium">
+                            {account.SoDienThoai || <span className="italic text-gray-400">Chưa cập nhật SĐT</span>}
+                          </div>
+                          {account.CCCD && (
+                            <div className="text-[11px] text-gray-500">
+                              CCCD: {account.CCCD}
+                            </div>
+                          )}
+                          {account.DiaChi && (
+                            <div className="text-[11px] text-gray-500 truncate max-w-[200px]" title={account.DiaChi}>
+                              {account.DiaChi}
+                            </div>
+                          )}
+                        </td>
+
+                        {/* Ngày tạo */}
+                        <td className="px-6 py-4 text-xs text-gray-500">
+                          {account.NgayTao 
+                            ? new Date(account.NgayTao).toLocaleDateString('vi-VN', { year: 'numeric', month: '2-digit', day: '2-digit' })
+                            : (account.created_at ? new Date(account.created_at).toLocaleDateString('vi-VN') : '—')}
+                        </td>
+
+                        {/* Trạng thái */}
+                        <td className="px-6 py-4 text-center">
+                          {account.TrangThai ? (
+                            <span className="inline-block px-2.5 py-1 rounded-md text-[11px] font-bold bg-emerald-100 text-emerald-800 border border-emerald-300">
+                              Hoạt động
+                            </span>
+                          ) : (
+                            <span className="inline-block px-2.5 py-1 rounded-md text-[11px] font-bold bg-red-100 text-red-800 border border-red-300">
+                              Đã khóa
+                            </span>
+                          )}
+                        </td>
+
+                        {/* Thao tác */}
+                        <td className="px-6 py-4 text-right">
+                          <div className="flex items-center justify-end gap-2">
+                            {/* Nút Khóa / Mở Khóa */}
+                            <button
+                              onClick={() => handleToggleAccountStatus(account)}
+                              disabled={accountActionLoadingId === account.TaiKhoanID}
+                              className={`px-2.5 py-1.5 rounded-lg text-xs font-bold transition-colors cursor-pointer border ${
+                                account.TrangThai 
+                                  ? 'bg-amber-50 text-amber-700 border-amber-200 hover:bg-amber-600 hover:text-white hover:border-amber-600'
+                                  : 'bg-emerald-50 text-emerald-700 border-emerald-200 hover:bg-emerald-600 hover:text-white hover:border-emerald-600'
+                              } disabled:opacity-50`}
+                            >
+                              {accountActionLoadingId === account.TaiKhoanID 
+                                ? 'Đang xử lý...' 
+                                : account.TrangThai ? 'Khóa' : 'Mở khóa'}
+                            </button>
+
+                            {/* Nút Sửa */}
+                            <button
+                              onClick={() => openEditAccountModal(account)}
+                              className="px-2.5 py-1.5 rounded-lg bg-blue-50 text-blue-700 border border-blue-200 hover:bg-blue-600 hover:text-white hover:border-blue-600 text-xs font-bold transition-colors cursor-pointer"
+                            >
+                              Sửa
+                            </button>
+
+                            {/* Nút Xóa */}
+                            <button
+                              onClick={() => handleDeleteAccount(account)}
+                              disabled={accountActionLoadingId === account.TaiKhoanID}
+                              className="px-2.5 py-1.5 rounded-lg bg-red-50 text-red-600 border border-red-200 hover:bg-red-600 hover:text-white hover:border-red-600 text-xs font-bold transition-colors cursor-pointer disabled:opacity-50"
+                            >
+                              Xóa
+                            </button>
+                          </div>
+                        </td>
+                      </tr>
+                    );
+                  })}
+                </tbody>
+              </table>
+            )}
+          </div>
+        </div>
+      </div>
+    );
+  };
+
   return (
     <div className="flex h-screen font-sans bg-[#F8F5F0] text-[#0B1C2D] overflow-hidden selection:bg-[#D4AF37]/30 custom-scrollbar">
       <style dangerouslySetInnerHTML={{
@@ -661,6 +1150,7 @@ export default function HotelDashboard() {
           <NavItem icon={<Users />} label="Guests" active={activeTab === 'guests'} onClick={() => setActiveTab('guests')} />
           <NavItem icon={<FileText />} label="Invoices" active={activeTab === 'reports'} onClick={() => setActiveTab('reports')} />
           <NavItem icon={<MessageSquare />} label="Reviews" active={activeTab === 'reviews'} onClick={() => setActiveTab('reviews')} />
+          <NavItem icon={<ShieldCheck />} label="Accounts" active={activeTab === 'accounts'} onClick={() => setActiveTab('accounts')} />
 
           <div className="pt-8 border-t border-white/10 mt-8"></div>
           <NavItem onClick={handleLogout} icon={<LogOut />} label="Logout" />
@@ -677,7 +1167,8 @@ export default function HotelDashboard() {
               activeTab === 'dashboard' ? 'Overview' :
                 activeTab === 'roomMap' ? 'Room Map' :
                   activeTab === 'guests' ? 'Guest Management' :
-                    activeTab === 'reviews' ? 'Review Management' : 'Reports & Invoices'
+                    activeTab === 'reviews' ? 'Review Management' :
+                      activeTab === 'accounts' ? 'Account Management' : 'Reports & Invoices'
             }</h2>
             <p className="text-sm text-[#0B1C2D]/60">{new Date().toLocaleDateString('en-US', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' })}</p>
           </div>
@@ -694,6 +1185,7 @@ export default function HotelDashboard() {
           {activeTab === 'guests' && renderGuests()}
           {activeTab === 'reports' && renderReports()}
           {activeTab === 'reviews' && renderReviews()}
+          {activeTab === 'accounts' && renderAccounts()}
         </main>
       </div>
 
@@ -1026,6 +1518,170 @@ export default function HotelDashboard() {
                       <span>Xác nhận Đặt phòng</span>
                     </>
                   )}
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
+
+      {/* --- MODAL THÊM / SỬA TÀI KHOẢN --- */}
+      {isAccountModalOpen && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-[#0B1C2D]/70 backdrop-blur-sm animate-fade-in">
+          <div className="bg-white rounded-2xl shadow-2xl max-w-xl w-full border border-[#0B1C2D]/10 overflow-hidden flex flex-col max-h-[90vh]">
+            {/* Modal Header */}
+            <div className="bg-[#0B1C2D] text-white p-6 flex justify-between items-center relative">
+              <div>
+                <h3 className="text-xl font-serif font-bold text-white">
+                  {editingAccount ? 'Chỉnh sửa tài khoản' : 'Tạo tài khoản mới'}
+                </h3>
+                <p className="text-xs text-white/60 mt-0.5">
+                  {editingAccount ? `Cập nhật thông tin cho #${editingAccount.TaiKhoanID} - ${editingAccount.Email}` : 'Cấp quyền và tạo thông tin người dùng mới'}
+                </p>
+              </div>
+              <button
+                onClick={() => setIsAccountModalOpen(false)}
+                className="p-2 bg-white/10 hover:bg-white/20 rounded-full transition-colors text-white cursor-pointer"
+              >
+                <X className="w-5 h-5" />
+              </button>
+            </div>
+
+            {/* Modal Body */}
+            <form onSubmit={handleAccountFormSubmit} className="p-6 overflow-y-auto space-y-4 custom-scrollbar">
+              {accountFormError && (
+                <div className="p-3 bg-red-50 border border-red-200 text-red-700 text-sm rounded-lg font-medium">
+                  {accountFormError}
+                </div>
+              )}
+
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div className="md:col-span-2">
+                  <label className="block text-xs font-bold text-[#0B1C2D]/70 uppercase tracking-wider mb-1">
+                    Họ và tên <span className="text-red-500">*</span>
+                  </label>
+                  <input
+                    type="text"
+                    required
+                    placeholder="VD: Nguyễn Văn A"
+                    value={accountForm.HoTen}
+                    onChange={(e) => setAccountForm({ ...accountForm, HoTen: e.target.value })}
+                    className="w-full px-3.5 py-2.5 rounded-lg border border-[#0B1C2D]/20 focus:border-[#D4AF37] focus:ring-1 focus:ring-[#D4AF37] outline-none text-sm"
+                  />
+                </div>
+
+                <div>
+                  <label className="block text-xs font-bold text-[#0B1C2D]/70 uppercase tracking-wider mb-1">
+                    Email đăng nhập <span className="text-red-500">*</span>
+                  </label>
+                  <input
+                    type="email"
+                    required
+                    placeholder="VD: user@hotel.com"
+                    value={accountForm.Email}
+                    onChange={(e) => setAccountForm({ ...accountForm, Email: e.target.value })}
+                    className="w-full px-3.5 py-2.5 rounded-lg border border-[#0B1C2D]/20 focus:border-[#D4AF37] focus:ring-1 focus:ring-[#D4AF37] outline-none text-sm"
+                  />
+                </div>
+
+                <div>
+                  <label className="block text-xs font-bold text-[#0B1C2D]/70 uppercase tracking-wider mb-1">
+                    Mật khẩu {editingAccount ? <span className="text-gray-400 font-normal">(tùy chọn)</span> : <span className="text-red-500">*</span>}
+                  </label>
+                  <input
+                    type="password"
+                    required={!editingAccount}
+                    placeholder={editingAccount ? "Để trống nếu giữ nguyên" : "Tối thiểu 6 ký tự"}
+                    value={accountForm.MatKhau}
+                    onChange={(e) => setAccountForm({ ...accountForm, MatKhau: e.target.value })}
+                    className="w-full px-3.5 py-2.5 rounded-lg border border-[#0B1C2D]/20 focus:border-[#D4AF37] focus:ring-1 focus:ring-[#D4AF37] outline-none text-sm"
+                  />
+                </div>
+
+                <div>
+                  <label className="block text-xs font-bold text-[#0B1C2D]/70 uppercase tracking-wider mb-1">
+                    Vai trò hệ thống <span className="text-red-500">*</span>
+                  </label>
+                  <select
+                    value={accountForm.VaiTroID}
+                    onChange={(e) => setAccountForm({ ...accountForm, VaiTroID: Number(e.target.value) })}
+                    className="w-full px-3.5 py-2.5 rounded-lg border border-[#0B1C2D]/20 focus:border-[#D4AF37] focus:ring-1 focus:ring-[#D4AF37] outline-none text-sm bg-white cursor-pointer"
+                  >
+                    <option value={1}>Quản trị viên (Admin)</option>
+                    <option value={2}>Nhân viên / Lễ tân</option>
+                    <option value={3}>Khách hàng</option>
+                  </select>
+                </div>
+
+                <div>
+                  <label className="block text-xs font-bold text-[#0B1C2D]/70 uppercase tracking-wider mb-1">
+                    Trạng thái tài khoản
+                  </label>
+                  <select
+                    value={accountForm.TrangThai}
+                    onChange={(e) => setAccountForm({ ...accountForm, TrangThai: Number(e.target.value) })}
+                    className="w-full px-3.5 py-2.5 rounded-lg border border-[#0B1C2D]/20 focus:border-[#D4AF37] focus:ring-1 focus:ring-[#D4AF37] outline-none text-sm bg-white cursor-pointer"
+                  >
+                    <option value={1}>Hoạt động (Cho phép đăng nhập)</option>
+                    <option value={0}>Đã khóa (Chặn đăng nhập)</option>
+                  </select>
+                </div>
+
+                <div>
+                  <label className="block text-xs font-bold text-[#0B1C2D]/70 uppercase tracking-wider mb-1">
+                    Số điện thoại
+                  </label>
+                  <input
+                    type="tel"
+                    placeholder="VD: 0901234567"
+                    value={accountForm.SoDienThoai}
+                    onChange={(e) => setAccountForm({ ...accountForm, SoDienThoai: e.target.value })}
+                    className="w-full px-3.5 py-2.5 rounded-lg border border-[#0B1C2D]/20 focus:border-[#D4AF37] focus:ring-1 focus:ring-[#D4AF37] outline-none text-sm"
+                  />
+                </div>
+
+                <div>
+                  <label className="block text-xs font-bold text-[#0B1C2D]/70 uppercase tracking-wider mb-1">
+                    Số CCCD / CMND
+                  </label>
+                  <input
+                    type="text"
+                    placeholder="VD: 07920300xxxx"
+                    value={accountForm.CCCD}
+                    onChange={(e) => setAccountForm({ ...accountForm, CCCD: e.target.value })}
+                    className="w-full px-3.5 py-2.5 rounded-lg border border-[#0B1C2D]/20 focus:border-[#D4AF37] focus:ring-1 focus:ring-[#D4AF37] outline-none text-sm"
+                  />
+                </div>
+
+                <div className="md:col-span-2">
+                  <label className="block text-xs font-bold text-[#0B1C2D]/70 uppercase tracking-wider mb-1">
+                    Địa chỉ
+                  </label>
+                  <input
+                    type="text"
+                    placeholder="VD: Quận 1, TP. Hồ Chí Minh"
+                    value={accountForm.DiaChi}
+                    onChange={(e) => setAccountForm({ ...accountForm, DiaChi: e.target.value })}
+                    className="w-full px-3.5 py-2.5 rounded-lg border border-[#0B1C2D]/20 focus:border-[#D4AF37] focus:ring-1 focus:ring-[#D4AF37] outline-none text-sm"
+                  />
+                </div>
+              </div>
+
+              {/* Modal Actions */}
+              <div className="flex justify-end gap-3 pt-4 border-t border-gray-100">
+                <button
+                  type="button"
+                  onClick={() => setIsAccountModalOpen(false)}
+                  className="px-5 py-2.5 rounded-lg border border-gray-300 text-gray-700 font-bold text-xs uppercase tracking-wider hover:bg-gray-100 transition-colors cursor-pointer"
+                >
+                  Hủy bỏ
+                </button>
+                <button
+                  type="submit"
+                  disabled={accountFormLoading}
+                  className="px-6 py-2.5 rounded-lg bg-[#D4AF37] hover:bg-[#b5952f] text-[#0B1C2D] font-bold text-xs uppercase tracking-wider transition-colors shadow-md cursor-pointer disabled:opacity-50"
+                >
+                  {accountFormLoading ? 'Đang lưu...' : editingAccount ? 'Lưu thay đổi' : 'Xác nhận tạo'}
                 </button>
               </div>
             </form>

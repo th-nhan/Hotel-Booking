@@ -31,6 +31,8 @@ const Login = () => {
 
                 if (response.data.user.role === 1 || response.data.user.role === '1') {
                     navigate('/dashboard');
+                } else if (response.data.user.role === 2 || response.data.user.role === '2') {
+                    navigate('/receptionist');
                 } else {
                     navigate('/');
                 }

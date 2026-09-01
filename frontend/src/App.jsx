@@ -5,6 +5,7 @@ import Login from './pages/auth/Login';
 import Register from './pages/auth/Register';
 import Home from './pages/Home';
 import HotelDashboard from './pages/admin/HotelDashboard';
+import ReceptionistDashboard from './pages/receptionist/ReceptionistDashboard';
 import ProfileCustomer from './pages/customer/ProfileCustomer';
 import ReviewPage from './pages/customer/Review';
 import Heritage from './pages/about/Heritage';
@@ -42,8 +43,9 @@ function App() {
           <Route path="/experience/:slug" element={<ExperienceDetail />} />
 
 
-          {/* ----------------------------ADMIN-------------------------- */}
+          {/* ----------------------------ADMIN & RECEPTION-------------------------- */}
           <Route path="/dashboard" element={<HotelDashboard />} />
+          <Route path="/receptionist" element={<ReceptionistDashboard />} />
 
 
         </Routes>
