@@ -27,10 +27,22 @@ const AIAnalyzer = ({ timeRange }) => {
             
         } catch (error) {
             console.error("Lỗi tải file:", error);
-            if(error.response && error.response.status === 404) {
-                alert("Không có đánh giá nào trong khoảng thời gian này để phân tích!");
+            let errorMsg = "Đã có lỗi xảy ra khi gọi AI. Vui lòng kiểm tra lại server!";
+            if (error.response?.data) {
+                try {
+                    const text = error.response.data instanceof Blob ? await error.response.data.text() : error.response.data;
+                    const parsed = typeof text === 'string' ? JSON.parse(text) : text;
+                    if (parsed.error) {
+                        errorMsg = parsed.error;
+                    }
+                } catch {
+                    // Fallback to default error message if response parsing fails
+                }
+            }
+            if (error.response && error.response.status === 404) {
+                alert(errorMsg || "Không có đánh giá nào trong khoảng thời gian này để phân tích!");
             } else {
-                alert("Đã có lỗi xảy ra khi gọi AI. Vui lòng kiểm tra lại server!");
+                alert(errorMsg);
             }
         } finally {
             setIsLoading(false);

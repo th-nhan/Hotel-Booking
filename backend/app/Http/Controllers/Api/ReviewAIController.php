@@ -16,8 +16,13 @@ class ReviewAIController extends Controller
 {
     public function analyzeAndExport(Request $request)
     {
-        config(['excel.temporary_files.local_path' => '/tmp']);
-        // 1. NHẬN YÊU CẦU THỜI GIAN TỪ REACTJS (Mặc định là '1' nếu không có)
+        // Sử dụng thư mục tạm phù hợp trên cả Windows và Linux
+        $tempPath = sys_get_temp_dir();
+        if ($tempPath) {
+            config(['excel.temporary_files.local_path' => $tempPath]);
+        }
+
+        // 1. NHẬN YÊU CẦU THỜI GIAN TỪ REACTJS (Mặc định là 'all' hoặc '1' nếu không có)
         $timeRange = $request->input('time_range', '1');
 
         // 2. KHỞI TẠO CÂU LỆNH TRUY VẤN CƠ BẢN
@@ -44,34 +49,32 @@ class ReviewAIController extends Controller
             return response()->json(['error' => 'Không có đánh giá nào có nội dung chữ để phân tích trong khoảng thời gian này.'], 404);
         }
 
-        // 5. MAP DỮ LIỆU (Giữ nguyên y hệt như cũ)
+        // 5. MAP DỮ LIỆU
         $reviews = $dbReviews->map(function ($item) {
             return [
                 'id'      => $item->DanhGiaID,
                 'content' => $item->BinhLuan
             ];
         })->toArray();
+
         try {
-            // 3. GỌI API MICROSERVICE PYTHON
+            // 3. GỌI API MICROSERVICE PYTHON (Bỏ qua kiểm tra SSL trên localhost Windows)
             /** @var \Illuminate\Http\Client\Response $response */
-            $response = Http::timeout(60)->post('https://hotel-ai-analyzer.vercel.app/analyze', [
+            $response = Http::withoutVerifying()->timeout(60)->post('https://hotel-ai-analyzer.vercel.app/analyze', [
                 'reviews' => $reviews
             ]);
 
-            // $response = Http::timeout(60)->post('http://host.docker.internal:8000/analyze', [
-            //     'reviews' => $reviews
-            // ]);
-
             // 4. XỬ LÝ JSON TỪ AI VÀ XUẤT RA EXCEL
-            if ($response->status() === 200) {
+            if ($response->successful()) {
                 $aiResults = $response->json();
                 
                 $excelData = [];
                 
                 // 1. IN DANH SÁCH CHI TIẾT CÁC ĐÁNH GIÁ
-                foreach ($aiResults['reviews_analysis'] as $item) {
+                $reviewsAnalysis = $aiResults['reviews_analysis'] ?? [];
+                foreach ($reviewsAnalysis as $item) {
                     $excelData[] = [
-                        'id'            => $item['id'],
+                        'id'            => $item['id'] ?? '',
                         'sentiment'     => $item['sentiment'] ?? 'N/A',
                         'tags'          => isset($item['tags']) ? (is_array($item['tags']) ? implode(', ', $item['tags']) : $item['tags']) : '', 
                         'summary'       => $item['summary'] ?? '',
@@ -94,13 +97,13 @@ class ReviewAIController extends Controller
                 ];
 
                 // 4. IN CÁC NỘI DUNG TỔNG KẾT CỦA GIÁM ĐỐC
-                $summary = $aiResults['overall_summary'];
+                $summary = $aiResults['overall_summary'] ?? [];
 
                 // Dòng: Các vấn đề chính
                 $excelData[] = [
                     'id' => '', 'sentiment' => '', 
                     'tags' => 'Các vấn đề chính (Lặp lại nhiều)', 
-                    'summary' => isset($summary['main_issues']) ? (is_array($summary['main_issues']) ? implode("\n- ", $summary['main_issues']) : $summary['main_issues']) : '',
+                    'summary' => isset($summary['main_issues']) ? (is_array($summary['main_issues']) ? implode("\n- ", (array)$summary['main_issues']) : $summary['main_issues']) : '',
                     'action_needed' => ''
                 ];
 
@@ -108,7 +111,7 @@ class ReviewAIController extends Controller
                 $excelData[] = [
                     'id' => '', 'sentiment' => '', 
                     'tags' => 'Hành động ƯU TIÊN', 
-                    'summary' => isset($summary['priority_actions']) ? (is_array($summary['priority_actions']) ? implode("\n- ", $summary['priority_actions']) : $summary['priority_actions']) : '',
+                    'summary' => isset($summary['priority_actions']) ? (is_array($summary['priority_actions']) ? implode("\n- ", (array)$summary['priority_actions']) : $summary['priority_actions']) : '',
                     'action_needed' => ''
                 ];
 
@@ -116,7 +119,7 @@ class ReviewAIController extends Controller
                 $excelData[] = [
                     'id' => '', 'sentiment' => '', 
                     'tags' => 'Điểm mạnh cần duy trì', 
-                    'summary' => isset($summary['positive_points']) ? (is_array($summary['positive_points']) ? implode("\n- ", $summary['positive_points']) : $summary['positive_points']) : '',
+                    'summary' => isset($summary['positive_points']) ? (is_array($summary['positive_points']) ? implode("\n- ", (array)$summary['positive_points']) : $summary['positive_points']) : '',
                     'action_needed' => ''
                 ];
 
