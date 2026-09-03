@@ -164,6 +164,7 @@ export default function HotelDashboard() {
                 if (parsed.error) {
                     errorMsg = parsed.error;
                 }
+            // eslint-disable-next-line no-unused-vars
             } catch (e) {
                 // Bỏ qua nếu không parse được JSON
             }
