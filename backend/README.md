@@ -1,16 +1,16 @@
-# 🏨 Hotel Booking - Backend API (Laravel)
+# 🏨 La Maison DTN — Backend RESTful API
 
-Hệ thống Backend RESTful API phục vụ quản trị và đặt phòng khách sạn, được xây dựng trên nền tảng **Laravel Framework** (PHP 8.2+).
+Hệ thống Backend RESTful API phục vụ nghiệp vụ quản trị và đặt phòng khách sạn **La Maison DTN**, xây dựng trên nền tảng **Laravel Framework** (PHP 8.2+).
 
 ---
 
 ## 📋 Yêu cầu hệ thống (Prerequisites)
 
-Trước khi chạy dự án, hãy đảm bảo máy tính của bạn đã cài đặt:
-- **PHP** >= 8.2 (Bật các extension: `pdo_mysql` / `pdo_sqlite`, `mbstring`, `openssl`, `bcmath`, `fileinfo`, `gd`)
-- **Composer** >= 2.0
-- **MySQL** / **MariaDB** (hoặc SQLite)
-- **Node.js** & **npm** (tùy chọn nếu cần build asset)
+Trước khi chạy dự án, hãy đảm bảo môi trường phát triển của bạn đáp ứng:
+- **PHP**: `>= 8.2` (Bật các extension: `pdo_mysql`, `mbstring`, `openssl`, `bcmath`, `fileinfo`, `gd`, `curl`)
+- **Composer**: `>= 2.2`
+- **MySQL / MariaDB**: `>= 8.0`
+- **Node.js & npm** *(Tùy chọn, cần khi build assets backend)*
 
 ---
 
@@ -42,7 +42,7 @@ php artisan key:generate
 ```
 
 ### Bước 5: Cấu hình Cơ sở dữ liệu
-Mở file `.env` và thiết lập thông tin kết nối Database của bạn (ví dụ với MySQL):
+Mở file `.env` và thiết lập kết nối Database (ví dụ với MySQL):
 ```env
 DB_CONNECTION=mysql
 DB_HOST=127.0.0.1
@@ -51,91 +51,109 @@ DB_DATABASE=hotel_booking
 DB_USERNAME=root
 DB_PASSWORD=
 ```
-> *Lưu ý: Đảm bảo bạn đã tạo Database `hotel_booking` trong MySQL (qua phpMyAdmin, DBeaver, Navicat hoặc dòng lệnh).*
+> ⚠️ **Lưu ý:** Đảm bảo bạn đã tạo Database `hotel_booking` trong MySQL (thông qua phpMyAdmin, HeidiSQL, DBeaver hoặc MySQL CLI).
 
 ### Bước 6: Chạy Migration và Seed dữ liệu mẫu
-Tạo toàn bộ các bảng và nạp dữ liệu mẫu ban đầu:
+Tạo toàn bộ cấu trúc bảng và nạp dữ liệu demo ban đầu (tài khoản, loại phòng, danh sách phòng từ tầng 2-9):
 ```bash
 php artisan migrate --seed
 ```
-> *Nếu muốn xóa sạch DB và nạp lại từ đầu:*
+> 💡 *Nếu muốn xóa sạch DB và nạp lại từ đầu:*
 > ```bash
 > php artisan migrate:fresh --seed
 > ```
 
-### Bước 7: Khởi chạy Server
-Chạy lệnh sau để khởi động Laravel Development Server:
+### Bước 7: Tạo symbolic link cho thư mục lưu trữ ảnh (Storage Link)
+```bash
+php artisan storage:link
+```
+
+### Bước 8: Khởi chạy Server Backend
 ```bash
 php artisan serve
 ```
-> ⚠️ **Lưu ý:** Lệnh chuẩn là `php artisan serve` (không phải `php serve artisan`).
-
-Server sẽ mặc định chạy tại: **`http://127.0.0.1:8000`** hoặc **`http://localhost:8000`**.
+Server API sẽ lắng nghe tại: **`http://127.0.0.1:8000`** (Base API: `http://127.0.0.1:8000/api`).
 
 ---
 
 ## 👥 Tài khoản thử nghiệm mặc định (Seed Data)
 
-Sau khi chạy `--seed`, bạn có thể dùng các tài khoản sau để đăng nhập:
+Sau khi chạy `migrate --seed`, hệ thống khởi tạo sẵn các tài khoản sau:
 
-| Vai trò | Email | Mật khẩu | Mô tả |
+| Vai trò (Role) | Email | Mật khẩu | Quyền hạn & Mô tả |
 | :--- | :--- | :--- | :--- |
-| **Admin** | `admin@hotel.com` | `123456` | Toàn quyền quản trị hệ thống |
-| **Nhân viên / Lễ tân** | `nhanvien@hotel.com` | `123456` | Quản lý nhận/trả phòng, đơn đặt |
-| **Khách hàng** | `khachhang@gmail.com` | `123456` | Tài khoản khách hàng mẫu |
+| **👑 Admin** | `admin@hotel.com` | `123456` | Toàn quyền quản trị hệ thống, xem dashboard doanh thu, AI Analytics |
+| **🛎️ Lễ tân (Receptionist)** | `nhanvien@hotel.com` | `123456` | Quản lý nhận/trả phòng, tiếp nhận đặt phòng và hủy đơn |
+| **👤 Khách hàng (Customer)** | `khachhang@gmail.com` | `123456` | Tài khoản khách hàng mẫu để đặt phòng và đánh giá |
 
 ---
 
-## 🛠️ Các lệnh hữu ích thường dùng (Artisan & Composer)
+## 📡 Danh sách API Endpoints chi tiết
 
-- **Khởi động server backend:**
+Base API URL: `http://127.0.0.1:8000/api`
+
+### 1. Xác thực (Authentication) & Tài khoản cá nhân
+| Method | Endpoint | Yêu cầu Auth | Mô tả |
+| :--- | :--- | :---: | :--- |
+| `POST` | `/register` | Không | Đăng ký tài khoản khách hàng mới |
+| `POST` | `/login` | Không | Đăng nhập nhận Sanctum Token & thông tin User |
+| `POST` | `/logout` | Có (Bearer) | Thu hồi Token và đăng xuất |
+| `GET` | `/my-profile` | Có (Bearer) | Lấy thông tin tài khoản hiện tại |
+| `POST` | `/update-profile` | Có (Bearer) | Cập nhật họ tên, SĐT, CCCD, địa chỉ... |
+| `POST` | `/upload-avatar` | Có (Bearer) | Cập nhật ảnh đại diện người dùng |
+
+### 2. Nghiệp vụ Phòng & Đặt phòng
+| Method | Endpoint | Yêu cầu Auth | Mô tả |
+| :--- | :--- | :---: | :--- |
+| `GET` | `/phongs` | Không | Danh sách phòng theo tầng, loại phòng và tình trạng |
+| `POST` | `/dat-phong` | Tùy chọn | Đặt phòng (chọn phòng, ngày check-in/out, thông tin khách) |
+| `POST` | `/nhan-phong` | Có (Nhân viên) | Tiếp nhận nhận phòng (Check-in) |
+| `POST` | `/tra-phong` | Có (Nhân viên) | Trả phòng và tính toán tổng tiền (Check-out) |
+| `POST` | `/hoan-tat-don` | Có (Nhân viên) | Xác nhận hoàn thành đơn đặt phòng |
+
+### 3. Nghiệp vụ Bàn Lễ tân (Receptionist)
+| Method | Endpoint | Yêu cầu Auth | Mô tả |
+| :--- | :--- | :---: | :--- |
+| `GET` | `/receptionist/bookings` | Tùy chọn | Danh sách đặt phòng chi tiết cho bàn lễ tân |
+| `POST` | `/receptionist/bookings/{id}/cancel` | Tùy chọn | Hủy đơn đặt phòng theo ID |
+
+### 4. Đánh giá & Phân tích AI (Reviews & AI Sentiment)
+| Method | Endpoint | Yêu cầu Auth | Mô tả |
+| :--- | :--- | :---: | :--- |
+| `GET` | `/review` | Không | Lấy danh sách đánh giá từ khách hàng |
+| `POST` | `/review` | Không | Gửi đánh giá mới kèm điểm sao |
+| `DELETE` | `/review/{id}` | Có | Xóa đánh giá |
+| `POST` | `/review/{id}/like` | Không | Thả like/unlike đánh giá |
+| `POST` | `/review/{id}/reply` | Không | Gửi phản hồi bình luận |
+| `POST` | `/reviews/analyze-export` | Có | AI phân tích cảm xúc đánh giá & xuất file Excel báo cáo |
+
+### 5. Quản trị hệ thống (Admin Management & Dashboard)
+| Method | Endpoint | Yêu cầu Auth | Mô tả |
+| :--- | :--- | :---: | :--- |
+| `GET` | `/dashboard` | Không | Số liệu thống kê doanh thu, tỷ lệ phòng, đơn đặt |
+| `GET` | `/accounts` | Có (Admin) | Danh sách toàn bộ tài khoản trong hệ thống |
+| `POST` | `/accounts` | Có (Admin) | Tạo tài khoản nhân viên / quản trị mới |
+| `PUT` | `/accounts/{id}` | Có (Admin) | Chỉnh sửa thông tin tài khoản |
+| `PATCH` | `/accounts/{id}/toggle-status` | Có (Admin) | Khóa hoặc kích hoạt tài khoản |
+| `DELETE` | `/accounts/{id}` | Có (Admin) | Xóa tài khoản |
+
+---
+
+## 🛠️ Các lệnh Artisan hữu ích thường dùng
+
+* **Khởi động server backend:**
   ```bash
   php artisan serve
   ```
-- **Xóa cache hệ thống (khi sửa config hoặc route không nhận):**
+* **Xóa sạch cache hệ thống (khi sửa config hoặc routes không nhận):**
   ```bash
   php artisan optimize:clear
-  # hoặc xóa từng loại:
-  php artisan config:clear
-  php artisan route:clear
-  php artisan cache:clear
   ```
-- **Tạo link lưu trữ hình ảnh/file:**
-  ```bash
-  php artisan storage:link
-  ```
-- **Tạo lại toàn bộ CSDL và nạp dữ liệu:**
+* **Làm mới hoàn toàn cơ sở dữ liệu và seed dữ liệu:**
   ```bash
   php artisan migrate:fresh --seed
   ```
-
----
-
-## 📡 Danh sách API Endpoints chính
-
-Base URL: `http://localhost:8000/api`
-
-### 1. Xác thực (Authentication) & Tài khoản
-- `POST /api/register` - Đăng ký tài khoản mới
-- `POST /api/login` - Đăng nhập nhận Sanctum Token
-- `POST /api/logout` - Đăng xuất (Cần Bearer Token)
-- `GET  /api/my-profile` - Lấy thông tin cá nhân (Cần Bearer Token)
-- `POST /api/update-profile` - Cập nhật hồ sơ cá nhân (Cần Bearer Token)
-
-### 2. Quản lý Phòng & Đặt phòng
-- `GET  /api/phongs` - Lấy danh sách phòng và trạng thái
-- `POST /api/dat-phong` - Đặt phòng
-- `POST /api/nhan-phong` - Nhận phòng (Check-in)
-- `POST /api/tra-phong` - Trả phòng & tính tiền (Check-out)
-- `POST /api/hoan-tat-don` - Hoàn tất đơn đặt phòng
-
-### 3. Đánh giá & Phản hồi (Reviews)
-- `GET    /api/review` - Xem danh sách đánh giá
-- `POST   /api/review` - Gửi đánh giá mới
-- `DELETE /api/review/{id}` - Xóa đánh giá
-- `POST   /api/review/{id}/like` - Thả like đánh giá
-- `POST   /api/review/{id}/reply` - Phản hồi đánh giá
-- `POST   /api/reviews/analyze-export` - Phân tích AI & Xuất báo cáo đánh giá
-
-### 4. Thống kê (Dashboard)
-- `GET  /api/dashboard` - Dữ liệu tổng quan doanh thu, số lượng phòng, trạng thái đặt phòng
+* **Tạo liên kết thư mục public cho file upload:**
+  ```bash
+  php artisan storage:link
+  ```
